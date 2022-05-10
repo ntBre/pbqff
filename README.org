@@ -1,11 +1,12 @@
-* Tasks [2/11]
+* Tasks [3/11]
 ** WAIT parse input - for now no processing
    - initial geometry
    - opt bool
    - path to spectro
 ** DONE optimize geometry (if requested)
 ** DONE read out optimized geometry
-** TODO parse intder template header
+** DONE parse intder template header
+   - easy with Intder::load_file
 ** TODO run taylor.py to generate disps and anpass
 ** TODO run intder to get disps
    - combine

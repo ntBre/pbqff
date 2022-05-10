@@ -11,6 +11,7 @@ pub const MOPAC_TMPL: Template = Template::from(
 mod tests {
     use std::rc::Rc;
 
+    use intder::Intder;
     use psqs::{
         program::{mopac::Mopac, Job},
         queue::{local::LocalQueue, Queue},
@@ -22,6 +23,7 @@ mod tests {
     #[test]
     fn test_full() {
         let config = Config::load("testfiles/test.toml");
+        // optimize the geometry
         let geom = if config.optimize {
             std::fs::create_dir("opt").unwrap();
             let opt = Job::new(
@@ -43,5 +45,8 @@ mod tests {
         };
         std::fs::remove_dir_all("opt").unwrap();
         println!("{}", geom);
+
+        let intder = Intder::load_file("testfiles/intder.in");
+        dbg!(intder);
     }
 }

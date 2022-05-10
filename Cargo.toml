@@ -7,5 +7,6 @@ edition = "2021"
 
 [dependencies]
 psqs = { path = "/home/brent/Projects/psqs" }
+intder = { path = "/home/brent/Projects/intder" }
 toml = "0.5.8"
 serde = { version = "1.0", features = ["derive"] }
