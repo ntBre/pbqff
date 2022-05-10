@@ -22,20 +22,8 @@ mod tests {
     #[test]
     fn test_full() {
         let config = Config::load("testfiles/test.toml");
-        if config.optimize {
-            match std::fs::create_dir("opt") {
-                Ok(_) => (),
-                _ => (),
-                // TODO use this in the real version
-                // Err(e) => {
-                //     if e.kind() == ErrorKind::AlreadyExists {
-                //         eprintln!("directory `opt` already exists");
-                //         std::process::exit(1);
-                //     } else {
-                //         panic!();
-                //     }
-                // }
-            };
+        let geom = if config.optimize {
+            std::fs::create_dir("opt").unwrap();
             let opt = Job::new(
                 Mopac::new(
                     "opt/opt".to_string(),
@@ -46,13 +34,14 @@ mod tests {
                 ),
                 0,
             );
-
             let submitter = LocalQueue {
                 dir: "opt".to_string(),
             };
-            let got = submitter.optimize(opt);
-            dbg!(got);
-        }
+            submitter.optimize(opt)
+        } else {
+            todo!();
+        };
         std::fs::remove_dir_all("opt").unwrap();
+        println!("{}", geom);
     }
 }
