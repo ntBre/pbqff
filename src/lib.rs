@@ -47,6 +47,15 @@ mod tests {
         println!("{}", geom);
 
         let intder = Intder::load_file("testfiles/intder.in");
+        // DONE convert psqs::Geom -> intder::Geom
+        let symm_intder = Intder {
+            geom: intder::geom::Geom::from(geom),
+            ..intder.clone()
+        };
+        // TODO do displacements for symmetries
+        // TODO convert displacements -> symm::Molecules
+	// TODO generate taylor.py input from that
+	// TODO run taylor.py to get fcs and disps
         dbg!(intder);
     }
 }

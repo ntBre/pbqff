@@ -1,4 +1,4 @@
-* Tasks [3/11]
+* Tasks [4/12]
 ** WAIT parse input - for now no processing
    - initial geometry
    - opt bool
@@ -8,6 +8,8 @@
 ** DONE parse intder template header
    - easy with Intder::load_file
 ** TODO run taylor.py to generate disps and anpass
+*** DONE write taylor.py
+*** TODO determine symmetries of coordinates
 ** TODO run intder to get disps
    - combine
      1. template header

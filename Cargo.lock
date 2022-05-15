@@ -38,6 +38,7 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "nalgebra",
+ "psqs",
  "regex",
 ]
 
@@ -142,6 +143,7 @@ name = "psqs"
 version = "0.1.0"
 dependencies = [
  "nalgebra",
+ "symm",
 ]
 
 [[package]]
@@ -183,6 +185,8 @@ dependencies = [
  "intder",
  "psqs",
  "serde",
+ "symm",
+ "taylor",
  "toml",
 ]
 
@@ -229,6 +233,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "symm"
+version = "0.1.0"
+dependencies = [
+ "nalgebra",
+]
+
+[[package]]
 name = "syn"
 version = "1.0.93"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -238,6 +249,10 @@ dependencies = [
  "quote",
  "unicode-xid",
 ]
+
+[[package]]
+name = "taylor"
+version = "0.1.0"
 
 [[package]]
 name = "toml"
