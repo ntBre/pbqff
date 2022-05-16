@@ -1,8 +1,15 @@
+#![allow(dead_code)]
 pub mod config;
 
+#[cfg(test)]
+mod tests;
+
+use anpass::Anpass;
+use nalgebra as na;
 use psqs::program::Template;
+use rust_anpass as anpass;
 use symm::{Irrep, PointGroup};
-use taylor::Checks;
+use taylor::{Checks, Taylor};
 
 /// step size to take in each symmetry internal coordinate to determine its
 /// irrep
@@ -14,7 +21,7 @@ pub const MOPAC_TMPL: Template = Template::from(
 );
 
 /// generate the Taylor series mod and equivalence checks from `irreps` in `pg`
-pub fn make_taylor_checks(
+fn make_taylor_checks(
     irreps: Vec<(usize, Irrep)>,
     pg: &PointGroup,
 ) -> (Option<Checks>, Option<Checks>) {
@@ -66,83 +73,39 @@ pub fn make_taylor_checks(
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use std::rc::Rc;
-
-    use intder::Intder;
-    use psqs::{
-        program::{mopac::Mopac, Job},
-        queue::{local::LocalQueue, Queue},
-    };
-    use symm::Molecule;
-    use taylor::Taylor;
-
-    use crate::{
-        config::Config, make_taylor_checks, MOPAC_TMPL, TAYLOR_DISP_SIZE,
-    };
-    use psqs::geom::Geom;
-
-    #[test]
-    fn test_full() {
-        let config = Config::load("testfiles/test.toml");
-        // optimize the geometry
-        let geom = if config.optimize {
-            std::fs::create_dir("opt").unwrap();
-            let opt = Job::new(
-                Mopac::new(
-                    "opt/opt".to_string(),
-                    None,
-                    Rc::new(Geom::Zmat(config.geometry)),
-                    0,
-                    &MOPAC_TMPL,
-                ),
-                0,
-            );
-            let submitter = LocalQueue {
-                dir: "opt".to_string(),
-            };
-            submitter.optimize(opt)
-        } else {
-            todo!();
-        };
-        std::fs::remove_dir_all("opt").unwrap();
-
-        let mol = Molecule::new(geom.xyz().unwrap().to_vec());
-        let atomic_numbers = mol.atomic_numbers();
-        let pg = mol.point_group();
-
-        let intder = Intder::load_file("testfiles/intder.in");
-        let nsic = intder.symmetry_internals.len();
-        // generate a displacement for each SIC
-        let mut disps = Vec::new();
-        for i in 0..nsic {
-            let mut disp = vec![0.0; nsic];
-            disp[i] = TAYLOR_DISP_SIZE;
-            disps.push(disp);
+fn taylor_to_anpass(
+    taylor: &Taylor,
+    taylor_disps: &Vec<Vec<isize>>,
+    energies: &[f64],
+) -> Anpass {
+    let mut disps = Vec::new();
+    for disp in taylor_disps {
+        for coord in disp {
+            disps.push(*coord as f64 * TAYLOR_DISP_SIZE);
         }
-        let symm_intder = Intder {
-            geom: intder::geom::Geom::from(mol),
-            disps,
-            ..intder.clone()
-        };
-        // convert them to Cartesian coordinates
-        let disps = symm_intder.convert_disps();
-        // convert displacements -> symm::Molecules and determine irrep
-        let mut irreps = Vec::new();
-        for (i, disp) in disps.iter().enumerate() {
-            let m =
-                Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
-            irreps.push((i, m.irrep(&pg)));
-        }
-        // sort by irrep symmetry
-        irreps.sort_by_key(|k| k.1);
-        // generate checks
-        let checks = make_taylor_checks(irreps, &pg);
-        // run taylor.py to get fcs and disps
-        let taylor = Taylor::new(5, nsic, checks.0, checks.1);
-        let _disps = taylor.disps();
-        let _anpass_bot = taylor.forces;
-        // put these into intder and anpass
     }
+    let tdl = taylor_disps.len();
+    let fl = taylor.forces.len();
+    let mut fs = Vec::new();
+    for row in &taylor.forces {
+        for c in row {
+            fs.push(*c as i32);
+        }
+    }
+    Anpass {
+        disps: anpass::Dmat::from_row_slice(tdl, disps.len() / tdl, &disps),
+        energies: anpass::Dvec::from_row_slice(energies),
+        exponents: na::DMatrix::from_row_slice(fl, taylor.forces[0].len(), &fs),
+        bias: None,
+    }
+}
+
+fn disp_to_intder(disps: &Vec<Vec<isize>>) -> Vec<Vec<f64>> {
+    let mut ret = Vec::new();
+    for disp in disps {
+        let disp: Vec<_> =
+            disp.iter().map(|i| *i as f64 * TAYLOR_DISP_SIZE).collect();
+        ret.push(disp);
+    }
+    ret
 }
