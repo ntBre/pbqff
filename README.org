@@ -10,6 +10,13 @@
 ** TODO run taylor.py to generate disps and anpass
 *** DONE write taylor.py
 *** TODO determine symmetries of coordinates
+    - [ ] determine point group of molecule
+    - [ ] run one disp of each coord
+    - [ ] determine symmetry of each displacement
+*** TODO sort disps by irrep
+    - implement cmp::Ordering (I think) on Irrep to call sort, probably on a
+      vector of tuples (coord_number, irrep)
+*** TODO call taylor code
 ** TODO run intder to get disps
    - combine
      1. template header
