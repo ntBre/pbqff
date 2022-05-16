@@ -20,6 +20,7 @@ mod tests {
         program::{mopac::Mopac, Job},
         queue::{local::LocalQueue, Queue},
     };
+    use symm::Molecule;
 
     use crate::{config::Config, MOPAC_TMPL, TAYLOR_DISP_SIZE};
     use psqs::geom::Geom;
@@ -48,14 +49,14 @@ mod tests {
             todo!();
         };
         std::fs::remove_dir_all("opt").unwrap();
-        println!("{}", geom);
 
-        let pg =
-            symm::Molecule::new(geom.xyz().unwrap().to_vec()).point_group();
-        dbg!(pg);
+        let mol = Molecule::new(geom.xyz().unwrap().to_vec());
+        let atomic_numbers = mol.atomic_numbers();
+        let pg = mol.point_group();
 
         let intder = Intder::load_file("testfiles/intder.in");
         let nsic = intder.symmetry_internals.len();
+        // generate a displacement for each SIC
         let mut disps = Vec::new();
         for i in 0..nsic {
             let mut disp = vec![0.0; nsic];
@@ -63,14 +64,22 @@ mod tests {
             disps.push(disp);
         }
         let symm_intder = Intder {
-            geom: intder::geom::Geom::from(geom),
+            geom: intder::geom::Geom::from(mol),
             disps,
             ..intder.clone()
         };
-        // TODO do displacements for symmetries
-        // TODO convert displacements -> symm::Molecules
+        // convert them to Cartesian coordinates
+        let disps = symm_intder.convert_disps();
+        // convert displacements -> symm::Molecules and determine irrep
+        let mut irreps = Vec::new();
+        for disp in disps {
+            let m =
+                Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
+            irreps.push(m.irrep(&pg));
+        }
+        dbg!(irreps);
+        // TODO sort by irreps
         // TODO generate taylor.py input from that
         // TODO run taylor.py to get fcs and disps
-        dbg!(symm_intder);
     }
 }
