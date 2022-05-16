@@ -1,6 +1,8 @@
 pub mod config;
 
 use psqs::program::Template;
+use symm::{Irrep, PointGroup};
+use taylor::Checks;
 
 /// step size to take in each symmetry internal coordinate to determine its
 /// irrep
@@ -10,6 +12,59 @@ pub const TAYLOR_DISP_SIZE: f64 = 0.005;
 pub const MOPAC_TMPL: Template = Template::from(
     "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 );
+
+/// generate the Taylor series mod and equivalence checks from `irreps` in `pg`
+pub fn make_taylor_checks(
+    irreps: Vec<(usize, Irrep)>,
+    pg: &PointGroup,
+) -> (Option<Checks>, Option<Checks>) {
+    use symm::Irrep::*;
+    use symm::PointGroup::*;
+    match pg {
+        C1 => (None, None),
+        C2 { axis: _ } => {
+            todo!();
+        }
+        Cs { plane: _ } => {
+            todo!()
+        }
+        C2v { axis: _, planes: _ } => {
+            let mut checks = Checks::new();
+            // first one you hit goes in checks.0, second goes in checks.1
+            for i in irreps {
+                match i.1 {
+                    A1 => (),
+                    B1 => {
+                        if checks[(0, 0)] == 0 {
+                            checks[(0, 0)] = i.0 + 1;
+                            checks[(0, 1)] = i.0 + 1;
+                        } else if i.0 + 1 > checks[(0, 1)] {
+                            checks[(0, 1)] = i.0 + 1;
+                        }
+                    }
+                    B2 => {
+                        if checks[(1, 0)] == 0 {
+                            checks[(1, 0)] = i.0 + 1;
+                            checks[(1, 1)] = i.0 + 1;
+                        } else if i.0 + 1 > checks[(1, 1)] {
+                            checks[(1, 1)] = i.0 + 1;
+                        }
+                    }
+                    A2 => {
+                        if checks[(2, 0)] == 0 {
+                            checks[(2, 0)] = i.0 + 1;
+                            checks[(2, 1)] = i.0 + 1;
+                        } else if i.0 + 1 > checks[(2, 1)] {
+                            checks[(2, 1)] = i.0 + 1;
+                        }
+                    }
+                    _ => panic!("non-C2v irrep found in C2v point group"),
+                }
+            }
+            (Some(checks.clone()), Some(checks))
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -21,8 +76,11 @@ mod tests {
         queue::{local::LocalQueue, Queue},
     };
     use symm::Molecule;
+    use taylor::Taylor;
 
-    use crate::{config::Config, MOPAC_TMPL, TAYLOR_DISP_SIZE};
+    use crate::{
+        config::Config, make_taylor_checks, MOPAC_TMPL, TAYLOR_DISP_SIZE,
+    };
     use psqs::geom::Geom;
 
     #[test]
@@ -72,14 +130,19 @@ mod tests {
         let disps = symm_intder.convert_disps();
         // convert displacements -> symm::Molecules and determine irrep
         let mut irreps = Vec::new();
-        for disp in disps {
+        for (i, disp) in disps.iter().enumerate() {
             let m =
                 Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
-            irreps.push(m.irrep(&pg));
+            irreps.push((i, m.irrep(&pg)));
         }
-        dbg!(irreps);
-        // TODO sort by irreps
-        // TODO generate taylor.py input from that
-        // TODO run taylor.py to get fcs and disps
+        // sort by irrep symmetry
+        irreps.sort_by_key(|k| k.1);
+        // generate checks
+        let checks = make_taylor_checks(irreps, &pg);
+        // run taylor.py to get fcs and disps
+        let taylor = Taylor::new(5, nsic, checks.0, checks.1);
+        let _disps = taylor.disps();
+        let _anpass_bot = taylor.forces;
+        // put these into intder and anpass
     }
 }
