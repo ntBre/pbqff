@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use intder::Intder;
 use psqs::{
+    geom::Geom,
     program::{mopac::Mopac, Job},
     queue::{local::LocalQueue, Queue},
 };
@@ -9,7 +10,6 @@ use symm::Molecule;
 use taylor::Taylor;
 
 use crate::{config::Config, *};
-use psqs::geom::Geom;
 
 #[test]
 fn test_full() {
@@ -36,7 +36,11 @@ fn test_full() {
     };
     std::fs::remove_dir_all("opt").unwrap();
 
-    let mol = Molecule::new(geom.xyz().unwrap().to_vec());
+    let mol = {
+        let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
+        mol.normalize();
+        mol
+    };
     let atomic_numbers = mol.atomic_numbers();
     let pg = mol.point_group();
 
@@ -51,6 +55,7 @@ fn test_full() {
         disps.push(disp);
     }
     intder.geom = intder::geom::Geom::from(mol);
+    intder.geom.to_bohr();
     intder.disps = disps;
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
@@ -71,13 +76,42 @@ fn test_full() {
 
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
-    let _file07 = intder.convert_disps();
+    let file07 = intder.convert_disps();
 
     // TODO build and run the points using psqs
+    std::fs::create_dir("pts").unwrap();
+    let mut geoms = Vec::with_capacity(file07.len());
+    for geom in file07 {
+        // this is a bit unsightly, but I also don't want to duplicate the
+        // `from_slices` code in psqs
+        geoms.push(Rc::new(Geom::from(Molecule::from_slices(
+            atomic_numbers.clone(),
+            geom.as_slice(),
+        ))));
+    }
+    // TODO switch on Program type eventually
+
+    // TODO take charge from input or template, or don't write charge if
+    // self.charge=0 in mopac.write_input
+    const CHARGE: isize = 0;
+    let mut jobs =
+        Mopac::build_jobs(&geoms, None, "pts", 0, 1.0, 0, CHARGE, &MOPAC_TMPL);
+    let mut energies = vec![0.0; jobs.len()];
+    LocalQueue {
+        dir: "pts".to_string(),
+    }
+    .drain(&mut jobs, &mut energies);
+    let min = energies.iter().cloned().reduce(f64::min).unwrap();
+    for energy in energies.iter_mut() {
+        *energy -= min;
+    }
+    std::fs::remove_dir_all("pts").unwrap();
 
     // TODO use these after running the points
-    let energies = vec![];
-    let _anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies);
+    let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies);
+    println!("{}", anpass);
+    let fcs = &anpass.run();
+    anpass.write9903(&mut std::io::stdout(), &fcs);
 
     // TODO intder_geom
     // TODO intder freqs

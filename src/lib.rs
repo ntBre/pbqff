@@ -17,7 +17,7 @@ pub const TAYLOR_DISP_SIZE: f64 = 0.005;
 
 // TODO take this from a template file
 pub const MOPAC_TMPL: Template = Template::from(
-    "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
+    "A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 );
 
 /// generate the Taylor series mod and equivalence checks from `irreps` in `pg`
@@ -95,7 +95,11 @@ fn taylor_to_anpass(
     Anpass {
         disps: anpass::Dmat::from_row_slice(tdl, disps.len() / tdl, &disps),
         energies: anpass::Dvec::from_row_slice(energies),
-        exponents: na::DMatrix::from_row_slice(fl, taylor.forces[0].len(), &fs),
+        exponents: na::DMatrix::from_column_slice(
+            taylor.forces[0].len(),
+            fl,
+            &fs,
+        ),
         bias: None,
     }
 }
