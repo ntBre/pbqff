@@ -4,7 +4,11 @@ use crate::run;
 
 #[test]
 fn full() {
-    let summ = run();
+    let summ = run(
+        "testfiles/test.toml",
+        "testfiles/intder.in",
+        "testfiles/spectro.in",
+    );
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.corr),
         Dvec::from(vec![

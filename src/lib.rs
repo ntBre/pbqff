@@ -124,11 +124,21 @@ fn disp_to_intder(disps: &Vec<Vec<isize>>) -> Vec<Vec<f64>> {
     ret
 }
 
-pub fn run() -> Summary {
-    let config = Config::load("testfiles/test.toml");
+/// run a full qff, taking the configuration from `config_file`, the intder
+/// template from `intder_file`, and the spectro template from `spectro_file.`
+/// Only the simple internal and symmetry internal coordinates are read from the
+/// intder template. The input options, weights, and curvils are copied from the
+/// spectro template, but the geometry will be updated
+pub fn run(
+    config_file: &str,
+    intder_file: &str,
+    spectro_file: &str,
+) -> Summary {
+    let config = Config::load(config_file);
     // optimize the geometry
     let geom = if config.optimize {
-        std::fs::create_dir("opt").unwrap();
+        // TODO handle error
+        let _ = std::fs::create_dir("opt");
         let opt = Job::new(
             Mopac::new(
                 "opt/opt".to_string(),
@@ -146,7 +156,6 @@ pub fn run() -> Summary {
     } else {
         todo!();
     };
-    std::fs::remove_dir_all("opt").unwrap();
 
     let mol = {
         let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
@@ -157,7 +166,7 @@ pub fn run() -> Summary {
     let pg = mol.point_group();
 
     // load the initial intder
-    let mut intder = Intder::load_file("testfiles/intder.in");
+    let mut intder = Intder::load_file(intder_file);
     let nsic = intder.symmetry_internals.len();
     // generate a displacement for each SIC
     let mut disps = Vec::new();
@@ -190,8 +199,9 @@ pub fn run() -> Summary {
     // memory to build the jobs
     let file07 = intder.convert_disps();
 
-    // TODO build and run the points using psqs
-    std::fs::create_dir("pts").unwrap();
+    // build and run the points using psqs
+    // TODO handle error
+    let _ = std::fs::create_dir("pts");
     let mut geoms = Vec::with_capacity(file07.len());
     for geom in file07 {
         // this is a bit unsightly, but I also don't want to duplicate the
@@ -217,7 +227,6 @@ pub fn run() -> Summary {
     for energy in energies.iter_mut() {
         *energy -= min;
     }
-    std::fs::remove_dir_all("pts").unwrap();
 
     // run anpass
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies);
@@ -239,13 +248,14 @@ pub fn run() -> Summary {
     }
 
     let (f2, f3, f4) = intder.convert_fcs();
+    // TODO handle error
     let _ = std::fs::create_dir("freqs");
     Intder::dump_fcs("freqs", &f2, &f3, &f4);
 
     // spectro
     let spectro = Spectro {
         geom: mol,
-        ..Spectro::load("testfiles/spectro.in")
+        ..Spectro::load(spectro_file)
     };
     spectro.write("freqs/spectro.in").unwrap();
 
