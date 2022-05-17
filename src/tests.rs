@@ -107,13 +107,27 @@ fn test_full() {
     }
     std::fs::remove_dir_all("pts").unwrap();
 
-    // TODO use these after running the points
+    // run anpass
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies);
-    println!("{}", anpass);
-    let fcs = &anpass.run();
-    anpass.write9903(&mut std::io::stdout(), &fcs);
+    let (fcs, long_line) = &anpass.run();
 
-    // TODO intder_geom
-    // TODO intder freqs
+    // intder_geom
+    intder.disps = vec![long_line.disp.as_slice().to_vec()];
+    let refit_geom = intder.convert_disps();
+    let mol =
+        Molecule::from_slices(atomic_numbers.clone(), refit_geom[0].as_slice());
+    intder.geom = intder::geom::Geom::from(mol);
+
+    // intder freqs
+    for fc in fcs {
+        // skip zeroth and first derivatives
+        if (fc.1, fc.2, fc.3) != (0, 0, 0) {
+            intder.add_fc(vec![fc.0, fc.1, fc.2, fc.3], fc.4);
+        }
+    }
+
+    let (f2, f3, f4) = intder.convert_fcs();
+    Intder::dump_fcs(&f2, &f3, &f4);
+
     // TODO spectro
 }
