@@ -1,5 +1,6 @@
 #![allow(dead_code)]
 pub mod config;
+pub mod summary;
 
 #[cfg(test)]
 mod tests;

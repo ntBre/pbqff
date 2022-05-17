@@ -6,10 +6,11 @@ use psqs::{
     program::{mopac::Mopac, Job},
     queue::{local::LocalQueue, Queue},
 };
+use spectro::Spectro;
 use symm::Molecule;
 use taylor::Taylor;
 
-use crate::{config::Config, *};
+use crate::{config::Config, summary::Summary, *};
 
 #[test]
 fn test_full() {
@@ -116,7 +117,7 @@ fn test_full() {
     let refit_geom = intder.convert_disps();
     let mol =
         Molecule::from_slices(atomic_numbers.clone(), refit_geom[0].as_slice());
-    intder.geom = intder::geom::Geom::from(mol);
+    intder.geom = intder::geom::Geom::from(mol.clone());
 
     // intder freqs
     for fc in fcs {
@@ -127,7 +128,25 @@ fn test_full() {
     }
 
     let (f2, f3, f4) = intder.convert_fcs();
-    Intder::dump_fcs(&f2, &f3, &f4);
+    let _ = std::fs::create_dir("freqs");
+    Intder::dump_fcs("freqs", &f2, &f3, &f4);
 
-    // TODO spectro
+    // spectro
+    let spectro = Spectro {
+        geom: mol,
+        ..Spectro::load("testfiles/spectro.in")
+    };
+    spectro.write("freqs/spectro.in").unwrap();
+
+    // run gspectro
+    std::process::Command::new(
+        "/home/brent/Projects/chemutils/spectro/spectro/spectro",
+    )
+    .arg("-cmd=/home/brent/Projects/pbqff/bin/spectro")
+    .arg("freqs/spectro.in")
+    .output()
+    .unwrap();
+
+    let summ = Summary::new("freqs/spectro2.out");
+    println!("{:?}", summ.fund);
 }
