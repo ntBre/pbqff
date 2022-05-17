@@ -16,3 +16,4 @@ symm = { path = "/home/brent/Projects/symm" }
 toml = "0.5.8"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+approx = "0.5.1"
