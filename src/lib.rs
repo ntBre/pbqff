@@ -300,7 +300,7 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
         &atomic_numbers,
         spectro,
         &config.gspectro_cmd,
-	&config.spectro_cmd,
-	&config.summary_cmd,
+        &config.spectro_cmd,
+        &config.summary_cmd,
     )
 }
