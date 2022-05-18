@@ -123,18 +123,12 @@ fn disp_to_intder(disps: &Vec<Vec<isize>>) -> Vec<Vec<f64>> {
     }
     ret
 }
-
-/// run a full qff, taking the configuration from `config_file`, the intder
-/// template from `intder_file`, and the spectro template from `spectro_file.`
-/// Only the simple internal and symmetry internal coordinates are read from the
-/// intder template. The input options, weights, and curvils are copied from the
+/// run a full qff, taking the configuration from `config`, the intder template
+/// from `intder`, and the spectro template from `spectro`. Only the simple
+/// internal and symmetry internal coordinates are read from the intder
+/// template. The input options, weights, and curvils are copied from the
 /// spectro template, but the geometry will be updated
-pub fn run(
-    config_file: &str,
-    intder_file: &str,
-    spectro_file: &str,
-) -> Summary {
-    let config = Config::load(config_file);
+pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
     // optimize the geometry
     let geom = if config.optimize {
         // TODO handle error
@@ -143,7 +137,7 @@ pub fn run(
             Mopac::new(
                 "opt/opt".to_string(),
                 None,
-                Rc::new(Geom::Zmat(config.geometry)),
+                Rc::new(Geom::Zmat(config.geometry.clone())),
                 0,
                 &MOPAC_TMPL,
             ),
@@ -166,7 +160,6 @@ pub fn run(
     let pg = mol.point_group();
 
     // load the initial intder
-    let mut intder = Intder::load_file(intder_file);
     let nsic = intder.symmetry_internals.len();
     // generate a displacement for each SIC
     let mut disps = Vec::new();
@@ -175,6 +168,7 @@ pub fn run(
         disp[i] = TAYLOR_DISP_SIZE;
         disps.push(disp);
     }
+    let mut intder = intder.clone();
     intder.geom = intder::geom::Geom::from(mol);
     intder.geom.to_bohr();
     intder.disps = disps;
@@ -253,10 +247,8 @@ pub fn run(
     Intder::dump_fcs("freqs", &f2, &f3, &f4);
 
     // spectro
-    let spectro = Spectro {
-        geom: mol,
-        ..Spectro::load(spectro_file)
-    };
+    let mut spectro = spectro.clone();
+    spectro.geom = mol;
     spectro.write("freqs/spectro.in").unwrap();
 
     // run gspectro

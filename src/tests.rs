@@ -1,14 +1,15 @@
+use intder::Intder;
 use rust_anpass::Dvec;
+use spectro::Spectro;
 
-use crate::run;
+use crate::{config::Config, run};
 
 #[test]
 fn full() {
-    let summ = run(
-        "testfiles/test.toml",
-        "testfiles/intder.in",
-        "testfiles/spectro.in",
-    );
+    let config = Config::load("testfiles/test.toml");
+    let intder = Intder::load_file("testfiles/intder.in");
+    let spectro = Spectro::load("testfiles/spectro.in");
+    let summ = run(&config, &intder, &spectro);
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.corr),
         Dvec::from(vec![
