@@ -7,7 +7,7 @@ mod tests;
 use std::rc::Rc;
 
 use anpass::Anpass;
-use intder::Intder;
+pub use intder::Intder;
 use nalgebra as na;
 use psqs::{
     geom::Geom,
@@ -15,7 +15,7 @@ use psqs::{
     queue::{local::LocalQueue, Queue},
 };
 use rust_anpass as anpass;
-use spectro::Spectro;
+pub use spectro::Spectro;
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
@@ -123,34 +123,29 @@ fn disp_to_intder(disps: &Vec<Vec<isize>>) -> Vec<Vec<f64>> {
     }
     ret
 }
-/// run a full qff, taking the configuration from `config`, the intder template
-/// from `intder`, and the spectro template from `spectro`. Only the simple
-/// internal and symmetry internal coordinates are read from the intder
-/// template. The input options, weights, and curvils are copied from the
-/// spectro template, but the geometry will be updated
-pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
-    // optimize the geometry
-    let geom = if config.optimize {
-        // TODO handle error
-        let _ = std::fs::create_dir("opt");
-        let opt = Job::new(
-            Mopac::new(
-                "opt/opt".to_string(),
-                None,
-                Rc::new(Geom::Zmat(config.geometry.clone())),
-                0,
-                &MOPAC_TMPL,
-            ),
-            0,
-        );
-        let submitter = LocalQueue {
-            dir: "opt".to_string(),
-        };
-        submitter.optimize(opt)
-    } else {
-        todo!();
-    };
 
+pub fn optimize(geom: Geom) -> Geom {
+    // TODO handle error
+    let _ = std::fs::create_dir("opt");
+    let opt = Job::new(
+        Mopac::new("opt/opt".to_string(), None, Rc::new(geom), 0, &MOPAC_TMPL),
+        0,
+    );
+    // TODO pass in submitter, via `run`, actually have to pass in the Program
+    // too I think
+    let submitter = LocalQueue {
+        dir: "opt".to_string(),
+    };
+    submitter.optimize(opt)
+}
+
+type TaylorDisps = Vec<Vec<isize>>;
+type AtomicNumbers = Vec<usize>;
+
+pub fn generate_pts(
+    geom: Geom,
+    intder: &mut Intder,
+) -> (Vec<Rc<Geom>>, Taylor, TaylorDisps, AtomicNumbers) {
     let mol = {
         let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
         mol.normalize();
@@ -168,7 +163,6 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
         disp[i] = TAYLOR_DISP_SIZE;
         disps.push(disp);
     }
-    let mut intder = intder.clone();
     intder.geom = intder::geom::Geom::from(mol);
     intder.geom.to_bohr();
     intder.disps = disps;
@@ -205,18 +199,20 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
             geom.as_slice(),
         ))));
     }
-    // TODO switch on Program type eventually
+    (geoms, taylor, taylor_disps, atomic_numbers)
+}
 
-    // TODO take charge from input or template, or don't write charge if
-    // self.charge=0 in mopac.write_input
-    const CHARGE: isize = 0;
-    let mut jobs =
-        Mopac::build_jobs(&geoms, None, "pts", 0, 1.0, 0, CHARGE, &MOPAC_TMPL);
-    let mut energies = vec![0.0; jobs.len()];
-    LocalQueue {
-        dir: "pts".to_string(),
-    }
-    .drain(&mut jobs, &mut energies);
+pub fn freqs(
+    mut energies: Vec<f64>,
+    intder: &mut Intder,
+    taylor: &Taylor,
+    taylor_disps: &TaylorDisps,
+    atomic_numbers: &AtomicNumbers,
+    spectro: &Spectro,
+    gspectro_cmd: &String,
+    spectro_cmd: &String,
+    summary_cmd: &String,
+) -> Summary {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
         *energy -= min;
@@ -252,13 +248,59 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
     spectro.write("freqs/spectro.in").unwrap();
 
     // run gspectro
-    std::process::Command::new(
-        "/home/brent/Projects/chemutils/spectro/spectro/spectro",
-    )
-    .arg("-cmd=/home/brent/Projects/pbqff/bin/spectro")
-    .arg("freqs/spectro.in")
-    .output()
-    .unwrap();
+    let spectro_arg = String::from("-cmd=") + spectro_cmd;
+    std::process::Command::new(gspectro_cmd.clone())
+        .arg(spectro_arg)
+        .arg("freqs/spectro.in")
+        .output()
+        .unwrap();
 
-    Summary::new("freqs/spectro2.out")
+    Summary::new(summary_cmd, "freqs/spectro2.out")
+}
+
+// TODO I might have a QFF trait in this package that I can implement on
+// psqs::Programs to extend them; pass the common stuff into run and then make
+// run a method on this trait
+
+/// run a full qff, taking the configuration from `config`, the intder template
+/// from `intder`, and the spectro template from `spectro`. Only the simple
+/// internal and symmetry internal coordinates are read from the intder
+/// template. The input options, weights, and curvils are copied from the
+/// spectro template, but the geometry will be updated
+pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
+    // optimize the geometry
+    let geom = if config.optimize {
+        optimize(config.geometry.clone())
+    } else {
+        todo!();
+    };
+
+    let mut intder = intder.clone();
+    let (geoms, taylor, taylor_disps, atomic_numbers) =
+        generate_pts(geom, &mut intder);
+
+    // TODO switch on Program type eventually
+
+    // TODO take charge from input or template, or don't write charge if
+    // self.charge=0 in mopac.write_input
+    const CHARGE: isize = 0;
+    let mut jobs =
+        Mopac::build_jobs(&geoms, None, "pts", 0, 1.0, 0, CHARGE, &MOPAC_TMPL);
+    let mut energies = vec![0.0; jobs.len()];
+    LocalQueue {
+        dir: "pts".to_string(),
+    }
+    .drain(&mut jobs, &mut energies);
+
+    freqs(
+        energies,
+        &mut intder,
+        &taylor,
+        &taylor_disps,
+        &atomic_numbers,
+        spectro,
+        &config.gspectro_cmd,
+	&config.spectro_cmd,
+	&config.summary_cmd,
+    )
 }

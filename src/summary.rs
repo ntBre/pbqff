@@ -19,8 +19,8 @@ pub struct Summary {
 }
 
 impl Summary {
-    pub fn new(filename: &str) -> Self {
-        let output = std::process::Command::new("/home/brent/go/bin/summarize")
+    pub fn new(summary_cmd: &String, filename: &str) -> Self {
+        let output = std::process::Command::new(summary_cmd)
             .arg("-json")
             .arg(filename)
             .output()

@@ -1,20 +1,55 @@
 use serde::Deserialize;
 
-// TODO geometry should probably be processed more in the future. call this
-// RawConfig for deserializing and then do some conversion after to a real
-// Config
 #[derive(Deserialize, Debug, PartialEq)]
+struct RawConfig {
+    /// the geometry to start with
+    geometry: String,
+
+    /// whether or not to optimize the structure first
+    optimize: bool,
+
+    /// the path to the wrapper SPECTRO program to be called, eventually this
+    /// will be deprecated when I have a Rust version of gspectro
+    gspectro_cmd: String,
+
+    /// the path to the real SPECTRO executable to be passed to gspectro,
+    /// deprecated when I rewrite SPECTRO
+    spectro_cmd: String,
+
+    /// the path to `summarize`, deprecated when I rewrite summarize
+    summary_cmd: String,
+}
+
+impl RawConfig {
+    fn load(filename: &str) -> Self {
+        let contents = std::fs::read_to_string(filename)
+            .expect("failed to load config file");
+        toml::from_str(&contents).expect("failed to deserialize config file")
+    }
+}
+
 pub struct Config {
-    pub geometry: String,
+    pub geometry: psqs::geom::Geom,
+
     pub optimize: bool,
-    pub spectro: String,
+
+    pub gspectro_cmd: String,
+
+    pub spectro_cmd: String,
+
+    pub summary_cmd: String,
 }
 
 impl Config {
     pub fn load(filename: &str) -> Self {
-        let contents = std::fs::read_to_string(filename)
-            .expect("failed to load config file");
-        toml::from_str(&contents).expect("failed to deserialize config file")
+        let rc = RawConfig::load(filename);
+        Self {
+            geometry: rc.geometry.parse().unwrap(),
+            optimize: rc.optimize,
+            gspectro_cmd: rc.gspectro_cmd,
+            spectro_cmd: rc.spectro_cmd,
+            summary_cmd: rc.summary_cmd,
+        }
     }
 }
 
@@ -24,8 +59,8 @@ mod tests {
 
     #[test]
     fn config() {
-        let got = Config::load("testfiles/test.toml");
-        let want = Config {
+        let got = RawConfig::load("testfiles/test.toml");
+        let want = RawConfig {
             geometry: "C
 C 1 CC
 C 1 CC 2 CCC
@@ -39,8 +74,11 @@ HCC =               147.81488230
 "
             .to_string(),
             optimize: true,
-            spectro: "/home/brent/Downloads/spec3jm/backup/spectro.x"
-                .to_string(),
+            gspectro_cmd:
+                "/home/brent/Projects/chemutils/spectro/spectro/spectro"
+                    .to_string(),
+            spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
+            summary_cmd: "/home/brent/go/bin/summarize".to_string(),
         };
         assert_eq!(got, want);
     }
