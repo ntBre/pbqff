@@ -1,5 +1,4 @@
 pub mod config;
-pub mod summary;
 
 #[cfg(test)]
 mod tests;
@@ -16,10 +15,11 @@ use psqs::{
 };
 use rust_anpass as anpass;
 pub use spectro::Spectro;
+use summarize::Summary;
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
-use crate::{config::Config, summary::Summary};
+use crate::config::Config;
 
 /// step size to take in each symmetry internal coordinate to determine its
 /// irrep
@@ -211,7 +211,6 @@ pub fn freqs(
     spectro: &Spectro,
     gspectro_cmd: &String,
     spectro_cmd: &String,
-    summary_cmd: &String,
 ) -> Summary {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
@@ -255,7 +254,7 @@ pub fn freqs(
         .output()
         .unwrap();
 
-    Summary::new(summary_cmd, "freqs/spectro2.out")
+    Summary::new("freqs/spectro2.out")
 }
 
 // TODO I might have a QFF trait in this package that I can implement on
@@ -301,6 +300,5 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
         spectro,
         &config.gspectro_cmd,
         &config.spectro_cmd,
-        &config.summary_cmd,
     )
 }

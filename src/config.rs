@@ -15,9 +15,6 @@ struct RawConfig {
     /// the path to the real SPECTRO executable to be passed to gspectro,
     /// deprecated when I rewrite SPECTRO
     spectro_cmd: String,
-
-    /// the path to `summarize`, deprecated when I rewrite summarize
-    summary_cmd: String,
 }
 
 impl RawConfig {
@@ -30,14 +27,9 @@ impl RawConfig {
 
 pub struct Config {
     pub geometry: psqs::geom::Geom,
-
     pub optimize: bool,
-
     pub gspectro_cmd: String,
-
     pub spectro_cmd: String,
-
-    pub summary_cmd: String,
 }
 
 impl Config {
@@ -48,7 +40,6 @@ impl Config {
             optimize: rc.optimize,
             gspectro_cmd: rc.gspectro_cmd,
             spectro_cmd: rc.spectro_cmd,
-            summary_cmd: rc.summary_cmd,
         }
     }
 }
@@ -78,7 +69,6 @@ HCC =               147.81488230
                 "/home/brent/Projects/chemutils/spectro/spectro/spectro"
                     .to_string(),
             spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
-            summary_cmd: "/home/brent/go/bin/summarize".to_string(),
         };
         assert_eq!(got, want);
     }

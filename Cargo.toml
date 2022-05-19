@@ -12,6 +12,7 @@ taylor = { path = "/home/brent/Projects/taylor" }
 intder = { path = "/home/brent/Projects/intder" }
 spectro = { path = "/home/brent/Projects/spectro" }
 rust-anpass = { path = "/home/brent/Projects/rust-anpass" }
+summarize = { path = "/home/brent/Projects/summarize" }
 symm = { path = "/home/brent/Projects/symm" }
 toml = "0.5.8"
 serde = { version = "1.0", features = ["derive"] }

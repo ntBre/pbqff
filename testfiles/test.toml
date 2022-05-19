@@ -13,4 +13,3 @@ HCC =               147.81488230
 optimize = true
 gspectro_cmd = "/home/brent/Projects/chemutils/spectro/spectro/spectro"
 spectro_cmd = "/home/brent/Projects/pbqff/bin/spectro"
-summary_cmd = "/home/brent/go/bin/summarize"

@@ -206,6 +206,7 @@ dependencies = [
  "serde",
  "serde_json",
  "spectro",
+ "summarize",
  "symm",
  "taylor",
  "toml",
@@ -276,6 +277,10 @@ version = "0.1.0"
 dependencies = [
  "symm",
 ]
+
+[[package]]
+name = "summarize"
+version = "0.1.0"
 
 [[package]]
 name = "symm"
