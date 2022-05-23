@@ -203,7 +203,7 @@ pub fn generate_pts(
 }
 
 pub fn freqs(
-    mut energies: Vec<f64>,
+    energies: &mut [f64],
     intder: &mut Intder,
     taylor: &Taylor,
     taylor_disps: &TaylorDisps,
@@ -292,7 +292,7 @@ pub fn run(config: &Config, intder: &Intder, spectro: &Spectro) -> Summary {
     .drain(&mut jobs, &mut energies);
 
     freqs(
-        energies,
+        &mut energies,
         &mut intder,
         &taylor,
         &taylor_disps,
