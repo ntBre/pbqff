@@ -15,6 +15,9 @@ struct RawConfig {
     /// the path to the real SPECTRO executable to be passed to gspectro,
     /// deprecated when I rewrite SPECTRO
     spectro_cmd: String,
+
+    /// charge on the molecule
+    charge: isize,
 }
 
 impl RawConfig {
@@ -30,6 +33,7 @@ pub struct Config {
     pub optimize: bool,
     pub gspectro_cmd: String,
     pub spectro_cmd: String,
+    pub charge: isize,
 }
 
 impl Config {
@@ -40,6 +44,7 @@ impl Config {
             optimize: rc.optimize,
             gspectro_cmd: rc.gspectro_cmd,
             spectro_cmd: rc.spectro_cmd,
+	    charge: rc.charge,
         }
     }
 }
@@ -69,6 +74,7 @@ HCC =               147.81488230
                 "/home/brent/Projects/chemutils/spectro/spectro/spectro"
                     .to_string(),
             spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
+	    charge: 0,
         };
         assert_eq!(got, want);
     }

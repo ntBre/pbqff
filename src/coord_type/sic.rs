@@ -45,9 +45,6 @@ impl CoordType for SIC {
 
         // TODO switch on Program type eventually
 
-        // TODO take charge from input or template, or don't write charge if
-        // self.charge=0 in mopac.write_input
-        const CHARGE: isize = 0;
         let mut jobs = Mopac::build_jobs(
             &geoms,
             None,
@@ -55,9 +52,10 @@ impl CoordType for SIC {
             0,
             1.0,
             0,
-            CHARGE,
+            config.charge,
             &MOPAC_TMPL,
         );
+
         let mut energies = vec![0.0; jobs.len()];
         LocalQueue {
             dir: "pts".to_string(),
