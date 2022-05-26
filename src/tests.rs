@@ -2,14 +2,16 @@ use intder::Intder;
 use rust_anpass::Dvec;
 use spectro::Spectro;
 
-use crate::{config::Config, run};
+use crate::config::Config;
+use crate::coord_type::CoordType;
+use crate::coord_type::SIC;
 
 #[test]
 fn full() {
     let config = Config::load("testfiles/test.toml");
-    let intder = Intder::load_file("testfiles/intder.in");
+    let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
     let spectro = Spectro::load("testfiles/spectro.in");
-    let summ = run(&config, &intder, &spectro);
+    let summ = coord.run(&config, &spectro);
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.corr),
         Dvec::from(vec![
