@@ -16,10 +16,6 @@ use taylor::{Checks, Taylor};
 use super::CoordType;
 use crate::{config::Config, optimize, MOPAC_TMPL};
 
-/// step size to take in each symmetry internal coordinate to determine its
-/// irrep
-pub const TAYLOR_DISP_SIZE: f64 = 0.005;
-
 pub struct SIC {
     intder: Intder,
 }
@@ -41,7 +37,7 @@ impl CoordType for SIC {
 
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(geom, &mut intder);
+            generate_pts(geom, &mut intder, config.step_size);
 
         // TODO switch on Program type eventually
 
@@ -72,6 +68,7 @@ impl CoordType for SIC {
             spectro,
             &config.gspectro_cmd,
             &config.spectro_cmd,
+            config.step_size,
         )
     }
 }
@@ -133,11 +130,12 @@ fn taylor_to_anpass(
     taylor: &Taylor,
     taylor_disps: &Vec<Vec<isize>>,
     energies: &[f64],
+    step_size: f64,
 ) -> Anpass {
     let mut disps = Vec::new();
     for disp in taylor_disps {
         for coord in disp {
-            disps.push(*coord as f64 * TAYLOR_DISP_SIZE);
+            disps.push(*coord as f64 * step_size);
         }
     }
     let tdl = taylor_disps.len();
@@ -160,11 +158,10 @@ fn taylor_to_anpass(
     }
 }
 
-fn disp_to_intder(disps: &Vec<Vec<isize>>) -> Vec<Vec<f64>> {
+fn disp_to_intder(disps: &Vec<Vec<isize>>, step_size: f64) -> Vec<Vec<f64>> {
     let mut ret = Vec::new();
     for disp in disps {
-        let disp: Vec<_> =
-            disp.iter().map(|i| *i as f64 * TAYLOR_DISP_SIZE).collect();
+        let disp: Vec<_> = disp.iter().map(|i| *i as f64 * step_size).collect();
         ret.push(disp);
     }
     ret
@@ -176,6 +173,7 @@ type AtomicNumbers = Vec<usize>;
 pub fn generate_pts(
     geom: Geom,
     intder: &mut Intder,
+    step_size: f64,
 ) -> (Vec<Rc<Geom>>, Taylor, TaylorDisps, AtomicNumbers) {
     let mol = {
         let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
@@ -191,7 +189,7 @@ pub fn generate_pts(
     let mut disps = Vec::new();
     for i in 0..nsic {
         let mut disp = vec![0.0; nsic];
-        disp[i] = TAYLOR_DISP_SIZE;
+        disp[i] = step_size;
         disps.push(disp);
     }
     intder.geom = intder::geom::Geom::from(mol);
@@ -212,7 +210,7 @@ pub fn generate_pts(
     // run taylor.py to get fcs and disps
     let taylor = Taylor::new(5, nsic, checks.0, checks.1);
     let taylor_disps = taylor.disps();
-    intder.disps = disp_to_intder(&taylor_disps);
+    intder.disps = disp_to_intder(&taylor_disps, step_size);
 
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
@@ -245,6 +243,7 @@ pub fn freqs(
     spectro: &Spectro,
     gspectro_cmd: &String,
     spectro_cmd: &String,
+    step_size: f64,
 ) -> Summary {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
@@ -252,7 +251,7 @@ pub fn freqs(
     }
 
     // run anpass
-    let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies);
+    let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
     let (fcs, long_line) = &anpass.run();
 
     // intder_geom

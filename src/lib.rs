@@ -15,7 +15,7 @@ use psqs::{
 pub use spectro::Spectro;
 
 // TODO take this from a template file
-pub const MOPAC_TMPL: Template = Template::from(
+pub(crate) const MOPAC_TMPL: Template = Template::from(
     "A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 );
 
