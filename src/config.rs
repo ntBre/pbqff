@@ -18,6 +18,9 @@ struct RawConfig {
 
     /// charge on the molecule
     charge: isize,
+
+    /// distance in Å to displace the atoms
+    step_size: f64,
 }
 
 impl RawConfig {
@@ -34,6 +37,7 @@ pub struct Config {
     pub gspectro_cmd: String,
     pub spectro_cmd: String,
     pub charge: isize,
+    pub step_size: f64,
 }
 
 impl Config {
@@ -44,7 +48,8 @@ impl Config {
             optimize: rc.optimize,
             gspectro_cmd: rc.gspectro_cmd,
             spectro_cmd: rc.spectro_cmd,
-	    charge: rc.charge,
+            charge: rc.charge,
+            step_size: rc.step_size,
         }
     }
 }
@@ -74,7 +79,8 @@ HCC =               147.81488230
                 "/home/brent/Projects/chemutils/spectro/spectro/spectro"
                     .to_string(),
             spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
-	    charge: 0,
+            charge: 0,
+            step_size: 0.005,
         };
         assert_eq!(got, want);
     }

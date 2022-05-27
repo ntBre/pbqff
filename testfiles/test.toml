@@ -14,3 +14,4 @@ optimize = true
 gspectro_cmd = "/home/brent/Projects/chemutils/spectro/spectro/spectro"
 spectro_cmd = "/home/brent/Projects/pbqff/bin/spectro"
 charge = 0
+step_size = 0.005
