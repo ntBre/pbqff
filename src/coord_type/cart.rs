@@ -4,7 +4,10 @@ use std::rc::Rc;
 use intder::ANGBOHR;
 use psqs::{
     geom::Geom,
-    program::{mopac::{Mopac, KCALHT}, Job, Template},
+    program::{
+        mopac::{Mopac, KCALHT},
+        Job, Template,
+    },
     queue::{local::LocalQueue, Queue},
 };
 use spectro::Spectro;
@@ -320,14 +323,14 @@ impl Cart {
                                 i,
                                 j,
                             ),
-                            // (_, 0) => make3d(
-                            //     names.clone(),
-                            //     coords.clone(),
-                            //     step_size,
-                            //     i,
-                            //     j,
-                            //     k,
-                            // ),
+                            (_, 0) => make3d(
+                                names.clone(),
+                                coords.clone(),
+                                step_size,
+                                i,
+                                j,
+                                k,
+                            ),
                             // (_, _) => make4d(
                             //     names.clone(),
                             //     coords.clone(),
@@ -345,7 +348,8 @@ impl Cart {
                         for p in protos {
                             if p.geom.is_none() {
                                 let (i, j, k, l) = idx;
-                                dest[index(ncoords, i, j, k, l)] += p.coeff * ref_energy;
+                                dest[index(ncoords, i, j, k, l)] +=
+                                    p.coeff * ref_energy;
                             } else {
                                 ret.push(CartGeom {
                                     geom: p.geom.unwrap(),
@@ -385,14 +389,15 @@ impl CoordType for Cart {
             todo!();
         };
 
-	println!("{}", &geom);
-
         // 3 * #atoms
         let n = 3 * geom.xyz().unwrap().len();
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+
+        assert!(nfc2 == 225);
+        assert!(nfc3 == 680);
 
         let ref_energy = 0.12660293116764660226E+03 / KCALHT; // TODO
         let geoms =
@@ -407,6 +412,11 @@ impl CoordType for Cart {
                 job_num += 1;
                 let (i, j, k, l) = mol.index;
                 let index = index(n, i, j, k, l);
+                let offset = match (k, l) {
+                    (0, 0) => 0,
+                    (_, 0) => nfc2,
+                    (_, _) => nfc2 + nfc3,
+                };
                 let mut job = Job::new(
                     Mopac::new(
                         filename,
@@ -415,7 +425,7 @@ impl CoordType for Cart {
                         config.charge,
                         &MOPAC_TMPL,
                     ),
-                    index,
+                    index + offset,
                 );
                 job.coeff = mol.coeff;
                 jobs.push(job);
@@ -438,9 +448,13 @@ impl CoordType for Cart {
                 fc2[(j, i)] = f;
             }
         }
-        println!("{:.8}", &fc2);
 
-        intder::Intder::dump_fcs(".", &fc2, &fcs[nfc2..nfc3], &fcs[nfc3..]);
+        intder::Intder::dump_fcs(
+            ".",
+            &fc2,
+            &fcs[nfc2..nfc2 + nfc3],
+            &fcs[nfc2 + nfc3..],
+        );
 
         todo!();
 
