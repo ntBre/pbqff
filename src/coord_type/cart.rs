@@ -101,8 +101,8 @@ macro_rules! proto {
 }
 
 fn make2d(
-    names: Vec<&str>,
-    coords: na::DVector<f64>,
+    names: &Vec<&str>,
+    coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
     j: usize,
@@ -127,8 +127,8 @@ fn make2d(
 }
 
 fn make3d(
-    names: Vec<&str>,
-    coords: na::DVector<f64>,
+    names: &Vec<&str>,
+    coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
     j: usize,
@@ -178,8 +178,8 @@ fn make3d(
 }
 
 fn make4d(
-    names: Vec<&str>,
-    coords: na::DVector<f64>,
+    names: &Vec<&str>,
+    coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
     j: usize,
@@ -316,31 +316,13 @@ impl Cart {
                 for k in 0..=j {
                     for l in 0..=k {
                         let protos = match (k, l) {
-                            (0, 0) => make2d(
-                                names.clone(),
-                                coords.clone(),
-                                step_size,
-                                i,
-                                j,
-                            ),
-                            (_, 0) => make3d(
-                                names.clone(),
-                                coords.clone(),
-                                step_size,
-                                i,
-                                j,
-                                k,
-                            ),
-                            // (_, _) => make4d(
-                            //     names.clone(),
-                            //     coords.clone(),
-                            //     step_size,
-                            //     i,
-                            //     j,
-                            //     k,
-                            //     l,
-                            // ),
-                            (_, _) => vec![],
+                            (0, 0) => make2d(&names, &coords, step_size, i, j),
+                            (_, 0) => {
+                                make3d(&names, &coords, step_size, i, j, k)
+                            }
+                            (_, _) => {
+                                make4d(&names, &coords, step_size, i, j, k, l)
+                            }
                         };
 
                         // TODO handle symmetry
