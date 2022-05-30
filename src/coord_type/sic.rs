@@ -58,6 +58,7 @@ impl CoordType for SIC {
         }
         .drain(&mut jobs, &mut energies);
 
+	let _ = std::fs::create_dir("freqs");
         freqs(
             "freqs",
             &mut energies,
