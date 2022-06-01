@@ -12,7 +12,7 @@ use psqs::{
 };
 use spectro::Spectro;
 use summarize::Summary;
-use symm::Atom;
+use symm::{Atom, Molecule};
 
 use nalgebra as na;
 
@@ -44,6 +44,7 @@ struct CartGeom {
 
 /// geom is None if no displacement is required, i.e. this is the reference
 /// geometry
+#[derive(Debug, PartialEq)]
 struct Proto {
     geom: Option<Geom>,
     coeff: f64,
@@ -177,6 +178,8 @@ fn make3d(
     }
 }
 
+// there is an issue with the all same case => index 0, also an issue with the
+// 2-2 case => index 2
 fn make4d(
     names: &Vec<&str>,
     coords: &na::DVector<f64>,
@@ -186,8 +189,8 @@ fn make4d(
     k: usize,
     l: usize,
 ) -> Vec<Proto> {
-    let scale = ANGBOHR * ANGBOHR * ANGBOHR * ANGBOHR
-        / (16.0 * step_size * step_size * step_size * step_size);
+    let scale = ANGBOHR.powi(4) / (16.0 * step_size.powi(4));
+    // dbg!(i, j, k, l, index(coords.len(), i, j, k, l));
     let i = i as isize;
     let j = j as isize;
     let k = k as isize;
@@ -302,6 +305,8 @@ impl Cart {
         geom: Geom,
         step_size: f64,
         ref_energy: f64,
+        nfc2: usize,
+        nfc3: usize,
         dest: &mut [f64],
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
@@ -330,8 +335,13 @@ impl Cart {
                         for p in protos {
                             if p.geom.is_none() {
                                 let (i, j, k, l) = idx;
-                                dest[index(ncoords, i, j, k, l)] +=
-                                    p.coeff * ref_energy;
+                                let mut index = index(ncoords, i, j, k, l);
+                                match (k, l) {
+                                    (0, 0) => (),
+                                    (_, 0) => index += nfc2,
+                                    (_, _) => index += nfc2 + nfc3,
+                                };
+                                dest[index] += p.coeff * ref_energy;
                             } else {
                                 ret.push(CartGeom {
                                     geom: p.geom.unwrap(),
@@ -347,8 +357,26 @@ impl Cart {
         ret
     }
 
-    fn freqs(&self, _spectro: &Spectro) -> Summary {
-        Summary::new("spectro2.out")
+    fn freqs(
+        &self,
+        dir: &str,
+        spectro: &Spectro,
+        gspectro_cmd: &String,
+        spectro_cmd: &String,
+    ) -> Summary {
+	// write input
+        let input = format!("{}/spectro.in", dir);
+        spectro.write(&input).unwrap();
+
+        // run gspectro
+        let spectro_arg = String::from("-cmd=") + spectro_cmd;
+        std::process::Command::new(gspectro_cmd.clone())
+            .arg(spectro_arg)
+            .arg(input)
+            .output()
+            .unwrap();
+
+        Summary::new(&format!("{}/spectro2.out", dir))
     }
 }
 
@@ -381,9 +409,17 @@ impl CoordType for Cart {
         assert!(nfc2 == 225);
         assert!(nfc3 == 680);
 
-        let ref_energy = 0.12660293116764660226E+03 / KCALHT; // TODO
-        let geoms =
-            self.build_points(geom, config.step_size, ref_energy, &mut fcs);
+        // TODO actually compute this
+        let ref_energy = 0.12660293116764660226E+03 / KCALHT;
+
+        let geoms = self.build_points(
+            geom.clone(),
+            config.step_size,
+            ref_energy,
+            nfc2,
+            nfc3,
+            &mut fcs,
+        );
 
         let mut jobs = {
             let dir = "pts";
@@ -438,8 +474,9 @@ impl CoordType for Cart {
             &fcs[nfc2 + nfc3..],
         );
 
-        todo!();
-
-        self.freqs(spectro)
+        let mut spectro = spectro.clone();
+        spectro.geom = Molecule::new(geom.xyz().unwrap().to_vec());
+	let _ = std::fs::create_dir("freqs");
+        self.freqs("freqs", &spectro, &config.gspectro_cmd, &config.spectro_cmd)
     }
 }
