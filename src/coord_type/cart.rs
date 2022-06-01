@@ -364,7 +364,7 @@ impl Cart {
         gspectro_cmd: &String,
         spectro_cmd: &String,
     ) -> Summary {
-	// write input
+        // write input
         let input = format!("{}/spectro.in", dir);
         spectro.write(&input).unwrap();
 
@@ -467,16 +467,20 @@ impl CoordType for Cart {
             }
         }
 
+        let _ = std::fs::create_dir("freqs");
         intder::Intder::dump_fcs(
-            ".",
+            "freqs",
             &fc2,
             &fcs[nfc2..nfc2 + nfc3],
             &fcs[nfc2 + nfc3..],
         );
 
         let mut spectro = spectro.clone();
-        spectro.geom = Molecule::new(geom.xyz().unwrap().to_vec());
-	let _ = std::fs::create_dir("freqs");
+        spectro.geom = {
+            let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
+            mol.to_bohr();
+            mol
+        };
         self.freqs("freqs", &spectro, &config.gspectro_cmd, &config.spectro_cmd)
     }
 }
