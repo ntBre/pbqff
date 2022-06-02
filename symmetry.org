@@ -11,15 +11,21 @@ that's not too big of a deal.
 #+begin_src rust
   let map = HashMap<Structure, Target>::new();
 
+  struct Index {
+      index: usize,
+      coeff: f64,
+  }
+
   struct Target {
-      energy: Option<f64>,
-      source_index: usize, // into the energy array drain is called on
-      indices: Vec<(f64, usize)>, // index into the fc array with a coefficient
+      source_index: usize,
+      indices: Vec<Index>,
   }
 #+end_src
 
 =source_index= is an increasing counter and =indices= come from code I already have.
-if the structure is in the map, push an index to its result; else
+if the structure is in the map, push an index to its result; else insert into
+the map and add a job to run it. You don't actually need =energy= because
+source_index takes care of that. you retrieve the energy from that index.
 
 #+begin_src rust
   if let Some(result) = map.get(structure) {
@@ -28,7 +34,6 @@ if the structure is in the map, push an index to its result; else
       map.insert(
 	  structure,
 	  Target {
-	      energy: None,
 	      source_index: counter,
 	      indices: vec![(coeff, index)],
 	  },

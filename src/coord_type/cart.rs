@@ -1,5 +1,5 @@
 #![allow(unused)]
-use std::rc::Rc;
+use std::{collections::HashMap, hash::Hash, rc::Rc};
 
 use intder::ANGBOHR;
 use psqs::{
@@ -307,7 +307,8 @@ impl Cart {
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
-        dest: &mut [f64],
+        fcs: &mut [f64],
+        map: &mut HashMap<Structure, Target>,
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
@@ -315,6 +316,7 @@ impl Cart {
         let coords = na::DVector::from(coords);
 
         let mut ret = Vec::new();
+        let mut counter = 0;
         // start at 1 so that k = l = 0 indicates second derivative
         for i in 1..=ncoords {
             for j in 1..=i {
@@ -330,24 +332,48 @@ impl Cart {
                             }
                         };
 
-                        // TODO handle symmetry
                         let idx = (i, j, k, l);
                         for p in protos {
+                            let (i, j, k, l) = idx;
+                            let mut index = index(ncoords, i, j, k, l);
+                            match (k, l) {
+                                (0, 0) => (),
+                                (_, 0) => index += nfc2,
+                                (_, _) => index += nfc2 + nfc3,
+                            };
                             if p.geom.is_none() {
-                                let (i, j, k, l) = idx;
-                                let mut index = index(ncoords, i, j, k, l);
-                                match (k, l) {
-                                    (0, 0) => (),
-                                    (_, 0) => index += nfc2,
-                                    (_, _) => index += nfc2 + nfc3,
-                                };
-                                dest[index] += p.coeff * ref_energy;
+                                // reference energy, handle it directly in fcs
+                                fcs[index] += p.coeff * ref_energy;
                             } else {
-                                ret.push(CartGeom {
-                                    geom: p.geom.unwrap(),
-                                    coeff: p.coeff,
-                                    index: idx,
-                                });
+                                let structure: Structure = todo!();
+                                // if the structure has already been seen, push
+                                // this target index to its list of Targets
+                                if let Some(result) = map.get(&structure) {
+                                    result.indices.push(Index {
+                                        index,
+                                        coeff: p.coeff,
+                                    });
+                                } else {
+                                    // otherwise, mark the structure as seen by
+                                    // inserting it into the map and return a
+                                    // job to be run
+                                    map.insert(
+                                        structure,
+                                        Target {
+                                            source_index: counter,
+                                            indices: vec![Index {
+                                                index,
+                                                coeff: p.coeff,
+                                            }],
+                                        },
+                                    );
+                                    counter += 1;
+                                    ret.push(CartGeom {
+                                        geom: p.geom.unwrap(),
+                                        coeff: p.coeff,
+                                        index: idx,
+                                    });
+                                }
                             }
                         }
                     }
@@ -389,6 +415,38 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
+struct Index {
+    index: usize,
+    coeff: f64,
+}
+
+struct Target {
+    /// into the energy array drain is called on
+    source_index: usize,
+
+    /// index into the fc array with a coefficient
+    indices: Vec<Index>,
+}
+
+// not sure what fields, whatever `symm` operates on, a Molecule? could just
+// be a tuple struct in that case
+#[derive(Eq)]
+struct Structure {}
+
+// TODO ensure that symmetry-equivalent structures are equal
+impl PartialEq for Structure {
+    fn eq(&self, other: &Self) -> bool {
+        todo!()
+    }
+}
+
+// TODO ensure that symmetry-equivalent structures hash the same
+impl Hash for Structure {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        todo!()
+    }
+}
+
 impl CoordType for Cart {
     fn run(&self, config: &Config, spectro: &Spectro) -> Summary {
         let geom = if config.optimize {
@@ -409,6 +467,8 @@ impl CoordType for Cart {
         // TODO actually compute this
         let ref_energy = 0.12660293116764660226E+03 / KCALHT;
 
+        let mut target_map = HashMap::<Structure, Target>::new();
+
         let geoms = self.build_points(
             geom.clone(),
             config.step_size,
@@ -416,13 +476,10 @@ impl CoordType for Cart {
             nfc2,
             nfc3,
             &mut fcs,
+	    &mut target_map,
         );
 
-        println!(
-            "{} Cartesian coordinates requires {} points",
-            n,
-            geoms.len()
-        );
+        println!("{n} Cartesian coordinates requires {} points", geoms.len());
 
         let mut jobs = {
             let dir = "pts";
@@ -454,10 +511,20 @@ impl CoordType for Cart {
             jobs
         };
 
+        // drain into energies
+        let mut energies = vec![0.0; jobs.len()];
         LocalQueue {
             dir: "pts".to_string(),
         }
-        .drain(&mut jobs, &mut fcs);
+        .drain(&mut jobs, &mut energies);
+
+        // copy energies into all of the places they're needed
+        for target in target_map.values() {
+            let energy = energies[target.source_index];
+            for idx in &target.indices {
+                fcs[idx.index] += idx.coeff * energy;
+            }
+        }
 
         // mirror symmetric quadratic fcs
         let mut fc2 = intder::DMat::zeros(n, n);
