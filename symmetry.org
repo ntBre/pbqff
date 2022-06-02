@@ -58,3 +58,8 @@ implementation
 
 in the case that I'm using too much memory, just flush the hash map by pushing
 all of the Targets in the hashmap to the fc array and emptying the map
+
+Hashing may not actually be what I want. I just need some way to have a single
+symmetry-equivalent structure (which equates to several individual structures)
+pointing to a single Target. I'm afraid the Hash implementation for this might
+be quite involved though.
