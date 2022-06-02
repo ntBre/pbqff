@@ -1,0 +1,55 @@
+the problem is I have three things
+1. symmetry-equivalent structures
+2. force constants those comprise (indices in fc array)
+3. individual energies
+
+to avoid having to change psqs to account for symmetry, I can just keep a map of
+structures to energies and drain into an energy array, just like SICs. this has
+the disadvantage of keeping track of all the energies as we go, but I think
+that's not too big of a deal.
+
+#+begin_src rust
+  let map = HashMap<Structure, Target>::new();
+
+  struct Target {
+      energy: Option<f64>,
+      source_index: usize, // into the energy array drain is called on
+      indices: Vec<(f64, usize)>, // index into the fc array with a coefficient
+  }
+#+end_src
+
+=source_index= is an increasing counter and =indices= come from code I already have.
+if the structure is in the map, push an index to its result; else
+
+#+begin_src rust
+  if let Some(result) = map.get(structure) {
+      result.indices.push((coeff, index));
+  } else {
+      map.insert(
+	  structure,
+	  Target {
+	      energy: None,
+	      source_index: counter,
+	      indices: vec![(coeff, index)],
+	  },
+      );
+      counter += 1;
+  }
+#+end_src
+
+all of the actual symmetry accounting can be hidden in my own Hash
+implementation
+
+#+begin_src rust
+  struct Structure {
+      // not sure what fields, whatever `symm` operates on, a Molecule? could just
+      // be a tuple struct in that case
+  }
+
+  impl Hash for Structure {
+      // ensure that symmetry-equivalent structures hash the same
+  }
+#+end_src
+
+in the case that I'm using too much memory, just flush the hash map by pushing
+all of the Targets in the hashmap to the fc array and emptying the map
