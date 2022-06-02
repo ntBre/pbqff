@@ -406,9 +406,6 @@ impl CoordType for Cart {
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
 
-        assert!(nfc2 == 225);
-        assert!(nfc3 == 680);
-
         // TODO actually compute this
         let ref_energy = 0.12660293116764660226E+03 / KCALHT;
 
@@ -419,6 +416,12 @@ impl CoordType for Cart {
             nfc2,
             nfc3,
             &mut fcs,
+        );
+
+        println!(
+            "{} Cartesian coordinates requires {} points",
+            n,
+            geoms.len()
         );
 
         let mut jobs = {
