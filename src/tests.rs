@@ -36,9 +36,18 @@ fn sic() {
 #[test]
 #[ignore]
 fn cart() {
+    let _ = std::fs::remove_dir_all("opt");
+    let _ = std::fs::remove_dir_all("pts");
+    let _ = std::fs::remove_dir_all("freqs");
+
+    let _ = std::fs::create_dir("opt");
+    let _ = std::fs::create_dir("pts");
+    let _ = std::fs::create_dir("freqs");
+
     let config = Config::load("testfiles/test.toml");
     let spectro = Spectro::load("testfiles/spectro.in");
     let summ = Cart.run(&config, &spectro);
+    assert_eq!(summ.harm.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.harm),

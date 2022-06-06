@@ -1,5 +1,9 @@
 #![allow(unused)]
-use std::{collections::HashMap, hash::Hash, rc::Rc};
+use std::{
+    collections::{hash_map::Values, HashMap},
+    hash::Hash,
+    rc::Rc,
+};
 
 use intder::ANGBOHR;
 use psqs::{
@@ -12,7 +16,7 @@ use psqs::{
 };
 use spectro::Spectro;
 use summarize::Summary;
-use symm::{Atom, Molecule};
+use symm::{Atom, Molecule, PointGroup};
 
 use nalgebra as na;
 
@@ -39,7 +43,7 @@ fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
 struct CartGeom {
     geom: Geom,
     coeff: f64,
-    index: (usize, usize, usize, usize),
+    index: usize,
 }
 
 /// geom is None if no displacement is required, i.e. this is the reference
@@ -190,7 +194,6 @@ fn make4d(
     l: usize,
 ) -> Vec<Proto> {
     let scale = ANGBOHR.powi(4) / (16.0 * step_size.powi(4));
-    // dbg!(i, j, k, l, index(coords.len(), i, j, k, l));
     let i = i as isize;
     let j = j as isize;
     let k = k as isize;
@@ -299,6 +302,70 @@ fn make4d(
     }
 }
 
+struct BigHash {
+    map: HashMap<String, Target>,
+    pg: PointGroup,
+}
+
+impl BigHash {
+    fn new(mut mol: Molecule) -> Self {
+        mol.normalize();
+        let pg = mol.point_group();
+        Self {
+            map: HashMap::<String, Target>::new(),
+            pg,
+        }
+    }
+
+    fn to_string(mol: &Molecule) -> String {
+        format!("{}", mol)
+    }
+
+    fn get_mut(&mut self, key: &Molecule) -> Option<&mut Target> {
+        use symm::PointGroup::{C2v, Cs, C1, C2};
+        // first check the original structure
+        return None;
+        if self.map.contains_key(&key.to_string()) {
+            return Some(self.map.get_mut(&key.to_string()).unwrap());
+        }
+        // try checking only the original structure then give up
+
+        match &self.pg {
+            C1 => todo!(),
+            C2 { axis } => todo!(),
+            Cs { plane } => todo!(),
+            C2v { axis, planes } => {
+                // check C2 axis
+                let mol = key.rotate(180.0, &axis).to_string();
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+
+                // check first mirror plane
+                let mol = key.reflect(&planes[0]).to_string();
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+
+                // check second mirror plane
+                // let mol = key.reflect(&planes[1]).to_string();
+                // if self.map.contains_key(&mol) {
+                //     return Some(self.map.get_mut(&mol).unwrap());
+                // }
+            }
+        }
+        None
+    }
+
+    fn insert(&mut self, key: Molecule, value: Target) {
+        self.map.insert(key.to_string(), value);
+    }
+
+    fn values(&self) -> Values<String, Target> {
+        self.map.values()
+    }
+}
+
 impl Cart {
     fn build_points(
         &self,
@@ -308,7 +375,7 @@ impl Cart {
         nfc2: usize,
         nfc3: usize,
         fcs: &mut [f64],
-        map: &mut HashMap<Structure, Target>,
+        map: &mut BigHash,
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
@@ -341,14 +408,12 @@ impl Cart {
                                 (_, 0) => index += nfc2,
                                 (_, _) => index += nfc2 + nfc3,
                             };
-                            if p.geom.is_none() {
-                                // reference energy, handle it directly in fcs
-                                fcs[index] += p.coeff * ref_energy;
-                            } else {
-                                let structure: Structure = todo!();
+                            if let Some(geom) = p.geom.clone() {
+                                let mol =
+                                    Molecule::new(geom.xyz().unwrap().to_vec());
                                 // if the structure has already been seen, push
                                 // this target index to its list of Targets
-                                if let Some(result) = map.get(&structure) {
+                                if let Some(result) = map.get_mut(&mol) {
                                     result.indices.push(Index {
                                         index,
                                         coeff: p.coeff,
@@ -358,7 +423,7 @@ impl Cart {
                                     // inserting it into the map and return a
                                     // job to be run
                                     map.insert(
-                                        structure,
+                                        mol,
                                         Target {
                                             source_index: counter,
                                             indices: vec![Index {
@@ -367,13 +432,16 @@ impl Cart {
                                             }],
                                         },
                                     );
-                                    counter += 1;
                                     ret.push(CartGeom {
                                         geom: p.geom.unwrap(),
                                         coeff: p.coeff,
-                                        index: idx,
+                                        index: counter,
                                     });
+                                    counter += 1;
                                 }
+                            } else {
+                                // reference energy, handle it directly in fcs
+                                fcs[index] += p.coeff * ref_energy;
                             }
                         }
                     }
@@ -415,36 +483,19 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
+#[derive(Debug)]
 struct Index {
     index: usize,
     coeff: f64,
 }
 
+#[derive(Debug)]
 struct Target {
     /// into the energy array drain is called on
     source_index: usize,
 
     /// index into the fc array with a coefficient
     indices: Vec<Index>,
-}
-
-// not sure what fields, whatever `symm` operates on, a Molecule? could just
-// be a tuple struct in that case
-#[derive(Eq)]
-struct Structure {}
-
-// TODO ensure that symmetry-equivalent structures are equal
-impl PartialEq for Structure {
-    fn eq(&self, other: &Self) -> bool {
-        todo!()
-    }
-}
-
-// TODO ensure that symmetry-equivalent structures hash the same
-impl Hash for Structure {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        todo!()
-    }
 }
 
 impl CoordType for Cart {
@@ -467,7 +518,8 @@ impl CoordType for Cart {
         // TODO actually compute this
         let ref_energy = 0.12660293116764660226E+03 / KCALHT;
 
-        let mut target_map = HashMap::<Structure, Target>::new();
+        let mut target_map =
+            BigHash::new(Molecule::new(geom.xyz().unwrap().to_vec()));
 
         let geoms = self.build_points(
             geom.clone(),
@@ -476,7 +528,7 @@ impl CoordType for Cart {
             nfc2,
             nfc3,
             &mut fcs,
-	    &mut target_map,
+            &mut target_map,
         );
 
         println!("{n} Cartesian coordinates requires {} points", geoms.len());
@@ -488,13 +540,6 @@ impl CoordType for Cart {
             for mol in geoms {
                 let filename = format!("{dir}/job.{:08}", job_num);
                 job_num += 1;
-                let (i, j, k, l) = mol.index;
-                let index = index(n, i, j, k, l);
-                let offset = match (k, l) {
-                    (0, 0) => 0,
-                    (_, 0) => nfc2,
-                    (_, _) => nfc2 + nfc3,
-                };
                 let mut job = Job::new(
                     Mopac::new(
                         filename,
@@ -503,9 +548,9 @@ impl CoordType for Cart {
                         config.charge,
                         &MOPAC_TMPL,
                     ),
-                    index + offset,
+                    mol.index,
                 );
-                job.coeff = mol.coeff;
+                job.coeff = 1.0;
                 jobs.push(job);
             }
             jobs

@@ -58,7 +58,7 @@ impl CoordType for SIC {
         }
         .drain(&mut jobs, &mut energies);
 
-	let _ = std::fs::create_dir("freqs");
+        let _ = std::fs::create_dir("freqs");
         freqs(
             "freqs",
             &mut energies,
@@ -184,6 +184,10 @@ pub fn generate_pts(
     let atomic_numbers = mol.atomic_numbers();
     let pg = mol.point_group();
 
+    eprintln!("{}", mol);
+    eprintln!("Point Group = {}", pg);
+    dbg!(&pg);
+
     // load the initial intder
     let nsic = intder.symmetry_internals.len();
     // generate a displacement for each SIC
@@ -202,6 +206,8 @@ pub fn generate_pts(
     let mut irreps = Vec::new();
     for (i, disp) in disps.iter().enumerate() {
         let m = Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
+        eprintln!("starting disp {}", i + 1);
+        eprintln!("{}", m);
         irreps.push((i, m.irrep(&pg)));
     }
     // sort by irrep symmetry
