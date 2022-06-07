@@ -24,6 +24,9 @@ use crate::{config::Config, optimize};
 
 use super::CoordType;
 
+/// debugging options. currently supported options: fcs, none
+static DEBUG: &str = "none";
+
 const MOPAC_TMPL: Template = Template::from(
     "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 );
@@ -40,6 +43,7 @@ fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
     (names, coords)
 }
 
+#[derive(Debug)]
 struct CartGeom {
     geom: Geom,
     coeff: f64,
@@ -324,10 +328,10 @@ impl BigHash {
     fn get_mut(&mut self, key: &Molecule) -> Option<&mut Target> {
         use symm::PointGroup::{C2v, Cs, C1, C2};
         // first check the original structure
-        return None;
         if self.map.contains_key(&key.to_string()) {
             return Some(self.map.get_mut(&key.to_string()).unwrap());
         }
+        return None;
         // try checking only the original structure then give up
 
         match &self.pg {
@@ -357,12 +361,16 @@ impl BigHash {
         None
     }
 
-    fn insert(&mut self, key: Molecule, value: Target) {
-        self.map.insert(key.to_string(), value);
+    fn insert(&mut self, key: Molecule, value: Target) -> Option<Target> {
+        self.map.insert(key.to_string(), value)
     }
 
     fn values(&self) -> Values<String, Target> {
         self.map.values()
+    }
+
+    fn len(&self) -> usize {
+        self.map.len()
     }
 }
 
@@ -388,7 +396,7 @@ impl Cart {
         for i in 1..=ncoords {
             for j in 1..=i {
                 for k in 0..=j {
-                    for l in 0..=k {
+                    for l in 0..=0 {
                         let protos = match (k, l) {
                             (0, 0) => make2d(&names, &coords, step_size, i, j),
                             (_, 0) => {
@@ -398,7 +406,6 @@ impl Cart {
                                 make4d(&names, &coords, step_size, i, j, k, l)
                             }
                         };
-
                         let idx = (i, j, k, l);
                         for p in protos {
                             let (i, j, k, l) = idx;
@@ -422,7 +429,7 @@ impl Cart {
                                     // otherwise, mark the structure as seen by
                                     // inserting it into the map and return a
                                     // job to be run
-                                    map.insert(
+                                    let i = map.insert(
                                         mol,
                                         Target {
                                             source_index: counter,
@@ -432,6 +439,10 @@ impl Cart {
                                             }],
                                         },
                                     );
+                                    assert_eq!(i, None);
+                                    if idx == (1, 1, 1, 0) {
+                                        dbg!(index);
+                                    }
                                     ret.push(CartGeom {
                                         geom: p.geom.unwrap(),
                                         coeff: p.coeff,
@@ -483,13 +494,13 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Index {
     index: usize,
     coeff: f64,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Target {
     /// into the energy array drain is called on
     source_index: usize,
@@ -550,7 +561,6 @@ impl CoordType for Cart {
                     ),
                     mol.index,
                 );
-                job.coeff = 1.0;
                 jobs.push(job);
             }
             jobs
@@ -559,14 +569,27 @@ impl CoordType for Cart {
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
         LocalQueue {
+            chunk_size: 1024,
             dir: "pts".to_string(),
         }
         .drain(&mut jobs, &mut energies);
 
+        dbg!(energies.len());
+        dbg!(target_map.len());
+
         // copy energies into all of the places they're needed
         for target in target_map.values() {
+            if DEBUG == "fcs" {
+                println!("source index: {}", target.source_index);
+            }
             let energy = energies[target.source_index];
             for idx in &target.indices {
+                if DEBUG == "fcs" {
+                    println!(
+                        "\tfcs[{}] += {:12.8} * {:12.8}",
+                        idx.index, idx.coeff, energy
+                    );
+                }
                 fcs[idx.index] += idx.coeff * energy;
             }
         }

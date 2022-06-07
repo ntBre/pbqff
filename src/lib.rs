@@ -30,6 +30,7 @@ pub fn optimize(geom: Geom) -> Geom {
     // too I think
     let submitter = LocalQueue {
         dir: "opt".to_string(),
+        chunk_size: 512,
     };
     let mut res = vec![Geom::default(); 1];
     submitter.optimize(&mut [opt], &mut res);

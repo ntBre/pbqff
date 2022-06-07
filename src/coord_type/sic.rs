@@ -55,6 +55,7 @@ impl CoordType for SIC {
         let mut energies = vec![0.0; jobs.len()];
         LocalQueue {
             dir: "pts".to_string(),
+            chunk_size: 512,
         }
         .drain(&mut jobs, &mut energies);
 
