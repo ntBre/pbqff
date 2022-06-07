@@ -60,16 +60,8 @@ fn cart() {
     // corr
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.corr),
-        // this is the result from Go on eland
-        // 2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
-
-        // this is the original result on cactus with no symmetry
-        // 2791.6, 2773.8, 1769.7, 1172.5, 1049.2, 971.8, 931.1, 934.4, 908.3
-
-	// this is what I get on cactus with any symmetry
         Dvec::from(vec![
-            2801.9933, 2779.8732, 1771.631, 1175.0205, 1015.6794, 940.3505,
-            902.8107, 900.0773, 858.0311
+            2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
         ]),
         epsilon = 1.0
     );

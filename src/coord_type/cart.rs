@@ -272,19 +272,19 @@ fn make4d(
         make4d_2_2(i, k, j, l)
     } else if i == l && j == k {
         make4d_2_2(i, l, j, k)
-    // 2 and 1 and 1
+    // 2 and 1 and 1, first two are the equal ones
     } else if i == j {
         make4d_2_1_1(i, j, k, l)
     } else if i == k {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(i, k, j, l)
     } else if i == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(i, l, j, k)
     } else if j == k {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(j, k, i, l)
     } else if j == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(j, l, i, k)
     } else if k == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(k, l, i, j)
     } else {
         vec![
             proto!(names, coords, step_size, 1. * scale, i, j, k, l),
@@ -669,9 +669,6 @@ impl CoordType for Cart {
             dir: "pts".to_string(),
         }
         .drain(&mut jobs, &mut energies);
-
-        dbg!(energies.len());
-        dbg!(target_map.len());
 
         // copy energies into all of the places they're needed
         for target in target_map.values() {
