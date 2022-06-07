@@ -182,8 +182,10 @@ pub fn generate_pts(
         mol.normalize();
         mol
     };
+
+    const SYMM_EPS: f64 = 1e-6;
     let atomic_numbers = mol.atomic_numbers();
-    let pg = mol.point_group();
+    let pg = mol.point_group_approx(SYMM_EPS);
 
     eprintln!("{}", mol);
     eprintln!("Point Group = {}", pg);
@@ -210,7 +212,7 @@ pub fn generate_pts(
         eprintln!("starting disp {}", i + 1);
         eprintln!("{}", m);
         // pretty loose criteria
-        irreps.push((i, m.irrep_approx(&pg, 1e-5)));
+        irreps.push((i, m.irrep_approx(&pg, SYMM_EPS).unwrap()));
     }
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
