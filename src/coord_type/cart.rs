@@ -396,7 +396,7 @@ impl Cart {
         for i in 1..=ncoords {
             for j in 1..=i {
                 for k in 0..=j {
-                    for l in 0..=0 {
+                    for l in 0..=k {
                         let protos = match (k, l) {
                             (0, 0) => make2d(&names, &coords, step_size, i, j),
                             (_, 0) => {
@@ -440,9 +440,6 @@ impl Cart {
                                         },
                                     );
                                     assert_eq!(i, None);
-                                    if idx == (1, 1, 1, 0) {
-                                        dbg!(index);
-                                    }
                                     ret.push(CartGeom {
                                         geom: p.geom.unwrap(),
                                         coeff: p.coeff,
