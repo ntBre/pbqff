@@ -209,7 +209,8 @@ pub fn generate_pts(
         let m = Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
         eprintln!("starting disp {}", i + 1);
         eprintln!("{}", m);
-        irreps.push((i, m.irrep(&pg)));
+        // pretty loose criteria
+        irreps.push((i, m.irrep_approx(&pg, 1e-5)));
     }
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
