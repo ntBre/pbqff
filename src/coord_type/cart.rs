@@ -1,6 +1,7 @@
 #![allow(unused)]
 use std::{
     collections::{hash_map::Values, HashMap},
+    fmt::Write,
     hash::Hash,
     rc::Rc,
 };
@@ -306,33 +307,110 @@ fn make4d(
     }
 }
 
+#[derive(Debug)]
+enum Buddy {
+    C1,
+    C2,
+    Cs,
+    C2v {
+        axis: Vec<usize>,
+        plane0: Vec<usize>,
+        plane1: Vec<usize>,
+    },
+}
+
+impl Buddy {
+    fn apply(&self, mol: &Molecule) -> Vec<Molecule> {
+        let mut ret = Vec::new();
+        match self {
+            Buddy::C1 => todo!(),
+            Buddy::C2 => todo!(),
+            Buddy::Cs => todo!(),
+            Buddy::C2v {
+                axis,
+                plane0,
+                plane1,
+            } => {
+                ret.push(Molecule::new(
+                    axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+                ret.push(Molecule::new(
+                    plane0.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+                ret.push(Molecule::new(
+                    plane1.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+            }
+        }
+        ret
+    }
+}
+
 struct BigHash {
     map: HashMap<String, Target>,
     pg: PointGroup,
+    // buddies are pairs of atoms that are interchanged across symmetry
+    // operations
+    buddy: Buddy,
 }
 
 impl BigHash {
+    /// NOTE: assumes mol is already normalized
     fn new(mut mol: Molecule) -> Self {
-        mol.normalize();
         let pg = mol.point_group();
+        let buddy = match &pg {
+            PointGroup::C1 => todo!(),
+            PointGroup::C2 { axis } => todo!(),
+            PointGroup::Cs { plane } => todo!(),
+            PointGroup::C2v { axis, planes } => {
+                let axis = mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
+                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
+                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
+                Buddy::C2v {
+                    axis,
+                    plane0,
+                    plane1,
+                }
+            }
+        };
         Self {
             map: HashMap::<String, Target>::new(),
             pg,
+            buddy,
         }
     }
 
     fn to_string(mol: &Molecule) -> String {
-        format!("{}", mol)
+        let mut f = String::new();
+        // needed to make -0.0000000 = 0.0000000 for the String keys
+        let zero = |f: f64| {
+            if f.abs() < 1e-7 {
+                0.0
+            } else {
+                f
+            }
+        };
+        for atom in &mol.atoms {
+            writeln!(
+                f,
+                "{:5}{:12.8}{:12.8}{:12.8}",
+                symm::NUMBER_TO_SYMBOL[atom.atomic_number],
+                zero(atom.x),
+                zero(atom.y),
+                zero(atom.z)
+            )
+            .unwrap();
+        }
+        f
     }
 
-    fn get_mut(&mut self, key: &Molecule) -> Option<&mut Target> {
+    fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
         use symm::PointGroup::{C2v, Cs, C1, C2};
         // first check the original structure
-        if self.map.contains_key(&key.to_string()) {
-            return Some(self.map.get_mut(&key.to_string()).unwrap());
+        let mol = &Self::to_string(&orig);
+        if self.map.contains_key(mol) {
+            return Some(self.map.get_mut(mol).unwrap());
         }
-        return None;
-        // try checking only the original structure then give up
 
         match &self.pg {
             C1 => todo!(),
@@ -340,29 +418,48 @@ impl BigHash {
             Cs { plane } => todo!(),
             C2v { axis, planes } => {
                 // check C2 axis
-                let mol = key.rotate(180.0, &axis).to_string();
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
+                let mol = &orig.rotate(180.0, &axis);
+                let key = Self::to_string(mol);
+                if self.map.contains_key(&key) {
+                    return Some(self.map.get_mut(&key).unwrap());
                 }
-
                 // check first mirror plane
-                let mol = key.reflect(&planes[0]).to_string();
+                let mol = Self::to_string(&orig.reflect(&planes[0]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                // check second mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[1]));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
 
-                // check second mirror plane
-                // let mol = key.reflect(&planes[1]).to_string();
-                // if self.map.contains_key(&mol) {
-                //     return Some(self.map.get_mut(&mol).unwrap());
-                // }
+                // TODO DRY this out
+                for buddy in self.buddy.apply(orig) {
+                    // check C2 axis
+                    let mol = &buddy.rotate(180.0, &axis);
+                    let key = Self::to_string(mol);
+                    if self.map.contains_key(&key) {
+                        return Some(self.map.get_mut(&key).unwrap());
+                    }
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                    // check second mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
             }
         }
         None
     }
 
     fn insert(&mut self, key: Molecule, value: Target) -> Option<Target> {
-        self.map.insert(key.to_string(), value)
+        self.map.insert(Self::to_string(&key), value)
     }
 
     fn values(&self) -> Values<String, Target> {
@@ -526,11 +623,13 @@ impl CoordType for Cart {
         // TODO actually compute this
         let ref_energy = 0.12660293116764660226E+03 / KCALHT;
 
-        let mut target_map =
-            BigHash::new(Molecule::new(geom.xyz().unwrap().to_vec()));
+        let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
+        mol.normalize();
+        println!("\n{}", mol);
+        let mut target_map = BigHash::new(mol.clone());
 
         let geoms = self.build_points(
-            geom.clone(),
+            Geom::Xyz(mol.atoms.clone()),
             config.step_size,
             ref_energy,
             nfc2,
@@ -612,7 +711,6 @@ impl CoordType for Cart {
 
         let mut spectro = spectro.clone();
         spectro.geom = {
-            let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
             mol.to_bohr();
             mol
         };
