@@ -14,7 +14,7 @@ use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
 use super::CoordType;
-use crate::{config::Config, optimize, MOPAC_TMPL};
+use crate::{config::Config, coord_type::DEBUG, optimize, MOPAC_TMPL};
 
 pub struct SIC {
     intder: Intder,
@@ -187,9 +187,11 @@ pub fn generate_pts(
     let atomic_numbers = mol.atomic_numbers();
     let pg = mol.point_group_approx(SYMM_EPS);
 
-    eprintln!("{}", mol);
-    eprintln!("Point Group = {}", pg);
-    dbg!(&pg);
+    if DEBUG == "disp" {
+        eprintln!("{}", mol);
+        eprintln!("Point Group = {}", pg);
+        dbg!(&pg);
+    }
 
     // load the initial intder
     let nsic = intder.symmetry_internals.len();
@@ -209,8 +211,10 @@ pub fn generate_pts(
     let mut irreps = Vec::new();
     for (i, disp) in disps.iter().enumerate() {
         let m = Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
-        eprintln!("starting disp {}", i + 1);
-        eprintln!("{}", m);
+        if DEBUG == "disp" {
+            eprintln!("starting disp {}", i + 1);
+            eprintln!("{}", m);
+        }
         // pretty loose criteria
         irreps.push((i, m.irrep_approx(&pg, SYMM_EPS).unwrap()));
     }

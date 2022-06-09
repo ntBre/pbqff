@@ -25,8 +25,8 @@ use crate::{config::Config, optimize};
 
 use super::CoordType;
 
-/// debugging options. currently supported options: fcs, none
-static DEBUG: &str = "none";
+/// debugging options. currently supported options: disp, fcs, none
+pub(crate) static DEBUG: &str = "none";
 
 const MOPAC_TMPL: Template = Template::from(
     "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
