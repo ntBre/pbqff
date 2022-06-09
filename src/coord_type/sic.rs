@@ -1,6 +1,7 @@
 use std::rc::Rc;
 
 use intder::Intder;
+use na::vector;
 use nalgebra as na;
 use psqs::{
     geom::Geom,
@@ -37,7 +38,7 @@ impl CoordType for SIC {
 
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(geom, &mut intder, config.step_size);
+            generate_pts(geom, &mut intder, config.step_size, &vec![]);
 
         // TODO switch on Program type eventually
 
@@ -172,10 +173,16 @@ fn disp_to_intder(disps: &Vec<Vec<isize>>, step_size: f64) -> Vec<Vec<f64>> {
 type TaylorDisps = Vec<Vec<isize>>;
 type AtomicNumbers = Vec<usize>;
 
+// TODO clean up this dummy atom interface. this is the difficulty of not
+// reading a template geometry. Somehow I have to add dummy atoms when they are
+// needed *after* the optimization, which obviously doesn't include them. Right
+// now I'm specifying the dummy atoms in a pretty terrible format in the
+// rust-semp config file and they aren't really used within this package
 pub fn generate_pts(
     geom: Geom,
     intder: &mut Intder,
     step_size: f64,
+    dummies: &Vec<(usize, usize)>,
 ) -> (Vec<Rc<Geom>>, Taylor, TaylorDisps, AtomicNumbers) {
     let mol = {
         let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
@@ -205,12 +212,28 @@ pub fn generate_pts(
     intder.geom = intder::geom::Geom::from(mol);
     intder.geom.to_bohr();
     intder.disps = disps;
+    // add the dummy atoms
+    let mut ndum = 0;
+    for dummy in dummies {
+        let mut coord = [0.0; 3];
+        // first field is the axis
+        coord[dummy.0] = 1.111111111;
+        // second field is an atom to take the z value from
+        coord[2] = intder.geom[dummy.1].z;
+        // TODO this probably shouldn't always be the z value...
+        intder.geom.push(vector![coord[0], coord[1], coord[2]]);
+        ndum += 1;
+    }
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
     // convert displacements -> symm::Molecules and determine irrep
     let mut irreps = Vec::new();
     for (i, disp) in disps.iter().enumerate() {
-        let m = Molecule::from_slices(atomic_numbers.clone(), disp.as_slice());
+        let disp = disp.as_slice();
+        let m = Molecule::from_slices(
+            atomic_numbers.clone(),
+            &disp[..disp.len() - 3 * ndum],
+        );
         if DEBUG == "disp" {
             eprintln!("starting disp {}", i + 1);
             eprintln!("{}", m);
@@ -220,6 +243,13 @@ pub fn generate_pts(
     }
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
+
+    if DEBUG == "disp" {
+        for (i, irrep) in irreps.iter().enumerate() {
+            eprintln!("irrep {} = {}", i, irrep.1);
+        }
+    }
+
     // generate checks
     let checks = make_taylor_checks(irreps, &pg);
     // run taylor.py to get fcs and disps
@@ -240,7 +270,7 @@ pub fn generate_pts(
         // `from_slices` code in psqs
         geoms.push(Rc::new(Geom::from(Molecule::from_slices(
             atomic_numbers.clone(),
-            geom.as_slice(),
+            &geom.as_slice()[..geom.len() - 3 * ndum],
         ))));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
@@ -272,9 +302,14 @@ pub fn freqs(
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
     let refit_geom = intder.convert_disps();
-    let mol =
-        Molecule::from_slices(atomic_numbers.clone(), refit_geom[0].as_slice());
+    let refit_geom = refit_geom[0].as_slice();
+    let l = refit_geom.len() - 3 * intder.ndum();
+    let dummies = &refit_geom[l..];
+    let mol = Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
     intder.geom = intder::geom::Geom::from(mol.clone());
+    for dummy in dummies.chunks(3) {
+        intder.geom.push(vector![dummy[0], dummy[1], dummy[2]]);
+    }
 
     // intder freqs
     for fc in fcs {
