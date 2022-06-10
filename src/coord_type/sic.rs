@@ -195,9 +195,8 @@ pub fn generate_pts(
     let pg = mol.point_group_approx(SYMM_EPS);
 
     if DEBUG == "disp" {
-        eprintln!("{}", mol);
+        eprintln!("normalized mol =\n{}", mol);
         eprintln!("Point Group = {}", pg);
-        dbg!(&pg);
     }
 
     // load the initial intder
@@ -211,6 +210,7 @@ pub fn generate_pts(
     }
     intder.geom = intder::geom::Geom::from(mol);
     intder.geom.to_bohr();
+    eprintln!("normalized intder geom in bohr =\n{}", intder.geom);
     intder.disps = disps;
     // add the dummy atoms
     let mut ndum = 0;
@@ -243,6 +243,23 @@ pub fn generate_pts(
     }
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
+
+    dbg!(&intder.symmetry_internals);
+    dbg!(&irreps);
+
+    // TODO suspect this is the issue. I'm sorting the irreps I pass to taylor
+    // but I'm not sorting the SICs themself
+
+    // the better alternative is probably to pass lists instead of ranges to
+    // taylor so I don't have to sort them at all
+    let mut new_sics = Vec::new();
+    for irrep in &irreps {
+        new_sics.push(intder.symmetry_internals[irrep.0].clone());
+    }
+    intder.symmetry_internals = new_sics;
+    dbg!(&intder.symmetry_internals);
+
+    todo!();
 
     if DEBUG == "disp" {
         for (i, irrep) in irreps.iter().enumerate() {
@@ -299,6 +316,8 @@ pub fn freqs(
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
     let (fcs, long_line) = &anpass.run();
 
+    eprintln!("long_line = {}", long_line);
+
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
     let refit_geom = intder.convert_disps();
@@ -306,6 +325,7 @@ pub fn freqs(
     let l = refit_geom.len() - 3 * intder.ndum();
     let dummies = &refit_geom[l..];
     let mol = Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
+    eprintln!("refit geom\n{}", mol);
     intder.geom = intder::geom::Geom::from(mol.clone());
     for dummy in dummies.chunks(3) {
         intder.geom.push(vector![dummy[0], dummy[1], dummy[2]]);
@@ -326,6 +346,7 @@ pub fn freqs(
     let mut spectro = spectro.clone();
     spectro.geom = mol;
     let input = format!("{}/spectro.in", dir);
+    // eprintln!("spectro =\n{}", spectro);
     spectro.write(&input).unwrap();
 
     // run gspectro
@@ -336,5 +357,7 @@ pub fn freqs(
         .output()
         .unwrap();
 
-    Summary::new(&format!("{}/spectro2.out", dir))
+    let ret = Summary::new(&format!("{}/spectro2.out", dir));
+    // eprintln!("summary=\n{}", ret);
+    ret
 }
