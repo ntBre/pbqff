@@ -252,14 +252,19 @@ pub fn generate_pts(
 
     // the better alternative is probably to pass lists instead of ranges to
     // taylor so I don't have to sort them at all
+
+    // TODO try not sorting the irreps at all, that should have the same effect
+    // as not doing the symm stuff if this is the issue.
+
+    // TODO `make_taylor_checks` does use irrep.0. if the ranges aren't
+    // consecutive, who knows what it's even doing. That would be interesting to
+    // find out
     let mut new_sics = Vec::new();
     for irrep in &irreps {
         new_sics.push(intder.symmetry_internals[irrep.0].clone());
     }
     intder.symmetry_internals = new_sics;
     dbg!(&intder.symmetry_internals);
-
-    todo!();
 
     if DEBUG == "disp" {
         for (i, irrep) in irreps.iter().enumerate() {
