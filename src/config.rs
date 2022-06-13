@@ -54,6 +54,31 @@ impl Config {
     }
 }
 
+impl std::fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "
+Configuration Options:
+geometry = {{
+{}
+}}
+optimize = {}
+gspectro_cmd = {}
+spectro_cmd = {}
+charge = {}
+step_size = {}
+",
+            self.geometry.to_string().trim(),
+            self.optimize,
+            self.gspectro_cmd,
+            self.spectro_cmd,
+            self.charge,
+            self.step_size
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
