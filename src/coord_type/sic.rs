@@ -244,6 +244,20 @@ pub fn generate_pts(
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
 
+    // first number I got when sorting SICs: 563.6696
+
+    // I get 558.7015 with the re-alignment whether or not I sort the irreps
+
+    // I can reproduce the old results without sorting the irreps and without
+    // re-alignment
+
+    // DONE reproduce with +sort irreps, -alignment
+
+    // DONE +sort irreps, +sort sics, -alignment
+
+    // both of the above reproduce the old results, issue still seems to be the
+    // alignment
+
     dbg!(&intder.symmetry_internals);
     dbg!(&irreps);
 
@@ -259,12 +273,13 @@ pub fn generate_pts(
     // TODO `make_taylor_checks` does use irrep.0. if the ranges aren't
     // consecutive, who knows what it's even doing. That would be interesting to
     // find out
+
     let mut new_sics = Vec::new();
     for irrep in &irreps {
         new_sics.push(intder.symmetry_internals[irrep.0].clone());
     }
     intder.symmetry_internals = new_sics;
-    dbg!(&intder.symmetry_internals);
+    // dbg!(&intder.symmetry_internals);
 
     if DEBUG == "disp" {
         for (i, irrep) in irreps.iter().enumerate() {
