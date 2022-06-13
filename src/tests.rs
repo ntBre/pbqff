@@ -1,4 +1,5 @@
 use intder::Intder;
+use psqs::queue::local::LocalQueue;
 use rust_anpass::Dvec;
 use spectro::Spectro;
 
@@ -13,7 +14,11 @@ fn sic() {
     let config = Config::load("testfiles/test.toml");
     let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
     let spectro = Spectro::load("testfiles/spectro.in");
-    let summ = coord.run(&mut std::io::stdout(), &config, &spectro);
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+    };
+    let summ = coord.run(&mut std::io::stdout(), &queue, &config, &spectro);
 
     // these match the Go version from
     // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
@@ -22,17 +27,19 @@ fn sic() {
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.harm),
         Dvec::from(vec![
-            2820.2, 2799.3, 1819.2, 1198.9, 1060.5, 963.5, 931.3, 929.9, 912.4,
+            2820.227, 2799.282, 1819.161, 1198.887, 1060.531, 963.513, 931.318,
+            929.900, 912.358,
         ]),
-        epsilon = 0.1
+        epsilon = 1e-3
     );
     // corr
     approx::assert_abs_diff_eq!(
         Dvec::from(summ.corr),
         Dvec::from(vec![
-            2784.0, 2764.3, 1775.7, 1177.1, 1040.6, 960.1, 920.0, 927.0, 905.3,
+            2783.9552, 2764.3024, 1775.6603, 1177.1131, 1040.6267, 960.1012,
+            919.9009, 926.9755, 905.3032,
         ]),
-        epsilon = 0.1
+        epsilon = 1e-4
     );
 }
 
@@ -49,7 +56,11 @@ fn cart() {
 
     let config = Config::load("testfiles/test.toml");
     let spectro = Spectro::load("testfiles/spectro.in");
-    let summ = Cart.run(&mut std::io::stdout(), &config, &spectro);
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+    };
+    let summ = Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
     assert_eq!(summ.harm.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(

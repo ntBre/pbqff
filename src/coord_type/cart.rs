@@ -603,12 +603,18 @@ struct Target {
     indices: Vec<Index>,
 }
 
-impl<W: std::io::Write> CoordType<W> for Cart {
-    fn run(&self, w: &mut W, config: &Config, spectro: &Spectro) -> Summary {
+impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
+    fn run(
+        &self,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+        spectro: &Spectro,
+    ) -> Summary {
         let geom = if config.optimize {
             // TODO take the reference energy from the same calculation if
             // optimizing anyway
-            optimize(config.geometry.clone())
+            optimize(queue, config.geometry.clone())
         } else {
             todo!();
         };

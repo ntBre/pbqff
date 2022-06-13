@@ -10,7 +10,7 @@ pub use intder::Intder;
 use psqs::{
     geom::Geom,
     program::{mopac::Mopac, Job, Template},
-    queue::{local::LocalQueue, Queue},
+    queue::Queue,
 };
 pub use spectro::Spectro;
 
@@ -19,21 +19,15 @@ pub(crate) const MOPAC_TMPL: Template = Template::from(
     "A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 );
 
-pub fn optimize(geom: Geom) -> Geom {
+pub fn optimize<Q: Queue<Mopac>>(queue: &Q, geom: Geom) -> Geom {
     // TODO handle error
     let _ = std::fs::create_dir("opt");
     let opt = Job::new(
         Mopac::new("opt/opt".to_string(), None, Rc::new(geom), 0, &MOPAC_TMPL),
         0,
     );
-    // TODO pass in submitter, via `run`, actually have to pass in the Program
-    // too I think
-    let submitter = LocalQueue {
-        dir: "opt".to_string(),
-        chunk_size: 512,
-    };
     let mut res = vec![Geom::default(); 1];
-    submitter.optimize(&mut [opt], &mut res);
+    queue.optimize(&mut [opt], &mut res);
     res.pop().unwrap()
 }
 

@@ -3,11 +3,7 @@ use std::rc::Rc;
 use intder::Intder;
 use na::vector;
 use nalgebra as na;
-use psqs::{
-    geom::Geom,
-    program::mopac::Mopac,
-    queue::{local::LocalQueue, Queue},
-};
+use psqs::{geom::Geom, program::mopac::Mopac, queue::Queue};
 use rust_anpass::Anpass;
 use spectro::Spectro;
 use summarize::Summary;
@@ -30,12 +26,18 @@ impl SIC {
     }
 }
 
-impl<W: std::io::Write> CoordType<W> for SIC {
-    fn run(&self, w: &mut W, config: &Config, spectro: &Spectro) -> Summary {
+impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
+    fn run(
+        &self,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+        spectro: &Spectro,
+    ) -> Summary {
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
         let geom = if config.optimize {
-            let geom = optimize(config.geometry.clone());
+            let geom = optimize(queue, config.geometry.clone());
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
@@ -49,7 +51,7 @@ impl<W: std::io::Write> CoordType<W> for SIC {
         };
         let pg = mol.point_group_approx(SYMM_EPS);
 
-        writeln!(w, "Normalized Geometry:\n{}", mol).unwrap();
+        writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
 
         let mut intder = self.intder.clone();
@@ -73,11 +75,7 @@ impl<W: std::io::Write> CoordType<W> for SIC {
             .unwrap();
 
         let mut energies = vec![0.0; jobs.len()];
-        LocalQueue {
-            dir: "pts".to_string(),
-            chunk_size: 512,
-        }
-        .drain(&mut jobs, &mut energies);
+        queue.drain(&mut jobs, &mut energies);
 
         let _ = std::fs::create_dir("freqs");
         freqs(
@@ -266,6 +264,8 @@ pub fn generate_pts<W: std::io::Write>(
     let taylor_disps = taylor.disps();
     intder.disps = disp_to_intder(&taylor_disps, step_size);
 
+    writeln!(w, "\nIntder Input:\n{}", intder).unwrap();
+
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
     let file07 = intder.convert_disps();
@@ -307,7 +307,8 @@ pub fn freqs<W: std::io::Write>(
 
     // run anpass
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
-    let (fcs, long_line) = &anpass.run();
+    writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
+    let (fcs, long_line) = &anpass.run_debug(w);
 
     writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
 
@@ -319,12 +320,15 @@ pub fn freqs<W: std::io::Write>(
     let dummies = &refit_geom[l..];
     let mol = Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
 
-    writeln!(w, "\nRefit Geometry\n{}", mol).unwrap();
+    writeln!(w, "\nRefit Geometry\n{:20.12}", mol).unwrap();
 
     intder.geom = intder::geom::Geom::from(mol.clone());
     for dummy in dummies.chunks(3) {
         intder.geom.push(vector![dummy[0], dummy[1], dummy[2]]);
     }
+
+    intder.disps = vec![];
+    writeln!(w, "Intder Freqs Input\n{}", intder).unwrap();
 
     // intder freqs
     for fc in fcs {
@@ -341,7 +345,7 @@ pub fn freqs<W: std::io::Write>(
     let mut spectro = spectro.clone();
     spectro.geom = mol;
     let input = format!("{}/spectro.in", dir);
-    // eprintln!("spectro =\n{}", spectro);
+    writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
     spectro.write(&input).unwrap();
 
     // run gspectro
@@ -354,7 +358,7 @@ pub fn freqs<W: std::io::Write>(
 
     let ret = Summary::new(&format!("{}/spectro2.out", dir));
 
-    writeln!(w, "Vibrational Frequencies:\n{}", ret).unwrap();
+    writeln!(w, "Vibrational Frequencies:\n{:12.4}", ret).unwrap();
 
     ret
 }
