@@ -13,7 +13,10 @@ fn sic() {
     let config = Config::load("testfiles/test.toml");
     let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
     let spectro = Spectro::load("testfiles/spectro.in");
-    let summ = coord.run(&config, &spectro);
+    let summ = coord.run(&mut std::io::stdout(), &config, &spectro);
+
+    // these match the Go version from
+    // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
 
     // harmonics
     approx::assert_abs_diff_eq!(
@@ -21,7 +24,7 @@ fn sic() {
         Dvec::from(vec![
             2820.2, 2799.3, 1819.2, 1198.9, 1060.5, 963.5, 931.3, 929.9, 912.4,
         ]),
-        epsilon = 1.0
+        epsilon = 0.1
     );
     // corr
     approx::assert_abs_diff_eq!(
@@ -29,7 +32,7 @@ fn sic() {
         Dvec::from(vec![
             2784.0, 2764.3, 1775.7, 1177.1, 1040.6, 960.1, 920.0, 927.0, 905.3,
         ]),
-        epsilon = 1.0
+        epsilon = 0.1
     );
 }
 
@@ -46,7 +49,7 @@ fn cart() {
 
     let config = Config::load("testfiles/test.toml");
     let spectro = Spectro::load("testfiles/spectro.in");
-    let summ = Cart.run(&config, &spectro);
+    let summ = Cart.run(&mut std::io::stdout(), &config, &spectro);
     assert_eq!(summ.harm.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(

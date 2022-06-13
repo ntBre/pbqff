@@ -34,3 +34,30 @@
      in a template like the Go version. this will propagate to rust-semp, but
      there I can use a const template for the whole program
 ** TODO warn if directories exist and say to use overwrite flag
+
+     first number I got when sorting SICs: 563.6696
+
+     I get 558.7015 with the re-alignment whether or not I sort the irreps
+
+     I can reproduce the old results without sorting the irreps and without
+     re-alignment
+
+     DONE reproduce with +sort irreps, -alignment
+
+     DONE +sort irreps, +sort sics, -alignment
+
+     both of the above reproduce the old results, issue still seems to be the
+     alignment
+
+     TODO suspect this is the issue. I'm sorting the irreps I pass to taylor
+     but I'm not sorting the SICs themself
+
+     the better alternative is probably to pass lists instead of ranges to
+     taylor so I don't have to sort them at all
+
+     TODO try not sorting the irreps at all, that should have the same effect
+     as not doing the symm stuff if this is the issue.
+
+     TODO `make_taylor_checks` does use irrep.0. if the ranges aren't
+     consecutive, who knows what it's even doing. That would be interesting to
+     find out

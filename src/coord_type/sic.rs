@@ -15,7 +15,10 @@ use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
 use super::CoordType;
-use crate::{config::Config, coord_type::DEBUG, optimize, MOPAC_TMPL};
+use crate::{config::Config, optimize, MOPAC_TMPL};
+
+/// the precision to call things symmetric
+const SYMM_EPS: f64 = 1e-6;
 
 pub struct SIC {
     intder: Intder,
@@ -27,18 +30,31 @@ impl SIC {
     }
 }
 
-impl CoordType for SIC {
-    fn run(&self, config: &Config, spectro: &Spectro) -> Summary {
+impl<W: std::io::Write> CoordType<W> for SIC {
+    fn run(&self, w: &mut W, config: &Config, spectro: &Spectro) -> Summary {
+        writeln!(w, "{}", config).unwrap();
         // optimize the geometry
         let geom = if config.optimize {
-            optimize(config.geometry.clone())
+            let geom = optimize(config.geometry.clone());
+            writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
+            geom
         } else {
             todo!();
         };
 
+        let mol = {
+            let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
+            mol.normalize();
+            mol
+        };
+        let pg = mol.point_group_approx(SYMM_EPS);
+
+        writeln!(w, "Normalized Geometry:\n{}", mol).unwrap();
+        writeln!(w, "Point Group = {}", pg).unwrap();
+
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(geom, &mut intder, config.step_size, &vec![]);
+            generate_pts(w, &mol, &pg, &mut intder, config.step_size, &vec![]);
 
         // TODO switch on Program type eventually
 
@@ -53,6 +69,9 @@ impl CoordType for SIC {
             &MOPAC_TMPL,
         );
 
+        writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
+            .unwrap();
+
         let mut energies = vec![0.0; jobs.len()];
         LocalQueue {
             dir: "pts".to_string(),
@@ -62,6 +81,7 @@ impl CoordType for SIC {
 
         let _ = std::fs::create_dir("freqs");
         freqs(
+            w,
             "freqs",
             &mut energies,
             &mut intder,
@@ -178,26 +198,15 @@ type AtomicNumbers = Vec<usize>;
 // needed *after* the optimization, which obviously doesn't include them. Right
 // now I'm specifying the dummy atoms in a pretty terrible format in the
 // rust-semp config file and they aren't really used within this package
-pub fn generate_pts(
-    geom: Geom,
+pub fn generate_pts<W: std::io::Write>(
+    w: &mut W,
+    mol: &Molecule,
+    pg: &PointGroup,
     intder: &mut Intder,
     step_size: f64,
     dummies: &Vec<(usize, usize)>,
 ) -> (Vec<Rc<Geom>>, Taylor, TaylorDisps, AtomicNumbers) {
-    let mol = {
-        let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
-        mol.normalize();
-        mol
-    };
-
-    const SYMM_EPS: f64 = 1e-6;
     let atomic_numbers = mol.atomic_numbers();
-    let pg = mol.point_group_approx(SYMM_EPS);
-
-    if DEBUG == "disp" {
-        eprintln!("normalized mol =\n{}", mol);
-        eprintln!("Point Group = {}", pg);
-    }
 
     // load the initial intder
     let nsic = intder.symmetry_internals.len();
@@ -208,9 +217,8 @@ pub fn generate_pts(
         disp[i] = step_size;
         disps.push(disp);
     }
-    intder.geom = intder::geom::Geom::from(mol);
+    intder.geom = intder::geom::Geom::from(mol.clone());
     intder.geom.to_bohr();
-    eprintln!("normalized intder geom in bohr =\n{}", intder.geom);
     intder.disps = disps;
     // add the dummy atoms
     let mut ndum = 0;
@@ -234,58 +242,22 @@ pub fn generate_pts(
             atomic_numbers.clone(),
             &disp[..disp.len() - 3 * ndum],
         );
-        if DEBUG == "disp" {
-            eprintln!("starting disp {}", i + 1);
-            eprintln!("{}", m);
-        }
-        // pretty loose criteria
-        irreps.push((i, m.irrep_approx(&pg, SYMM_EPS).unwrap()));
+        let irrep = m.irrep_approx(&pg, SYMM_EPS).unwrap();
+        irreps.push((i, irrep));
     }
     // sort by irrep symmetry
     irreps.sort_by_key(|k| k.1);
 
-    // first number I got when sorting SICs: 563.6696
-
-    // I get 558.7015 with the re-alignment whether or not I sort the irreps
-
-    // I can reproduce the old results without sorting the irreps and without
-    // re-alignment
-
-    // DONE reproduce with +sort irreps, -alignment
-
-    // DONE +sort irreps, +sort sics, -alignment
-
-    // both of the above reproduce the old results, issue still seems to be the
-    // alignment
-
-    dbg!(&intder.symmetry_internals);
-    dbg!(&irreps);
-
-    // TODO suspect this is the issue. I'm sorting the irreps I pass to taylor
-    // but I'm not sorting the SICs themself
-
-    // the better alternative is probably to pass lists instead of ranges to
-    // taylor so I don't have to sort them at all
-
-    // TODO try not sorting the irreps at all, that should have the same effect
-    // as not doing the symm stuff if this is the issue.
-
-    // TODO `make_taylor_checks` does use irrep.0. if the ranges aren't
-    // consecutive, who knows what it's even doing. That would be interesting to
-    // find out
+    let just_irreps: Vec<_> = irreps.iter().map(|s| s.1).collect();
 
     let mut new_sics = Vec::new();
     for irrep in &irreps {
         new_sics.push(intder.symmetry_internals[irrep.0].clone());
     }
     intder.symmetry_internals = new_sics;
-    // dbg!(&intder.symmetry_internals);
 
-    if DEBUG == "disp" {
-        for (i, irrep) in irreps.iter().enumerate() {
-            eprintln!("irrep {} = {}", i, irrep.1);
-        }
-    }
+    writeln!(w, "\nSymmetry Internal Coordinates:").unwrap();
+    intder.print_sics(w, &just_irreps);
 
     // generate checks
     let checks = make_taylor_checks(irreps, &pg);
@@ -315,7 +287,8 @@ pub fn generate_pts(
 
 /// run the frequency portion of a QFF in `dir`. The caller is responsible for
 /// ensuring this directory exists.
-pub fn freqs(
+pub fn freqs<W: std::io::Write>(
+    w: &mut W,
     dir: &str,
     energies: &mut [f64],
     intder: &mut Intder,
@@ -336,7 +309,7 @@ pub fn freqs(
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
     let (fcs, long_line) = &anpass.run();
 
-    eprintln!("long_line = {}", long_line);
+    writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
 
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
@@ -345,7 +318,9 @@ pub fn freqs(
     let l = refit_geom.len() - 3 * intder.ndum();
     let dummies = &refit_geom[l..];
     let mol = Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
-    eprintln!("refit geom\n{}", mol);
+
+    writeln!(w, "\nRefit Geometry\n{}", mol).unwrap();
+
     intder.geom = intder::geom::Geom::from(mol.clone());
     for dummy in dummies.chunks(3) {
         intder.geom.push(vector![dummy[0], dummy[1], dummy[2]]);
@@ -378,6 +353,8 @@ pub fn freqs(
         .unwrap();
 
     let ret = Summary::new(&format!("{}/spectro2.out", dir));
-    // eprintln!("summary=\n{}", ret);
+
+    writeln!(w, "Vibrational Frequencies:\n{}", ret).unwrap();
+
     ret
 }

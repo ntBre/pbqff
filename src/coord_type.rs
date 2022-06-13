@@ -8,11 +8,11 @@ pub use sic::*;
 pub mod cart;
 pub mod sic;
 
-pub trait CoordType {
+pub trait CoordType<W: std::io::Write> {
     /// run a full qff, taking the configuration from `config`, the intder
     /// template from `intder`, and the spectro template from `spectro`. Only
     /// the simple internal and symmetry internal coordinates are read from the
     /// intder template. The input options, weights, and curvils are copied from
     /// the spectro template, but the geometry will be updated
-    fn run(&self, config: &Config, spectro: &Spectro) -> Summary;
+    fn run(&self, w: &mut W, config: &Config, spectro: &Spectro) -> Summary;
 }

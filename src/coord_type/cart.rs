@@ -26,7 +26,7 @@ use crate::{config::Config, optimize};
 use super::CoordType;
 
 /// debugging options. currently supported options: disp, fcs, none
-pub(crate) static DEBUG: &str = "disp";
+pub(crate) static DEBUG: &str = "none";
 
 const MOPAC_TMPL: Template = Template::from(
     "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
@@ -603,8 +603,8 @@ struct Target {
     indices: Vec<Index>,
 }
 
-impl CoordType for Cart {
-    fn run(&self, config: &Config, spectro: &Spectro) -> Summary {
+impl<W: std::io::Write> CoordType<W> for Cart {
+    fn run(&self, w: &mut W, config: &Config, spectro: &Spectro) -> Summary {
         let geom = if config.optimize {
             // TODO take the reference energy from the same calculation if
             // optimizing anyway
