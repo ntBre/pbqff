@@ -13,6 +13,9 @@ use taylor::{Checks, Taylor};
 use super::CoordType;
 use crate::{config::Config, optimize, MOPAC_TMPL};
 
+/// whether or not to print the input files used for intder, anpass, and spectro
+static DEBUG: bool = false;
+
 /// the precision to call things symmetric
 const SYMM_EPS: f64 = 1e-6;
 
@@ -264,7 +267,9 @@ pub fn generate_pts<W: std::io::Write>(
     let taylor_disps = taylor.disps();
     intder.disps = disp_to_intder(&taylor_disps, step_size);
 
-    writeln!(w, "\nIntder Input:\n{}", intder).unwrap();
+    if DEBUG {
+        writeln!(w, "\nIntder Input:\n{}", intder).unwrap();
+    }
 
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
@@ -307,10 +312,14 @@ pub fn freqs<W: std::io::Write>(
 
     // run anpass
     let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
-    writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
-    let (fcs, long_line) = &anpass.run_debug(w);
-
-    writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
+    let (fcs, long_line) = if DEBUG {
+        writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
+        let (fcs, long_line) = anpass.run_debug(w);
+        writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
+        (fcs, long_line)
+    } else {
+        anpass.run()
+    };
 
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
@@ -328,7 +337,6 @@ pub fn freqs<W: std::io::Write>(
     }
 
     intder.disps = vec![];
-    writeln!(w, "Intder Freqs Input\n{}", intder).unwrap();
 
     // intder freqs
     for fc in fcs {
@@ -338,6 +346,10 @@ pub fn freqs<W: std::io::Write>(
         }
     }
 
+    if DEBUG {
+        writeln!(w, "Intder Freqs Input\n{}", intder).unwrap();
+    }
+
     let (f2, f3, f4) = intder.convert_fcs();
     Intder::dump_fcs(dir, &f2, &f3, &f4);
 
@@ -345,7 +357,9 @@ pub fn freqs<W: std::io::Write>(
     let mut spectro = spectro.clone();
     spectro.geom = mol;
     let input = format!("{}/spectro.in", dir);
-    writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
+    if DEBUG {
+        writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
+    }
     spectro.write(&input).unwrap();
 
     // run gspectro
