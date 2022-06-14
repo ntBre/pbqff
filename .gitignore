@@ -5,3 +5,9 @@
 /opt/
 /pts/
 /scripts/
+/align.dat
+/align.out
+/freqs_align/
+/freqs_noalign/
+/noalign.dat
+/noalign.out
