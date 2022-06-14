@@ -224,14 +224,42 @@ pub fn generate_pts<W: std::io::Write>(
     // add the dummy atoms
     let mut ndum = 0;
     for dummy in dummies {
+        // atom the dummy attaches to
+        let real_coord = intder.geom[dummy.1];
+        // two of them should be zero and one is non-zero
+        let mut zeros = vec![];
+        let mut nonzero = 0;
+        for (i, c) in real_coord.iter().enumerate() {
+            if c.abs() < 1e-12 {
+                zeros.push(i);
+            } else {
+                nonzero = i;
+            }
+        }
+        if zeros.len() != 2 {
+            dbg!(real_coord);
+            dbg!(zeros);
+            dbg!(nonzero);
+            panic!("dummy atom for non-linear molecule");
+        }
+
         let mut coord = [0.0; 3];
-        // first field is the axis
-        coord[dummy.0] = 1.111111111;
-        // second field is an atom to take the z value from
-        coord[2] = intder.geom[dummy.1].z;
-        // TODO this probably shouldn't always be the z value...
-        intder.geom.push(vector![coord[0], coord[1], coord[2]]);
-        ndum += 1;
+        // match the nonzero field in the real geometry
+        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[zeros[0]] = 1.1111111111;
+        coord[zeros[1]] = 0.0;
+        intder.geom.push(na::Vector3::from(coord));
+
+        let mut coord = [0.0; 3];
+        // match the nonzero field in the real geometry
+        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[zeros[1]] = 1.1111111111;
+        coord[zeros[0]] = 0.0;
+        intder.geom.push(na::Vector3::from(coord));
+
+        // push dummy atoms perpendicular in both directions
+
+        ndum += 2;
     }
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
