@@ -223,6 +223,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder.disps = disps;
     // add the dummy atoms
     let mut ndum = 0;
+    const ZERO: f64 = 1e-8;
     for dummy in dummies {
         // atom the dummy attaches to
         let real_coord = intder.geom[dummy.1];
@@ -230,7 +231,7 @@ pub fn generate_pts<W: std::io::Write>(
         let mut zeros = vec![];
         let mut nonzero = 0;
         for (i, c) in real_coord.iter().enumerate() {
-            if c.abs() < 1e-12 {
+            if c.abs() < ZERO {
                 zeros.push(i);
             } else {
                 nonzero = i;
