@@ -372,6 +372,7 @@ impl BigHash {
                     plane1,
                 }
             }
+            PointGroup::D2h { axes, planes } => todo!(),
         };
         Self {
             map: HashMap::<String, Target>::new(),
@@ -454,6 +455,7 @@ impl BigHash {
                     }
                 }
             }
+            PointGroup::D2h { axes, planes } => todo!(),
         }
         None
     }
