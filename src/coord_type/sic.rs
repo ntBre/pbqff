@@ -147,7 +147,7 @@ fn make_taylor_checks(
             }
             (Some(checks.clone()), Some(checks))
         }
-        D2h { axes, planes } => todo!(),
+        D2h { axes: _, planes: _ } => todo!(),
     }
 }
 
@@ -273,7 +273,10 @@ pub fn generate_pts<W: std::io::Write>(
             atomic_numbers.clone(),
             &disp[..disp.len() - 3 * ndum],
         );
-        let irrep = m.irrep_approx(&pg, SYMM_EPS).unwrap();
+        let irrep = match m.irrep_approx(&pg, SYMM_EPS) {
+            Ok(rep) => rep,
+            Err(e) => panic!("failed on coord {} with {}", i, e.msg()),
+        };
         irreps.push((i, irrep));
     }
     // sort by irrep symmetry
