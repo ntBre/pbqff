@@ -110,7 +110,25 @@ fn make_taylor_checks(
             todo!();
         }
         Cs { plane: _ } => {
-            todo!()
+	    // only A'' modes go in checks[0], other two checks are 0-0
+            // let mut checks = Checks::new();
+            // for i in irreps {
+            //     match i.1 {
+            //         Ap => (),
+            //         App => {
+            //             if checks[(0, 0)] == 0 {
+            //                 checks[(0, 0)] = i.0 + 1;
+            //                 checks[(0, 1)] = i.0 + 1;
+            //             } else if i.0 + 1 > checks[(0, 1)] {
+            //                 checks[(0, 1)] = i.0 + 1;
+            //             }
+            //         }
+            //         _ => panic!("non-Cs irrep found in Cs point group"),
+            //     }
+            // }
+            // (Some(checks.clone()), Some(checks))
+	    // I think this is right, but it's untested
+	    todo!();
         }
         C2v { axis: _, planes: _ } => {
             let mut checks = Checks::new();
