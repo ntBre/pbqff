@@ -283,6 +283,9 @@ dependencies = [
 name = "spectro"
 version = "0.1.0"
 dependencies = [
+ "approx",
+ "intder",
+ "nalgebra",
  "symm",
 ]
 
