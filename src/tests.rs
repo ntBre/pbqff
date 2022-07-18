@@ -32,15 +32,13 @@ fn sic() {
         ]),
         epsilon = 1e-3
     );
+    let got = Dvec::from(summ.corr);
+    let want = Dvec::from(vec![
+        2783.9552, 2764.3024, 1775.6603, 1177.1131, 1040.6267, 960.1012,
+        919.9009, 926.9755, 905.3032,
+    ]);
     // corr
-    approx::assert_abs_diff_eq!(
-        Dvec::from(summ.corr),
-        Dvec::from(vec![
-            2783.9552, 2764.3024, 1775.6603, 1177.1131, 1040.6267, 960.1012,
-            919.9009, 926.9755, 905.3032,
-        ]),
-        epsilon = 1e-4
-    );
+    approx::assert_abs_diff_eq!(got, want, epsilon = 2e-1);
 }
 
 #[test]
