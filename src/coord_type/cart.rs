@@ -3,6 +3,7 @@ use std::{
     collections::{hash_map::Values, HashMap},
     fmt::Write,
     hash::Hash,
+    io,
     rc::Rc,
 };
 
@@ -21,7 +22,7 @@ use symm::{Atom, Molecule, PointGroup};
 
 use nalgebra as na;
 
-use crate::{config::Config, optimize};
+use crate::{config::Config, optimize, ref_energy};
 
 use super::CoordType;
 
@@ -605,7 +606,7 @@ struct Target {
     indices: Vec<Index>,
 }
 
-impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
+impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
     fn run(
         &self,
         w: &mut W,
@@ -618,21 +619,22 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             // optimizing anyway
             optimize(queue, config.geometry.clone())
         } else {
-            todo!();
+            config.geometry.clone()
         };
 
+        let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
-        let n = 3 * geom.xyz().unwrap().len();
+        let n = 3 * geom.len();
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
 
-        // TODO actually compute this
-        let ref_energy = 0.12660293116764660226E+03 / KCALHT;
+        let ref_energy = ref_energy(queue, Geom::Xyz(geom.clone()));
 
-        let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
+        let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
+        mol.reorder();
         println!("\n{}", mol);
         let mut target_map = BigHash::new(mol.clone());
 
