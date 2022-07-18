@@ -18,10 +18,17 @@ pub fn optimize<Q: Queue<Mopac>>(
     queue: &Q,
     geom: Geom,
     template: Template,
+    charge: isize,
 ) -> Geom {
     let _ = std::fs::create_dir("opt");
     let opt = Job::new(
-        Mopac::new("opt/opt".to_string(), None, Rc::new(geom), 0, template),
+        Mopac::new(
+            "opt/opt".to_string(),
+            None,
+            Rc::new(geom),
+            charge,
+            template,
+        ),
         0,
     );
     let mut res = vec![Geom::default(); 1];
@@ -35,10 +42,17 @@ pub fn ref_energy<Q: Queue<Mopac>>(
     queue: &Q,
     geom: Geom,
     template: Template,
+    charge: isize,
 ) -> f64 {
     let _ = std::fs::create_dir("opt");
     let opt = Job::new(
-        Mopac::new("opt/ref".to_string(), None, Rc::new(geom), 0, template),
+        Mopac::new(
+            "opt/ref".to_string(),
+            None,
+            Rc::new(geom),
+            charge,
+            template,
+        ),
         0,
     );
     let mut res = vec![0.0; 1];

@@ -45,8 +45,12 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
         let geom = if config.optimize {
-            let geom =
-                optimize(queue, config.geometry.clone(), template.clone());
+            let geom = optimize(
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            );
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {

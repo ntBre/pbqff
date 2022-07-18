@@ -308,7 +308,9 @@ fn make4d(
 enum Buddy {
     C1,
     C2,
-    Cs,
+    Cs {
+        plane: Vec<usize>,
+    },
     C2v {
         axis: Vec<usize>,
         plane0: Vec<usize>,
@@ -322,7 +324,11 @@ impl Buddy {
         match self {
             Buddy::C1 => todo!(),
             Buddy::C2 => todo!(),
-            Buddy::Cs => todo!(),
+            Buddy::Cs { plane } => {
+                ret.push(Molecule::new(
+                    plane.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+            }
             Buddy::C2v {
                 axis,
                 plane0,
@@ -359,7 +365,10 @@ impl BigHash {
         let buddy = match &pg {
             PointGroup::C1 => todo!(),
             PointGroup::C2 { axis } => todo!(),
-            PointGroup::Cs { plane } => todo!(),
+            PointGroup::Cs { plane } => {
+                let plane = mol.detect_buddies(&mol.reflect(plane), 1e-8);
+                Buddy::Cs { plane }
+            }
             PointGroup::C2v { axis, planes } => {
                 let axis = mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
                 let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
@@ -411,10 +420,24 @@ impl BigHash {
             return Some(self.map.get_mut(mol).unwrap());
         }
 
+        // TODO DRY this out
         match &self.pg {
             C1 => todo!(),
             C2 { axis } => todo!(),
-            Cs { plane } => todo!(),
+            Cs { plane } => {
+                // check first mirror plane
+                let mol = Self::to_string(&orig.reflect(plane));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(plane));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
             C2v { axis, planes } => {
                 // check C2 axis
                 let mol = &orig.rotate(180.0, &axis);
@@ -432,8 +455,6 @@ impl BigHash {
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
-
-                // TODO DRY this out
                 for buddy in self.buddy.apply(orig) {
                     // check C2 axis
                     let mol = &buddy.rotate(180.0, &axis);
@@ -615,7 +636,12 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let geom = if config.optimize {
             // TODO take the reference energy from the same calculation if
             // optimizing anyway
-            optimize(queue, config.geometry.clone(), template.clone())
+            optimize(
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            )
         } else {
             config.geometry.clone()
         };
@@ -628,8 +654,12 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
 
-        let ref_energy =
-            ref_energy(queue, Geom::Xyz(geom.clone()), template.clone());
+        let ref_energy = ref_energy(
+            queue,
+            Geom::Xyz(geom.clone()),
+            template.clone(),
+            config.charge,
+        );
 
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
