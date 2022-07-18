@@ -425,9 +425,5 @@ pub fn freqs<W: std::io::Write>(
         .output()
         .unwrap();
 
-    let ret = Summary::new(&format!("{}/spectro2.out", dir));
-
-    writeln!(w, "Vibrational Frequencies:\n{:12.4}", ret).unwrap();
-
-    ret
+    Summary::new(&format!("{}/spectro2.out", dir))
 }

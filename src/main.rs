@@ -6,6 +6,7 @@ use rust_pbqff::{
     coord_type::{Cart, CoordType, SIC},
     Intder, Spectro,
 };
+use summarize::Summary;
 
 fn cleanup() {
     let _ = std::fs::remove_dir("opt");
@@ -41,4 +42,7 @@ fn main() {
             );
         }
     }
+    let summ = Summary::new("freqs/spectro2.out");
+    println!("\nvibrational frequencies:\n{}", summ);
+    println!("normal termination of pbqff");
 }
