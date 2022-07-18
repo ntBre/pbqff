@@ -1,5 +1,8 @@
 use serde::Deserialize;
 
+mod coord_type;
+pub use coord_type::*;
+
 #[derive(Deserialize, Debug, PartialEq)]
 struct RawConfig {
     /// the geometry to start with
@@ -21,6 +24,12 @@ struct RawConfig {
 
     /// distance in Å to displace the atoms
     step_size: f64,
+
+    /// whether to use SICs or Cartesian coordinates
+    coord_type: CoordType,
+
+    /// the template to use for the quantum chemistry program
+    template: String,
 }
 
 impl RawConfig {
@@ -38,6 +47,8 @@ pub struct Config {
     pub spectro_cmd: String,
     pub charge: isize,
     pub step_size: f64,
+    pub coord_type: CoordType,
+    pub template: String,
 }
 
 impl Config {
@@ -50,6 +61,8 @@ impl Config {
             spectro_cmd: rc.spectro_cmd,
             charge: rc.charge,
             step_size: rc.step_size,
+            coord_type: rc.coord_type,
+            template: rc.template,
         }
     }
 }
@@ -68,13 +81,17 @@ gspectro_cmd = {}
 spectro_cmd = {}
 charge = {}
 step_size = {}
+coord_type = {}
+template = {}
 ",
             self.geometry.to_string().trim(),
             self.optimize,
             self.gspectro_cmd,
             self.spectro_cmd,
             self.charge,
-            self.step_size
+            self.step_size,
+            self.coord_type,
+            self.template,
         )
     }
 }
@@ -106,6 +123,10 @@ HCC =               147.81488230
             spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
             charge: 0,
             step_size: 0.005,
+            coord_type: CoordType::sic,
+	    template: String::from(
+		"A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
+		),
         };
         assert_eq!(got, want);
     }

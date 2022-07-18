@@ -29,10 +29,6 @@ use super::CoordType;
 /// debugging options. currently supported options: disp, fcs, none
 pub(crate) static DEBUG: &str = "none";
 
-const MOPAC_TMPL: Template = Template::from(
-    "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
-);
-
 pub struct Cart;
 
 fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
@@ -614,10 +610,11 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         config: &Config,
         spectro: &Spectro,
     ) -> Summary {
+        let template = Template::from(&config.template);
         let geom = if config.optimize {
             // TODO take the reference energy from the same calculation if
             // optimizing anyway
-            optimize(queue, config.geometry.clone())
+            optimize(queue, config.geometry.clone(), template.clone())
         } else {
             config.geometry.clone()
         };
@@ -630,7 +627,8 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
 
-        let ref_energy = ref_energy(queue, Geom::Xyz(geom.clone()));
+        let ref_energy =
+            ref_energy(queue, Geom::Xyz(geom.clone()), template.clone());
 
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
@@ -663,7 +661,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
                         None,
                         Rc::new(mol.geom),
                         config.charge,
-                        &MOPAC_TMPL,
+                        template.clone(),
                     ),
                     mol.index,
                 );
@@ -674,11 +672,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
 
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
-        LocalQueue {
-            chunk_size: 1024,
-            dir: "pts".to_string(),
-        }
-        .drain(&mut jobs, &mut energies);
+        queue.drain(&mut jobs, &mut energies);
 
         // copy energies into all of the places they're needed
         for target in target_map.values() {

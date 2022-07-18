@@ -3,7 +3,11 @@ use std::rc::Rc;
 use intder::Intder;
 use na::vector;
 use nalgebra as na;
-use psqs::{geom::Geom, program::mopac::Mopac, queue::Queue};
+use psqs::{
+    geom::Geom,
+    program::{mopac::Mopac, Template},
+    queue::Queue,
+};
 use rust_anpass::Anpass;
 use spectro::Spectro;
 use summarize::Summary;
@@ -11,7 +15,7 @@ use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
 use super::CoordType;
-use crate::{config::Config, optimize, MOPAC_TMPL};
+use crate::{config::Config, optimize};
 
 /// whether or not to print the input files used for intder, anpass, and spectro
 static DEBUG: bool = false;
@@ -37,10 +41,12 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
         config: &Config,
         spectro: &Spectro,
     ) -> Summary {
+        let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
         let geom = if config.optimize {
-            let geom = optimize(queue, config.geometry.clone());
+            let geom =
+                optimize(queue, config.geometry.clone(), template.clone());
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
@@ -71,7 +77,7 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
             1.0,
             0,
             config.charge,
-            &MOPAC_TMPL,
+            template.clone(),
         );
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())

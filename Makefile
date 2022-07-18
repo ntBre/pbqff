@@ -10,7 +10,7 @@ test:
 	RUST_BACKTRACE=1 cargo test ${TESTFLAGS} ${ARGS}
 
 BASE = /home/brent/Projects/rust-pbqff
-ELAND_DEST = 'eland:freq_semp/test/qff/.'
+ELAND_DEST = 'eland:programs/rust-pbqff/.'
 eland:
 # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \

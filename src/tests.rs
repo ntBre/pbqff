@@ -52,7 +52,7 @@ fn cart() {
     let _ = std::fs::create_dir("pts");
     let _ = std::fs::create_dir("freqs");
 
-    let config = Config::load("testfiles/test.toml");
+    let config = Config::load("testfiles/cart.toml");
     let spectro = Spectro::load("testfiles/spectro.in");
     let queue = LocalQueue {
         dir: "pts".to_string(),
