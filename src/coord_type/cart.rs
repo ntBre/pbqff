@@ -380,7 +380,18 @@ impl BigHash {
                     plane1,
                 }
             }
-            PointGroup::D2h { axes, planes } => todo!(),
+            // NOTE: treating D2h as a subgroup of C2v
+            PointGroup::D2h { axes, planes } => {
+                let axis =
+                    mol.detect_buddies(&mol.rotate(180.0, &axes[0]), 1e-8);
+                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
+                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
+                Buddy::C2v {
+                    axis,
+                    plane0,
+                    plane1,
+                }
+            }
         };
         Self {
             map: HashMap::<String, Target>::new(),
@@ -475,7 +486,44 @@ impl BigHash {
                     }
                 }
             }
-            PointGroup::D2h { axes, planes } => todo!(),
+            PointGroup::D2h { axes, planes } => {
+                // NOTE: this is copy-pasted from C2v and axis -> axes[0]
+
+                // check C2 axis
+                let mol = &orig.rotate(180.0, &axes[0]);
+                let key = Self::to_string(mol);
+                if self.map.contains_key(&key) {
+                    return Some(self.map.get_mut(&key).unwrap());
+                }
+                // check first mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[0]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                // check second mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[1]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check C2 axis
+                    let mol = &buddy.rotate(180.0, &axes[0]);
+                    let key = Self::to_string(mol);
+                    if self.map.contains_key(&key) {
+                        return Some(self.map.get_mut(&key).unwrap());
+                    }
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                    // check second mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
         }
         None
     }
