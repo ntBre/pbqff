@@ -349,7 +349,7 @@ impl Buddy {
     }
 }
 
-struct BigHash {
+pub struct BigHash {
     map: HashMap<String, Target>,
     pg: PointGroup,
     // buddies are pairs of atoms that are interchanged across symmetry
@@ -493,22 +493,25 @@ impl BigHash {
 }
 
 impl Cart {
-    fn build_points(
+    pub fn build_points(
         &self,
         geom: Geom,
         step_size: f64,
+        charge: isize,
+        template: Template,
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
         fcs: &mut [f64],
         map: &mut BigHash,
-    ) -> Vec<CartGeom> {
+    ) -> Vec<Job<Mopac>> {
+        // TODO want to make this return jobs directly
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
         let ncoords = coords.len();
         let coords = na::DVector::from(coords);
 
-        let mut ret = Vec::new();
+        let mut geoms = Vec::new();
         let mut counter = 0;
         // start at 1 so that k = l = 0 indicates second derivative
         for i in 1..=ncoords {
@@ -558,7 +561,7 @@ impl Cart {
                                         },
                                     );
                                     assert_eq!(i, None);
-                                    ret.push(CartGeom {
+                                    geoms.push(CartGeom {
                                         geom: p.geom.unwrap(),
                                         coeff: p.coeff,
                                         index: counter,
@@ -574,7 +577,25 @@ impl Cart {
                 }
             }
         }
-        ret
+        let dir = "pts";
+        let mut job_num = 0;
+        let mut jobs = Vec::new();
+        for mol in geoms {
+            let filename = format!("{dir}/job.{:08}", job_num);
+            job_num += 1;
+            let mut job = Job::new(
+                Mopac::new(
+                    filename,
+                    None,
+                    Rc::new(mol.geom),
+                    charge,
+                    template.clone(),
+                ),
+                mol.index,
+            );
+            jobs.push(job);
+        }
+        jobs
     }
 
     fn freqs(
@@ -667,9 +688,11 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         println!("normalized geometry:\n{}", mol);
         let mut target_map = BigHash::new(mol.clone());
 
-        let geoms = self.build_points(
+        let mut jobs = self.build_points(
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
+            config.charge,
+            template,
             ref_energy,
             nfc2,
             nfc3,
@@ -677,29 +700,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             &mut target_map,
         );
 
-        println!("{n} Cartesian coordinates requires {} points", geoms.len());
-
-        let mut jobs = {
-            let dir = "pts";
-            let mut job_num = 0;
-            let mut jobs = Vec::new();
-            for mol in geoms {
-                let filename = format!("{dir}/job.{:08}", job_num);
-                job_num += 1;
-                let mut job = Job::new(
-                    Mopac::new(
-                        filename,
-                        None,
-                        Rc::new(mol.geom),
-                        config.charge,
-                        template.clone(),
-                    ),
-                    mol.index,
-                );
-                jobs.push(job);
-            }
-            jobs
-        };
+        println!("{n} Cartesian coordinates requires {} points", jobs.len());
 
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
