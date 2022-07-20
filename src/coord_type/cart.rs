@@ -4,6 +4,7 @@ use std::{
     fmt::Write,
     hash::Hash,
     io,
+    path::Path,
     rc::Rc,
 };
 
@@ -304,7 +305,7 @@ fn make4d(
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 enum Buddy {
     C1,
     C2,
@@ -349,6 +350,7 @@ impl Buddy {
     }
 }
 
+#[derive(Clone)]
 pub struct BigHash {
     map: HashMap<String, Target>,
     pg: PointGroup,
@@ -359,9 +361,8 @@ pub struct BigHash {
 
 impl BigHash {
     /// NOTE: assumes mol is already normalized
-    fn new(mut mol: Molecule) -> Self {
+    pub fn new(mut mol: Molecule) -> Self {
         let pg = mol.point_group();
-        println!("point group = {}\n", pg);
         let buddy = match &pg {
             PointGroup::C1 => todo!(),
             PointGroup::C2 { axis } => todo!(),
@@ -495,6 +496,7 @@ impl BigHash {
 impl Cart {
     pub fn build_points(
         &self,
+        dir: &str,
         geom: Geom,
         step_size: f64,
         charge: isize,
@@ -577,7 +579,6 @@ impl Cart {
                 }
             }
         }
-        let dir = "pts";
         let mut job_num = 0;
         let mut jobs = Vec::new();
         for mol in geoms {
@@ -597,28 +598,35 @@ impl Cart {
         }
         jobs
     }
+}
 
-    fn freqs(
-        &self,
-        dir: &str,
-        spectro: &Spectro,
-        gspectro_cmd: &String,
-        spectro_cmd: &String,
-    ) -> Summary {
-        // write input
-        let input = format!("{}/spectro.in", dir);
-        spectro.write(&input).unwrap();
+pub fn freqs(
+    dir: &str,
+    spectro: &Spectro,
+    gspectro_cmd: &String,
+    spectro_cmd: &String,
+    mol: &Molecule,
+) -> Summary {
+    let mut spectro = spectro.clone();
+    let mut mol = mol.clone();
+    spectro.geom = {
+        mol.to_bohr();
+        mol
+    };
 
-        // run gspectro
-        let spectro_arg = String::from("-cmd=") + spectro_cmd;
-        std::process::Command::new(gspectro_cmd.clone())
-            .arg(spectro_arg)
-            .arg(input)
-            .output()
-            .unwrap();
+    // write input
+    let input = format!("{}/spectro.in", dir);
+    spectro.write(&input).unwrap();
 
-        Summary::new(&format!("{}/spectro2.out", dir))
-    }
+    // run gspectro
+    let spectro_arg = String::from("-cmd=") + spectro_cmd;
+    std::process::Command::new(gspectro_cmd.clone())
+        .arg(spectro_arg)
+        .arg(input)
+        .output()
+        .unwrap();
+
+    Summary::new(&format!("{}/spectro2.out", dir))
 }
 
 /// compute the index in the force constant array
@@ -630,13 +638,13 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct Index {
     index: usize,
     coeff: f64,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 struct Target {
     /// into the energy array drain is called on
     source_index: usize,
@@ -689,6 +697,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let mut target_map = BigHash::new(mol.clone());
 
         let mut jobs = self.build_points(
+            "pts",
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
             config.charge,
@@ -706,47 +715,60 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let mut energies = vec![0.0; jobs.len()];
         queue.drain(&mut jobs, &mut energies);
 
-        // copy energies into all of the places they're needed
-        for target in target_map.values() {
-            if DEBUG == "fcs" {
-                println!("source index: {}", target.source_index);
-            }
-            let energy = energies[target.source_index];
-            for idx in &target.indices {
-                if DEBUG == "fcs" {
-                    println!(
-                        "\tfcs[{}] += {:12.8} * {:12.8}",
-                        idx.index, idx.coeff, energy
-                    );
-                }
-                fcs[idx.index] += idx.coeff * energy;
-            }
-        }
+        make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
 
-        // mirror symmetric quadratic fcs
-        let mut fc2 = intder::DMat::zeros(n, n);
-        for i in 0..n {
-            fc2[(i, i)] = fcs[intder::fc2_index(n, i + 1, i + 1)];
-            for j in 0..i {
-                let f = fcs[intder::fc2_index(n, i + 1, j + 1)];
-                fc2[(i, j)] = f;
-                fc2[(j, i)] = f;
-            }
-        }
-
-        let _ = std::fs::create_dir("freqs");
-        intder::Intder::dump_fcs(
+        freqs(
             "freqs",
-            &fc2,
-            &fcs[nfc2..nfc2 + nfc3],
-            &fcs[nfc2 + nfc3..],
-        );
-
-        let mut spectro = spectro.clone();
-        spectro.geom = {
-            mol.to_bohr();
-            mol
-        };
-        self.freqs("freqs", &spectro, &config.gspectro_cmd, &config.spectro_cmd)
+            &spectro,
+            &config.gspectro_cmd,
+            &config.spectro_cmd,
+            &mol,
+        )
     }
+}
+
+/// use `target_map` to symmetrize the force constants and dump them to the
+/// files expected by spectro in `dir`
+pub fn make_fcs(
+    target_map: &mut BigHash,
+    energies: &[f64],
+    fcs: &mut [f64],
+    n: usize,
+    nfc2: usize,
+    nfc3: usize,
+    dir: &str,
+) {
+    // copy energies into all of the places they're needed
+    for target in target_map.values() {
+        if DEBUG == "fcs" {
+            println!("source index: {}", target.source_index);
+        }
+        let energy = energies[target.source_index];
+        for idx in &target.indices {
+            if DEBUG == "fcs" {
+                println!(
+                    "\tfcs[{}] += {:12.8} * {:12.8}",
+                    idx.index, idx.coeff, energy
+                );
+            }
+            fcs[idx.index] += idx.coeff * energy;
+        }
+    }
+    // mirror symmetric quadratic fcs
+    let mut fc2 = intder::DMat::zeros(n, n);
+    for i in 0..n {
+        fc2[(i, i)] = fcs[intder::fc2_index(n, i + 1, i + 1)];
+        for j in 0..i {
+            let f = fcs[intder::fc2_index(n, i + 1, j + 1)];
+            fc2[(i, j)] = f;
+            fc2[(j, i)] = f;
+        }
+    }
+    let _ = std::fs::create_dir(dir);
+    intder::Intder::dump_fcs(
+        dir,
+        &fc2,
+        &fcs[nfc2..nfc2 + nfc3],
+        &fcs[nfc2 + nfc3..],
+    );
 }
