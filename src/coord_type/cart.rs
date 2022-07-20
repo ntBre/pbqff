@@ -361,8 +361,7 @@ pub struct BigHash {
 
 impl BigHash {
     /// NOTE: assumes mol is already normalized
-    pub fn new(mut mol: Molecule) -> Self {
-        let pg = mol.point_group();
+    pub fn new(mut mol: Molecule, pg: PointGroup) -> Self {
         let buddy = match &pg {
             PointGroup::C1 => todo!(),
             PointGroup::C2 { axis } => todo!(),
@@ -741,8 +740,9 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
         mol.reorder();
+        let pg = mol.point_group();
         println!("normalized geometry:\n{}", mol);
-        let mut target_map = BigHash::new(mol.clone());
+        let mut target_map = BigHash::new(mol.clone(), pg);
 
         let mut jobs = self.build_points(
             "pts",
