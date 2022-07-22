@@ -548,6 +548,7 @@ impl Cart {
         step_size: f64,
         charge: isize,
         template: Template,
+        start_index: usize,
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
@@ -626,7 +627,7 @@ impl Cart {
                 }
             }
         }
-        let mut job_num = 0;
+        let mut job_num = start_index;
         let mut jobs = Vec::new();
         for mol in geoms {
             let filename = format!("{dir}/job.{:08}", job_num);
@@ -750,6 +751,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             config.step_size,
             config.charge,
             template,
+            0,
             ref_energy,
             nfc2,
             nfc3,
