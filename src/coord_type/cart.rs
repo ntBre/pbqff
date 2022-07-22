@@ -28,7 +28,7 @@ use crate::{config::Config, optimize, ref_energy};
 use super::CoordType;
 
 /// debugging options. currently supported options: disp, fcs, none
-pub(crate) static DEBUG: &str = "none";
+pub(crate) static DEBUG: &str = "fcs";
 
 pub struct Cart;
 
@@ -350,7 +350,7 @@ impl Buddy {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct BigHash {
     map: HashMap<String, Target>,
     pg: PointGroup,
@@ -535,7 +535,7 @@ impl BigHash {
         self.map.values()
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.map.len()
     }
 }
@@ -555,7 +555,6 @@ impl Cart {
         fcs: &mut [f64],
         map: &mut BigHash,
     ) -> Vec<Job<Mopac>> {
-        // TODO want to make this return jobs directly
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
         let ncoords = coords.len();
@@ -640,7 +639,7 @@ impl Cart {
                     charge,
                     template.clone(),
                 ),
-                mol.index,
+                mol.index + start_index,
             );
             jobs.push(job);
         }
@@ -791,12 +790,12 @@ pub fn make_fcs(
     // copy energies into all of the places they're needed
     for target in target_map.values() {
         if DEBUG == "fcs" {
-            println!("source index: {}", target.source_index);
+            eprintln!("source index: {}", target.source_index);
         }
         let energy = energies[target.source_index];
         for idx in &target.indices {
             if DEBUG == "fcs" {
-                println!(
+                eprintln!(
                     "\tfcs[{}] += {:12.8} * {:12.8}",
                     idx.index, idx.coeff, energy
                 );
