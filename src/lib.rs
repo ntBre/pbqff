@@ -10,29 +10,53 @@ pub use intder::Intder;
 use psqs::{
     geom::Geom,
     program::{mopac::Mopac, Job, Template},
-    queue::{local::LocalQueue, Queue},
+    queue::Queue,
 };
 pub use spectro::Spectro;
 
-// TODO take this from a template file
-pub(crate) const MOPAC_TMPL: Template = Template::from(
-    "A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
-);
-
-pub fn optimize(geom: Geom) -> Geom {
-    // TODO handle error
+pub fn optimize<Q: Queue<Mopac>>(
+    queue: &Q,
+    geom: Geom,
+    template: Template,
+    charge: isize,
+) -> Geom {
     let _ = std::fs::create_dir("opt");
     let opt = Job::new(
-        Mopac::new("opt/opt".to_string(), None, Rc::new(geom), 0, &MOPAC_TMPL),
+        Mopac::new(
+            "opt/opt".to_string(),
+            None,
+            Rc::new(geom),
+            charge,
+            template,
+        ),
         0,
     );
-    // TODO pass in submitter, via `run`, actually have to pass in the Program
-    // too I think
-    let submitter = LocalQueue {
-        dir: "opt".to_string(),
-    };
     let mut res = vec![Geom::default(); 1];
-    submitter.optimize(&mut [opt], &mut res);
+    queue.optimize(&mut [opt], &mut res);
+    res.pop().unwrap()
+}
+
+// TODO this is immensely stupid, just take the energy from the original
+// optimization, but that's now how I wrote the queue stuff
+pub fn ref_energy<Q: Queue<Mopac>>(
+    queue: &Q,
+    geom: Geom,
+    template: Template,
+    charge: isize,
+) -> f64 {
+    let _ = std::fs::create_dir("opt");
+    let opt = Job::new(
+        Mopac::new(
+            "opt/ref".to_string(),
+            None,
+            Rc::new(geom),
+            charge,
+            template,
+        ),
+        0,
+    );
+    let mut res = vec![0.0; 1];
+    queue.drain(&mut [opt], &mut res);
     res.pop().unwrap()
 }
 

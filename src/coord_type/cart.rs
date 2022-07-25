@@ -1,5 +1,12 @@
 #![allow(unused)]
-use std::{collections::HashMap, hash::Hash, rc::Rc};
+use std::{
+    collections::{hash_map::Values, HashMap},
+    fmt::Write,
+    hash::Hash,
+    io,
+    path::Path,
+    rc::Rc,
+};
 
 use intder::ANGBOHR;
 use psqs::{
@@ -12,17 +19,16 @@ use psqs::{
 };
 use spectro::Spectro;
 use summarize::Summary;
-use symm::{Atom, Molecule};
+use symm::{Atom, Molecule, PointGroup};
 
 use nalgebra as na;
 
-use crate::{config::Config, optimize};
+use crate::{config::Config, optimize, ref_energy};
 
 use super::CoordType;
 
-const MOPAC_TMPL: Template = Template::from(
-    "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
-);
+/// debugging options. currently supported options: disp, fcs, none
+pub(crate) static DEBUG: &str = "fcs";
 
 pub struct Cart;
 
@@ -36,10 +42,11 @@ fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
     (names, coords)
 }
 
+#[derive(Debug)]
 struct CartGeom {
     geom: Geom,
     coeff: f64,
-    index: (usize, usize, usize, usize),
+    index: usize,
 }
 
 /// geom is None if no displacement is required, i.e. this is the reference
@@ -190,7 +197,6 @@ fn make4d(
     l: usize,
 ) -> Vec<Proto> {
     let scale = ANGBOHR.powi(4) / (16.0 * step_size.powi(4));
-    // dbg!(i, j, k, l, index(coords.len(), i, j, k, l));
     let i = i as isize;
     let j = j as isize;
     let k = k as isize;
@@ -264,19 +270,19 @@ fn make4d(
         make4d_2_2(i, k, j, l)
     } else if i == l && j == k {
         make4d_2_2(i, l, j, k)
-    // 2 and 1 and 1
+    // 2 and 1 and 1, first two are the equal ones
     } else if i == j {
         make4d_2_1_1(i, j, k, l)
     } else if i == k {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(i, k, j, l)
     } else if i == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(i, l, j, k)
     } else if j == k {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(j, k, i, l)
     } else if j == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(j, l, i, k)
     } else if k == l {
-        make4d_2_1_1(i, j, k, l)
+        make4d_2_1_1(k, l, i, j)
     } else {
         vec![
             proto!(names, coords, step_size, 1. * scale, i, j, k, l),
@@ -299,23 +305,262 @@ fn make4d(
     }
 }
 
+#[derive(Clone, Debug)]
+enum Buddy {
+    C1,
+    C2,
+    Cs {
+        plane: Vec<usize>,
+    },
+    C2v {
+        axis: Vec<usize>,
+        plane0: Vec<usize>,
+        plane1: Vec<usize>,
+    },
+}
+
+impl Buddy {
+    fn apply(&self, mol: &Molecule) -> Vec<Molecule> {
+        let mut ret = Vec::new();
+        match self {
+            Buddy::C1 => todo!(),
+            Buddy::C2 => todo!(),
+            Buddy::Cs { plane } => {
+                ret.push(Molecule::new(
+                    plane.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+            }
+            Buddy::C2v {
+                axis,
+                plane0,
+                plane1,
+            } => {
+                ret.push(Molecule::new(
+                    axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+                ret.push(Molecule::new(
+                    plane0.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+                ret.push(Molecule::new(
+                    plane1.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+            }
+        }
+        ret
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct BigHash {
+    map: HashMap<String, Target>,
+    pg: PointGroup,
+    // buddies are pairs of atoms that are interchanged across symmetry
+    // operations
+    buddy: Buddy,
+}
+
+impl BigHash {
+    /// NOTE: assumes mol is already normalized
+    pub fn new(mut mol: Molecule, pg: PointGroup) -> Self {
+        let buddy = match &pg {
+            PointGroup::C1 => todo!(),
+            PointGroup::C2 { axis } => todo!(),
+            PointGroup::Cs { plane } => {
+                let plane = mol.detect_buddies(&mol.reflect(plane), 1e-8);
+                Buddy::Cs { plane }
+            }
+            PointGroup::C2v { axis, planes } => {
+                let axis = mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
+                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
+                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
+                Buddy::C2v {
+                    axis,
+                    plane0,
+                    plane1,
+                }
+            }
+            // NOTE: treating D2h as a subgroup of C2v
+            PointGroup::D2h { axes, planes } => {
+                let axis =
+                    mol.detect_buddies(&mol.rotate(180.0, &axes[0]), 1e-8);
+                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
+                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
+                Buddy::C2v {
+                    axis,
+                    plane0,
+                    plane1,
+                }
+            }
+        };
+        Self {
+            map: HashMap::<String, Target>::new(),
+            pg,
+            buddy,
+        }
+    }
+
+    fn to_string(mol: &Molecule) -> String {
+        let mut f = String::new();
+        // needed to make -0.0000000 = 0.0000000 for the String keys
+        let zero = |f: f64| {
+            if f.abs() < 1e-7 {
+                0.0
+            } else {
+                f
+            }
+        };
+        for atom in &mol.atoms {
+            writeln!(
+                f,
+                "{:5}{:12.8}{:12.8}{:12.8}",
+                symm::NUMBER_TO_SYMBOL[atom.atomic_number],
+                zero(atom.x),
+                zero(atom.y),
+                zero(atom.z)
+            )
+            .unwrap();
+        }
+        f
+    }
+
+    fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
+        use symm::PointGroup::{C2v, Cs, C1, C2};
+        // first check the original structure
+        let mol = &Self::to_string(&orig);
+        if self.map.contains_key(mol) {
+            return Some(self.map.get_mut(mol).unwrap());
+        }
+
+        // TODO DRY this out
+        match &self.pg {
+            C1 => todo!(),
+            C2 { axis } => todo!(),
+            Cs { plane } => {
+                // check first mirror plane
+                let mol = Self::to_string(&orig.reflect(plane));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(plane));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
+            C2v { axis, planes } => {
+                // check C2 axis
+                let mol = &orig.rotate(180.0, &axis);
+                let key = Self::to_string(mol);
+                if self.map.contains_key(&key) {
+                    return Some(self.map.get_mut(&key).unwrap());
+                }
+                // check first mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[0]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                // check second mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[1]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check C2 axis
+                    let mol = &buddy.rotate(180.0, &axis);
+                    let key = Self::to_string(mol);
+                    if self.map.contains_key(&key) {
+                        return Some(self.map.get_mut(&key).unwrap());
+                    }
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                    // check second mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
+            PointGroup::D2h { axes, planes } => {
+                // NOTE: this is copy-pasted from C2v and axis -> axes[0]
+
+                // check C2 axis
+                let mol = &orig.rotate(180.0, &axes[0]);
+                let key = Self::to_string(mol);
+                if self.map.contains_key(&key) {
+                    return Some(self.map.get_mut(&key).unwrap());
+                }
+                // check first mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[0]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                // check second mirror plane
+                let mol = Self::to_string(&orig.reflect(&planes[1]));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check C2 axis
+                    let mol = &buddy.rotate(180.0, &axes[0]);
+                    let key = Self::to_string(mol);
+                    if self.map.contains_key(&key) {
+                        return Some(self.map.get_mut(&key).unwrap());
+                    }
+                    // check first mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                    // check second mirror plane
+                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    fn insert(&mut self, key: Molecule, value: Target) -> Option<Target> {
+        self.map.insert(Self::to_string(&key), value)
+    }
+
+    fn values(&self) -> Values<String, Target> {
+        self.map.values()
+    }
+
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
+}
+
 impl Cart {
-    fn build_points(
+    pub fn build_points(
         &self,
+        dir: &str,
         geom: Geom,
         step_size: f64,
+        charge: isize,
+        template: Template,
+        start_index: usize,
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
         fcs: &mut [f64],
-        map: &mut HashMap<Structure, Target>,
-    ) -> Vec<CartGeom> {
+        map: &mut BigHash,
+    ) -> Vec<Job<Mopac>> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
         let ncoords = coords.len();
         let coords = na::DVector::from(coords);
 
-        let mut ret = Vec::new();
+        let mut geoms = Vec::new();
         let mut counter = 0;
         // start at 1 so that k = l = 0 indicates second derivative
         for i in 1..=ncoords {
@@ -331,7 +576,6 @@ impl Cart {
                                 make4d(&names, &coords, step_size, i, j, k, l)
                             }
                         };
-
                         let idx = (i, j, k, l);
                         for p in protos {
                             let (i, j, k, l) = idx;
@@ -341,14 +585,12 @@ impl Cart {
                                 (_, 0) => index += nfc2,
                                 (_, _) => index += nfc2 + nfc3,
                             };
-                            if p.geom.is_none() {
-                                // reference energy, handle it directly in fcs
-                                fcs[index] += p.coeff * ref_energy;
-                            } else {
-                                let structure: Structure = todo!();
+                            if let Some(geom) = p.geom.clone() {
+                                let mol =
+                                    Molecule::new(geom.xyz().unwrap().to_vec());
                                 // if the structure has already been seen, push
                                 // this target index to its list of Targets
-                                if let Some(result) = map.get(&structure) {
+                                if let Some(result) = map.get_mut(&mol) {
                                     result.indices.push(Index {
                                         index,
                                         coeff: p.coeff,
@@ -357,8 +599,8 @@ impl Cart {
                                     // otherwise, mark the structure as seen by
                                     // inserting it into the map and return a
                                     // job to be run
-                                    map.insert(
-                                        structure,
+                                    let i = map.insert(
+                                        mol,
                                         Target {
                                             source_index: counter,
                                             indices: vec![Index {
@@ -367,43 +609,71 @@ impl Cart {
                                             }],
                                         },
                                     );
-                                    counter += 1;
-                                    ret.push(CartGeom {
+                                    assert_eq!(i, None);
+                                    geoms.push(CartGeom {
                                         geom: p.geom.unwrap(),
                                         coeff: p.coeff,
-                                        index: idx,
+                                        index: counter,
                                     });
+                                    counter += 1;
                                 }
+                            } else {
+                                // reference energy, handle it directly in fcs
+                                fcs[index] += p.coeff * ref_energy;
                             }
                         }
                     }
                 }
             }
         }
-        ret
+        let mut job_num = start_index;
+        let mut jobs = Vec::new();
+        for mol in geoms {
+            let filename = format!("{dir}/job.{:08}", job_num);
+            job_num += 1;
+            let mut job = Job::new(
+                Mopac::new(
+                    filename,
+                    None,
+                    Rc::new(mol.geom),
+                    charge,
+                    template.clone(),
+                ),
+                mol.index + start_index,
+            );
+            jobs.push(job);
+        }
+        jobs
     }
+}
 
-    fn freqs(
-        &self,
-        dir: &str,
-        spectro: &Spectro,
-        gspectro_cmd: &String,
-        spectro_cmd: &String,
-    ) -> Summary {
-        // write input
-        let input = format!("{}/spectro.in", dir);
-        spectro.write(&input).unwrap();
+pub fn freqs(
+    dir: &str,
+    spectro: &Spectro,
+    gspectro_cmd: &String,
+    spectro_cmd: &String,
+    mol: &Molecule,
+) -> Summary {
+    let mut spectro = spectro.clone();
+    let mut mol = mol.clone();
+    spectro.geom = {
+        mol.to_bohr();
+        mol
+    };
 
-        // run gspectro
-        let spectro_arg = String::from("-cmd=") + spectro_cmd;
-        std::process::Command::new(gspectro_cmd.clone())
-            .arg(spectro_arg)
-            .arg(input)
-            .output()
-            .unwrap();
+    // write input
+    let input = format!("{}/spectro.in", dir);
+    spectro.write(&input).unwrap();
 
-        Summary::new(&format!("{}/spectro2.out", dir))
-    }
+    // run gspectro
+    let spectro_arg = String::from("-cmd=") + spectro_cmd;
+    std::process::Command::new(gspectro_cmd.clone())
+        .arg(spectro_arg)
+        .arg(input)
+        .output()
+        .unwrap();
+
+    Summary::new(&format!("{}/spectro2.out", dir))
 }
 
 /// compute the index in the force constant array
@@ -415,11 +685,13 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 struct Index {
     index: usize,
     coeff: f64,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 struct Target {
     /// into the energy array drain is called on
     source_index: usize,
@@ -428,129 +700,124 @@ struct Target {
     indices: Vec<Index>,
 }
 
-// not sure what fields, whatever `symm` operates on, a Molecule? could just
-// be a tuple struct in that case
-#[derive(Eq)]
-struct Structure {}
-
-// TODO ensure that symmetry-equivalent structures are equal
-impl PartialEq for Structure {
-    fn eq(&self, other: &Self) -> bool {
-        todo!()
-    }
-}
-
-// TODO ensure that symmetry-equivalent structures hash the same
-impl Hash for Structure {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        todo!()
-    }
-}
-
-impl CoordType for Cart {
-    fn run(&self, config: &Config, spectro: &Spectro) -> Summary {
+impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
+    fn run(
+        &self,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+        spectro: &Spectro,
+    ) -> Summary {
+        let template = Template::from(&config.template);
         let geom = if config.optimize {
             // TODO take the reference energy from the same calculation if
             // optimizing anyway
-            optimize(config.geometry.clone())
+            optimize(
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            )
         } else {
-            todo!();
+            config.geometry.clone()
         };
 
+        let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
-        let n = 3 * geom.xyz().unwrap().len();
+        let n = 3 * geom.len();
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
 
-        // TODO actually compute this
-        let ref_energy = 0.12660293116764660226E+03 / KCALHT;
+        let ref_energy = ref_energy(
+            queue,
+            Geom::Xyz(geom.clone()),
+            template.clone(),
+            config.charge,
+        );
 
-        let mut target_map = HashMap::<Structure, Target>::new();
+        let mut mol = Molecule::new(geom.to_vec());
+        mol.normalize();
+        mol.reorder();
+        let pg = mol.point_group();
+        println!("normalized geometry:\n{}", mol);
+        let mut target_map = BigHash::new(mol.clone(), pg);
 
-        let geoms = self.build_points(
-            geom.clone(),
+        let mut jobs = self.build_points(
+            "pts",
+            Geom::Xyz(mol.atoms.clone()),
             config.step_size,
+            config.charge,
+            template,
+            0,
             ref_energy,
             nfc2,
             nfc3,
             &mut fcs,
-	    &mut target_map,
+            &mut target_map,
         );
 
-        println!("{n} Cartesian coordinates requires {} points", geoms.len());
-
-        let mut jobs = {
-            let dir = "pts";
-            let mut job_num = 0;
-            let mut jobs = Vec::new();
-            for mol in geoms {
-                let filename = format!("{dir}/job.{:08}", job_num);
-                job_num += 1;
-                let (i, j, k, l) = mol.index;
-                let index = index(n, i, j, k, l);
-                let offset = match (k, l) {
-                    (0, 0) => 0,
-                    (_, 0) => nfc2,
-                    (_, _) => nfc2 + nfc3,
-                };
-                let mut job = Job::new(
-                    Mopac::new(
-                        filename,
-                        None,
-                        Rc::new(mol.geom),
-                        config.charge,
-                        &MOPAC_TMPL,
-                    ),
-                    index + offset,
-                );
-                job.coeff = mol.coeff;
-                jobs.push(job);
-            }
-            jobs
-        };
+        println!("{n} Cartesian coordinates requires {} points", jobs.len());
 
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
-        LocalQueue {
-            dir: "pts".to_string(),
-        }
-        .drain(&mut jobs, &mut energies);
+        queue.drain(&mut jobs, &mut energies);
 
-        // copy energies into all of the places they're needed
-        for target in target_map.values() {
-            let energy = energies[target.source_index];
-            for idx in &target.indices {
-                fcs[idx.index] += idx.coeff * energy;
-            }
-        }
+        make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
 
-        // mirror symmetric quadratic fcs
-        let mut fc2 = intder::DMat::zeros(n, n);
-        for i in 0..n {
-            fc2[(i, i)] = fcs[intder::fc2_index(n, i + 1, i + 1)];
-            for j in 0..i {
-                let f = fcs[intder::fc2_index(n, i + 1, j + 1)];
-                fc2[(i, j)] = f;
-                fc2[(j, i)] = f;
-            }
-        }
-
-        let _ = std::fs::create_dir("freqs");
-        intder::Intder::dump_fcs(
+        freqs(
             "freqs",
-            &fc2,
-            &fcs[nfc2..nfc2 + nfc3],
-            &fcs[nfc2 + nfc3..],
-        );
-
-        let mut spectro = spectro.clone();
-        spectro.geom = {
-            let mut mol = Molecule::new(geom.xyz().unwrap().to_vec());
-            mol.to_bohr();
-            mol
-        };
-        self.freqs("freqs", &spectro, &config.gspectro_cmd, &config.spectro_cmd)
+            &spectro,
+            &config.gspectro_cmd,
+            &config.spectro_cmd,
+            &mol,
+        )
     }
+}
+
+/// use `target_map` to symmetrize the force constants and dump them to the
+/// files expected by spectro in `dir`
+pub fn make_fcs(
+    target_map: &mut BigHash,
+    energies: &[f64],
+    fcs: &mut [f64],
+    n: usize,
+    nfc2: usize,
+    nfc3: usize,
+    dir: &str,
+) {
+    // copy energies into all of the places they're needed
+    for target in target_map.values() {
+        if DEBUG == "fcs" {
+            eprintln!("source index: {}", target.source_index);
+        }
+        let energy = energies[target.source_index];
+        for idx in &target.indices {
+            if DEBUG == "fcs" {
+                eprintln!(
+                    "\tfcs[{}] += {:12.8} * {:12.8}",
+                    idx.index, idx.coeff, energy
+                );
+            }
+            fcs[idx.index] += idx.coeff * energy;
+        }
+    }
+    // mirror symmetric quadratic fcs
+    let mut fc2 = intder::DMat::zeros(n, n);
+    for i in 0..n {
+        fc2[(i, i)] = fcs[intder::fc2_index(n, i + 1, i + 1)];
+        for j in 0..i {
+            let f = fcs[intder::fc2_index(n, i + 1, j + 1)];
+            fc2[(i, j)] = f;
+            fc2[(j, i)] = f;
+        }
+    }
+    let _ = std::fs::create_dir(dir);
+    intder::Intder::dump_fcs(
+        dir,
+        &fc2,
+        &fcs[nfc2..nfc2 + nfc3],
+        &fcs[nfc2 + nfc3..],
+    );
 }

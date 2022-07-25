@@ -16,5 +16,4 @@ spectro_cmd = "/home/brent/Projects/pbqff/bin/spectro"
 charge = 0
 step_size = 0.005
 coord_type = "sic"
-template = """
-A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat"""
+template = "scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat"
