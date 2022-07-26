@@ -28,7 +28,7 @@ use crate::{config::Config, optimize, ref_energy};
 use super::CoordType;
 
 /// debugging options. currently supported options: disp, fcs, none
-pub(crate) static DEBUG: &str = "fcs";
+pub(crate) static DEBUG: &str = "none";
 
 pub struct Cart;
 
@@ -43,10 +43,10 @@ fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
 }
 
 #[derive(Debug)]
-struct CartGeom {
-    geom: Geom,
-    coeff: f64,
-    index: usize,
+pub struct CartGeom {
+    pub geom: Geom,
+    pub coeff: f64,
+    pub index: usize,
 }
 
 /// geom is None if no displacement is required, i.e. this is the reference
@@ -531,7 +531,7 @@ impl BigHash {
         self.map.insert(Self::to_string(&key), value)
     }
 
-    fn values(&self) -> Values<String, Target> {
+    pub fn values(&self) -> Values<String, Target> {
         self.map.values()
     }
 
@@ -547,20 +547,21 @@ impl Cart {
         geom: Geom,
         step_size: f64,
         charge: isize,
-        template: Template,
         start_index: usize,
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
         fcs: &mut [f64],
         map: &mut BigHash,
-    ) -> Vec<Job<Mopac>> {
+    ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
         let ncoords = coords.len();
         let coords = na::DVector::from(coords);
 
         let mut geoms = Vec::new();
+        // counter is the index into the the energies array that the jobs will
+        // be run into
         let mut counter = 0;
         // start at 1 so that k = l = 0 indicates second derivative
         for i in 1..=ncoords {
@@ -579,6 +580,7 @@ impl Cart {
                         let idx = (i, j, k, l);
                         for p in protos {
                             let (i, j, k, l) = idx;
+                            // index is the index into the force constant array
                             let mut index = index(ncoords, i, j, k, l);
                             match (k, l) {
                                 (0, 0) => (),
@@ -626,24 +628,7 @@ impl Cart {
                 }
             }
         }
-        let mut job_num = start_index;
-        let mut jobs = Vec::new();
-        for mol in geoms {
-            let filename = format!("{dir}/job.{:08}", job_num);
-            job_num += 1;
-            let mut job = Job::new(
-                Mopac::new(
-                    filename,
-                    None,
-                    Rc::new(mol.geom),
-                    charge,
-                    template.clone(),
-                ),
-                mol.index + start_index,
-            );
-            jobs.push(job);
-        }
-        jobs
+	geoms
     }
 }
 
@@ -692,9 +677,9 @@ struct Index {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-struct Target {
+pub struct Target {
     /// into the energy array drain is called on
-    source_index: usize,
+    pub source_index: usize,
 
     /// index into the fc array with a coefficient
     indices: Vec<Index>,
@@ -744,12 +729,11 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         println!("normalized geometry:\n{}", mol);
         let mut target_map = BigHash::new(mol.clone(), pg);
 
-        let mut jobs = self.build_points(
+        let mut geoms = self.build_points(
             "pts",
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
             config.charge,
-            template,
             0,
             ref_energy,
             nfc2,
@@ -758,6 +742,27 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             &mut target_map,
         );
 
+        let mut jobs = {
+            let dir = "pts";
+            let mut job_num = 0;
+            let mut jobs = Vec::new();
+            for mol in geoms {
+                let filename = format!("{dir}/job.{:08}", job_num);
+                job_num += 1;
+                let mut job = Job::new(
+                    Mopac::new(
+                        filename,
+                        None,
+                        Rc::new(mol.geom),
+                        config.charge,
+                        template.clone(),
+                    ),
+                    mol.index,
+                );
+                jobs.push(job);
+            }
+            jobs
+        };
         println!("{n} Cartesian coordinates requires {} points", jobs.len());
 
         // drain into energies
