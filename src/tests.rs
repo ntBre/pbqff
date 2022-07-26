@@ -39,7 +39,7 @@ fn sic() {
     ]);
     println!("{:.8}", got.clone() - want.clone());
     // corr
-    approx::assert_abs_diff_eq!(got, want, epsilon = 2.4e-1);
+    approx::assert_abs_diff_eq!(got, want, epsilon = 2.6e-1);
 }
 
 #[test]
