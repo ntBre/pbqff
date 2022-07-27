@@ -9,6 +9,9 @@ endif
 test:
 	RUST_BACKTRACE=1 cargo test ${TESTFLAGS} ${ARGS}
 
+cover:
+	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
+
 BASE = /home/brent/Projects/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
 eland:

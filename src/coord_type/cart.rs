@@ -168,7 +168,7 @@ fn make3d(
     } else if i == j {
         make3d_2_1(i, j, k)
     } else if i == k {
-        make3d_2_1(i, k, j)
+        make3d_2_1(i, k, j) // unreachable
     } else if j == k {
         make3d_2_1(j, k, i)
     } else {
@@ -258,29 +258,29 @@ fn make4d(
     } else if i == j && i == k {
         make4d_3_1(i, j, k, l)
     } else if i == j && i == l {
-        make4d_3_1(i, j, l, k)
+        make4d_3_1(i, j, l, k) // unreachable
     } else if i == k && i == l {
-        make4d_3_1(i, k, l, j)
+        make4d_3_1(i, k, l, j) // unreachable
     } else if j == k && j == l {
         make4d_3_1(j, k, l, i)
     // 2 and 2
     } else if i == j && k == l {
         make4d_2_2(i, j, k, l)
     } else if i == k && j == l {
-        make4d_2_2(i, k, j, l)
+        make4d_2_2(i, k, j, l) // unreachable
     } else if i == l && j == k {
-        make4d_2_2(i, l, j, k)
-    // 2 and 1 and 1, first two are the equal ones
+        make4d_2_2(i, l, j, k) // unreachable
+                               // 2 and 1 and 1, first two are the equal ones
     } else if i == j {
         make4d_2_1_1(i, j, k, l)
     } else if i == k {
-        make4d_2_1_1(i, k, j, l)
+        make4d_2_1_1(i, k, j, l) // unreachable
     } else if i == l {
-        make4d_2_1_1(i, l, j, k)
+        make4d_2_1_1(i, l, j, k) // unreachable
     } else if j == k {
         make4d_2_1_1(j, k, i, l)
     } else if j == l {
-        make4d_2_1_1(j, l, i, k)
+        make4d_2_1_1(j, l, i, k) // unreachable
     } else if k == l {
         make4d_2_1_1(k, l, i, j)
     } else {
