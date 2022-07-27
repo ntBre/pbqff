@@ -628,7 +628,7 @@ impl Cart {
                 }
             }
         }
-	geoms
+        geoms
     }
 }
 
@@ -694,17 +694,22 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         spectro: &Spectro,
     ) -> Summary {
         let template = Template::from(&config.template);
-        let geom = if config.optimize {
-            // TODO take the reference energy from the same calculation if
-            // optimizing anyway
-            optimize(
+        let (geom, ref_energy) = if config.optimize {
+            let res = optimize(
                 queue,
                 config.geometry.clone(),
                 template.clone(),
                 config.charge,
-            )
+            );
+	    (Geom::Xyz(res.cart_geom), res.energy)
         } else {
-            config.geometry.clone()
+            let ref_energy = ref_energy(
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            );
+            (config.geometry.clone(), ref_energy)
         };
 
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
@@ -714,13 +719,6 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
-
-        let ref_energy = ref_energy(
-            queue,
-            Geom::Xyz(geom.clone()),
-            template.clone(),
-            config.charge,
-        );
 
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();

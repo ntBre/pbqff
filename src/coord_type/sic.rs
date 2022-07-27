@@ -51,6 +51,7 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
                 template.clone(),
                 config.charge,
             );
+	    let geom = Geom::Xyz(geom.cart_geom);
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {

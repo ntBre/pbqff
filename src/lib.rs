@@ -9,7 +9,7 @@ use std::rc::Rc;
 pub use intder::Intder;
 use psqs::{
     geom::Geom,
-    program::{mopac::Mopac, Job, Template},
+    program::{mopac::Mopac, Job, Template, ProgramResult},
     queue::Queue,
 };
 pub use spectro::Spectro;
@@ -19,7 +19,7 @@ pub fn optimize<Q: Queue<Mopac>>(
     geom: Geom,
     template: Template,
     charge: isize,
-) -> Geom {
+) -> ProgramResult {
     let _ = std::fs::create_dir("opt");
     let opt = Job::new(
         Mopac::new(
@@ -31,8 +31,8 @@ pub fn optimize<Q: Queue<Mopac>>(
         ),
         0,
     );
-    let mut res = vec![Geom::default(); 1];
-    queue.optimize(&mut [opt], &mut res);
+    let mut res = vec![Default::default(); 1];
+    queue.energize(&mut [opt], &mut res);
     res.pop().unwrap()
 }
 
