@@ -19,3 +19,11 @@ eland:
 	RUSTFLAGS='-C target-feature=+crt-static' \
 	cargo build --release --target x86_64-unknown-linux-gnu
 	scp -C ${BASE}/target/x86_64-unknown-linux-gnu/release/rust-pbqff ${ELAND_DEST}
+
+profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
+	valgrind --tool=callgrind --callgrind-out-file=callgrind.out	\
+		--collect-jumps=yes --simulate-cache=yes		\
+		${BASE}/target/release/$(1)
+
+profile.cart:
+	$(call profile,cart)

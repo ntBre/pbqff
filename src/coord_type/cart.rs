@@ -6,6 +6,7 @@ use std::{
     io,
     path::Path,
     rc::Rc,
+    str::FromStr,
 };
 
 use intder::ANGBOHR;
@@ -366,15 +367,27 @@ impl Buddy {
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+pub struct Key {
+    atom: usize,
+    x: isize,
+    y: isize,
+    z: isize,
+}
+
 #[derive(Clone, Debug)]
 pub struct BigHash {
-    map: HashMap<String, Target>,
+    map: HashMap<Vec<Key>, Target>,
     pg: PointGroup,
     // buddies are pairs of atoms that are interchanged across symmetry
     // operations
     buddy: Buddy,
 }
 
+// it would be really nice not to turn the Molecules into Strings every time,
+// the formatting is quite expensive. Not really sure how else to keep track of
+// them though. The ability to hash is really nice. searching through an array
+// would be way slower I expect
 impl BigHash {
     /// NOTE: assumes mol is already normalized
     pub fn new(mut mol: Molecule, pg: PointGroup) -> Self {
@@ -414,40 +427,29 @@ impl BigHash {
             }
         };
         Self {
-            map: HashMap::<String, Target>::new(),
+            map: HashMap::<Vec<Key>, Target>::new(),
             pg,
             buddy,
         }
     }
 
-    fn to_string(mol: &Molecule) -> String {
-        let mut f = String::new();
-        // needed to make -0.0000000 = 0.0000000 for the String keys
-        let zero = |f: f64| {
-            if f.abs() < 1e-7 {
-                0.0
-            } else {
-                f
-            }
-        };
+    fn to_keys(mol: &Molecule) -> Vec<Key> {
+        let mut ret = Vec::with_capacity(mol.atoms.len());
         for atom in &mol.atoms {
-            writeln!(
-                f,
-                "{:5}{:12.8}{:12.8}{:12.8}",
-                symm::NUMBER_TO_SYMBOL[atom.atomic_number],
-                zero(atom.x),
-                zero(atom.y),
-                zero(atom.z)
-            )
-            .unwrap();
+            ret.push(Key {
+                atom: atom.atomic_number,
+                x: (atom.x * 1e8).round() as isize,
+                y: (atom.y * 1e8).round() as isize,
+                z: (atom.z * 1e8).round() as isize,
+            })
         }
-        f
+        ret
     }
 
     fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
         use symm::PointGroup::{C2v, Cs, C1, C2};
         // first check the original structure
-        let mol = &Self::to_string(&orig);
+        let mol = &Self::to_keys(&orig);
         if self.map.contains_key(mol) {
             return Some(self.map.get_mut(mol).unwrap());
         }
@@ -458,13 +460,13 @@ impl BigHash {
             C2 { axis } => todo!(),
             Cs { plane } => {
                 // check first mirror plane
-                let mol = Self::to_string(&orig.reflect(plane));
+                let mol = Self::to_keys(&orig.reflect(plane));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
                 for buddy in self.buddy.apply(orig) {
                     // check first mirror plane
-                    let mol = Self::to_string(&buddy.reflect(plane));
+                    let mol = Self::to_keys(&buddy.reflect(plane));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
@@ -473,34 +475,34 @@ impl BigHash {
             C2v { axis, planes } => {
                 // check C2 axis
                 let mol = &orig.rotate(180.0, &axis);
-                let key = Self::to_string(mol);
+                let key = Self::to_keys(mol);
                 if self.map.contains_key(&key) {
                     return Some(self.map.get_mut(&key).unwrap());
                 }
                 // check first mirror plane
-                let mol = Self::to_string(&orig.reflect(&planes[0]));
+                let mol = Self::to_keys(&orig.reflect(&planes[0]));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
                 // check second mirror plane
-                let mol = Self::to_string(&orig.reflect(&planes[1]));
+                let mol = Self::to_keys(&orig.reflect(&planes[1]));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
                 for buddy in self.buddy.apply(orig) {
                     // check C2 axis
                     let mol = &buddy.rotate(180.0, &axis);
-                    let key = Self::to_string(mol);
+                    let key = Self::to_keys(mol);
                     if self.map.contains_key(&key) {
                         return Some(self.map.get_mut(&key).unwrap());
                     }
                     // check first mirror plane
-                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                    let mol = Self::to_keys(&buddy.reflect(&planes[0]));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
                     // check second mirror plane
-                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
+                    let mol = Self::to_keys(&buddy.reflect(&planes[1]));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
@@ -510,14 +512,14 @@ impl BigHash {
                 // check the C2 axes
                 for axis in axes {
                     let mol = &orig.rotate(180.0, axis);
-                    let key = Self::to_string(mol);
+                    let key = Self::to_keys(mol);
                     if self.map.contains_key(&key) {
                         return Some(self.map.get_mut(&key).unwrap());
                     }
                 }
                 // check the mirror planes
                 for plane in planes {
-                    let mol = Self::to_string(&orig.reflect(&plane));
+                    let mol = Self::to_keys(&orig.reflect(&plane));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
@@ -525,14 +527,14 @@ impl BigHash {
                 for buddy in self.buddy.apply(orig) {
                     for axis in axes {
                         let mol = &buddy.rotate(180.0, axis);
-                        let key = Self::to_string(mol);
+                        let key = Self::to_keys(mol);
                         if self.map.contains_key(&key) {
                             return Some(self.map.get_mut(&key).unwrap());
                         }
                     }
                     // check the mirror planes
                     for plane in planes {
-                        let mol = Self::to_string(&buddy.reflect(&plane));
+                        let mol = Self::to_keys(&buddy.reflect(&plane));
                         if self.map.contains_key(&mol) {
                             return Some(self.map.get_mut(&mol).unwrap());
                         }
@@ -544,10 +546,10 @@ impl BigHash {
     }
 
     fn insert(&mut self, key: Molecule, value: Target) -> Option<Target> {
-        self.map.insert(Self::to_string(&key), value)
+        self.map.insert(Self::to_keys(&key), value)
     }
 
-    pub fn values(&self) -> Values<String, Target> {
+    pub fn values(&self) -> Values<Vec<Key>, Target> {
         self.map.values()
     }
 
@@ -839,4 +841,20 @@ pub fn make_fcs(
         &fcs[nfc2..nfc2 + nfc3],
         &fcs[nfc2 + nfc3..],
     );
+}
+
+extern crate test;
+#[bench]
+fn bench_to_keys(b: &mut test::Bencher) {
+    let mol = Molecule::from_str(
+        "
+    C        0.000000   -0.888844    0.000000
+    C       -0.662697    0.368254    0.000000
+    C        0.662697    0.368254    0.000000
+    H       -1.595193    0.906925    0.000000
+    H        1.595193    0.906925    0.000000
+",
+    )
+    .unwrap();
+    b.iter(|| BigHash::to_keys(&mol))
 }

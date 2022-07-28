@@ -21,3 +21,7 @@ libc = "0.2.126"
 
 [dev-dependencies]
 approx = "0.5.1"
+
+[[bin]]
+name = "cart"
+path = "src/bin/cart.rs"

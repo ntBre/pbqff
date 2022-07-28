@@ -1,12 +1,17 @@
 use intder::Intder;
+use psqs::geom::Geom;
+use psqs::program::Template;
 use psqs::queue::local::LocalQueue;
 use rust_anpass::Dvec;
 use spectro::Spectro;
+use symm::Molecule;
 
 use crate::config::Config;
+use crate::coord_type::BigHash;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::SIC;
+use crate::optimize;
 
 #[test]
 #[ignore]
@@ -108,4 +113,54 @@ fn cart() {
     // A_7   34170.5
     // B_7   31904.4
     // C_7   16413.8
+}
+
+/// test approximately to check that I don't break the symmetry stuff without
+/// running the whole QFF.
+#[test]
+fn build_pts() {
+    let config = Config::load("testfiles/cart.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+    };
+    let template = Template::from(&config.template);
+    let (geom, ref_energy) = {
+        let res = optimize(
+            &queue,
+            config.geometry.clone(),
+            template.clone(),
+            config.charge,
+        );
+        (Geom::Xyz(res.cart_geom), res.energy)
+    };
+
+    let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
+    // 3 * #atoms
+    let n = 3 * geom.len();
+    let nfc2 = n * n;
+    let nfc3 = n * (n + 1) * (n + 2) / 6;
+    let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
+    let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+
+    let mut mol = Molecule::new(geom.to_vec());
+    mol.normalize();
+    mol.reorder();
+    let pg = mol.point_group();
+    println!("normalized geometry:\n{}", mol);
+    let mut target_map = BigHash::new(mol.clone(), pg);
+
+    let geoms = Cart.build_points(
+        "pts",
+        Geom::Xyz(mol.atoms.clone()),
+        config.step_size,
+        config.charge,
+        0,
+        ref_energy,
+        nfc2,
+        nfc3,
+        &mut fcs,
+        &mut target_map,
+    );
+    assert_eq!(geoms.len(), 11952);
 }
