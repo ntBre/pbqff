@@ -317,6 +317,10 @@ enum Buddy {
         plane0: Vec<usize>,
         plane1: Vec<usize>,
     },
+    D2h {
+        axes: Vec<Vec<usize>>,
+        planes: Vec<Vec<usize>>,
+    },
 }
 
 impl Buddy {
@@ -344,6 +348,18 @@ impl Buddy {
                 ret.push(Molecule::new(
                     plane1.iter().map(|i| mol.atoms[*i].clone()).collect(),
                 ));
+            }
+            Buddy::D2h { axes, planes } => {
+                for axis in axes {
+                    ret.push(Molecule::new(
+                        axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                    ));
+                }
+                for plane in planes {
+                    ret.push(Molecule::new(
+                        plane.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                    ));
+                }
             }
         }
         ret
@@ -379,16 +395,21 @@ impl BigHash {
                     plane1,
                 }
             }
-            // NOTE: treating D2h as a subgroup of C2v
             PointGroup::D2h { axes, planes } => {
-                let axis =
-                    mol.detect_buddies(&mol.rotate(180.0, &axes[0]), 1e-8);
-                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
-                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
-                Buddy::C2v {
-                    axis,
-                    plane0,
-                    plane1,
+                let mut new_axes = Vec::new();
+                for axis in axes {
+                    new_axes.push(
+                        mol.detect_buddies(&mol.rotate(180.0, &axes[0]), 1e-8),
+                    );
+                }
+                let mut new_planes = Vec::new();
+                for plane in planes {
+                    new_planes
+                        .push(mol.detect_buddies(&mol.reflect(plane), 1e-8))
+                }
+                Buddy::D2h {
+                    axes: new_axes,
+                    planes: new_planes,
                 }
             }
         };
@@ -486,40 +507,35 @@ impl BigHash {
                 }
             }
             PointGroup::D2h { axes, planes } => {
-                // NOTE: this is copy-pasted from C2v and axis -> axes[0]
-
-                // check C2 axis
-                let mol = &orig.rotate(180.0, &axes[0]);
-                let key = Self::to_string(mol);
-                if self.map.contains_key(&key) {
-                    return Some(self.map.get_mut(&key).unwrap());
-                }
-                // check first mirror plane
-                let mol = Self::to_string(&orig.reflect(&planes[0]));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                // check second mirror plane
-                let mol = Self::to_string(&orig.reflect(&planes[1]));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                for buddy in self.buddy.apply(orig) {
-                    // check C2 axis
-                    let mol = &buddy.rotate(180.0, &axes[0]);
+                // check the C2 axes
+                for axis in axes {
+                    let mol = &orig.rotate(180.0, axis);
                     let key = Self::to_string(mol);
                     if self.map.contains_key(&key) {
                         return Some(self.map.get_mut(&key).unwrap());
                     }
-                    // check first mirror plane
-                    let mol = Self::to_string(&buddy.reflect(&planes[0]));
+                }
+                // check the mirror planes
+                for plane in planes {
+                    let mol = Self::to_string(&orig.reflect(&plane));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
-                    // check second mirror plane
-                    let mol = Self::to_string(&buddy.reflect(&planes[1]));
-                    if self.map.contains_key(&mol) {
-                        return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    for axis in axes {
+                        let mol = &buddy.rotate(180.0, axis);
+                        let key = Self::to_string(mol);
+                        if self.map.contains_key(&key) {
+                            return Some(self.map.get_mut(&key).unwrap());
+                        }
+                    }
+                    // check the mirror planes
+                    for plane in planes {
+                        let mol = Self::to_string(&buddy.reflect(&plane));
+                        if self.map.contains_key(&mol) {
+                            return Some(self.map.get_mut(&mol).unwrap());
+                        }
                     }
                 }
             }
@@ -701,7 +717,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
                 template.clone(),
                 config.charge,
             );
-	    (Geom::Xyz(res.cart_geom), res.energy)
+            (Geom::Xyz(res.cart_geom), res.energy)
         } else {
             let ref_energy = ref_energy(
                 queue,
