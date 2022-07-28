@@ -1,22 +1,15 @@
-#![allow(unused)]
 use std::{
     collections::{hash_map::Values, HashMap},
-    fmt::Write,
     hash::Hash,
     io,
-    path::Path,
     rc::Rc,
-    str::FromStr,
 };
 
 use intder::ANGBOHR;
 use psqs::{
     geom::Geom,
-    program::{
-        mopac::{Mopac, KCALHT},
-        Job, Template,
-    },
-    queue::{local::LocalQueue, Queue},
+    program::{mopac::Mopac, Job, Template},
+    queue::Queue,
 };
 use spectro::Spectro;
 use summarize::Summary;
@@ -306,6 +299,8 @@ fn make4d(
     }
 }
 
+// TODO use this one day
+#[allow(unused)]
 #[derive(Clone, Debug)]
 enum Buddy {
     C1,
@@ -390,10 +385,10 @@ pub struct BigHash {
 // would be way slower I expect
 impl BigHash {
     /// NOTE: assumes mol is already normalized
-    pub fn new(mut mol: Molecule, pg: PointGroup) -> Self {
+    pub fn new(mol: Molecule, pg: PointGroup) -> Self {
         let buddy = match &pg {
             PointGroup::C1 => todo!(),
-            PointGroup::C2 { axis } => todo!(),
+            PointGroup::C2 { axis: _ } => todo!(),
             PointGroup::Cs { plane } => {
                 let plane = mol.detect_buddies(&mol.reflect(plane), 1e-8);
                 Buddy::Cs { plane }
@@ -412,7 +407,7 @@ impl BigHash {
                 let mut new_axes = Vec::new();
                 for axis in axes {
                     new_axes.push(
-                        mol.detect_buddies(&mol.rotate(180.0, &axes[0]), 1e-8),
+                        mol.detect_buddies(&mol.rotate(180.0, axis), 1e-8),
                     );
                 }
                 let mut new_planes = Vec::new();
@@ -457,7 +452,7 @@ impl BigHash {
         // TODO DRY this out
         match &self.pg {
             C1 => todo!(),
-            C2 { axis } => todo!(),
+            C2 { axis: _ } => todo!(),
             Cs { plane } => {
                 // check first mirror plane
                 let mol = Self::to_keys(&orig.reflect(plane));
@@ -561,11 +556,8 @@ impl BigHash {
 impl Cart {
     pub fn build_points(
         &self,
-        dir: &str,
         geom: Geom,
         step_size: f64,
-        charge: isize,
-        start_index: usize,
         ref_energy: f64,
         nfc2: usize,
         nfc3: usize,
@@ -742,15 +734,12 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         mol.normalize();
         mol.reorder();
         let pg = mol.point_group();
-        println!("normalized geometry:\n{}", mol);
+        writeln!(w, "normalized geometry:\n{}", mol).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
 
-        let mut geoms = self.build_points(
-            "pts",
+        let geoms = self.build_points(
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
-            config.charge,
-            0,
             ref_energy,
             nfc2,
             nfc3,
@@ -765,7 +754,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             for mol in geoms {
                 let filename = format!("{dir}/job.{:08}", job_num);
                 job_num += 1;
-                let mut job = Job::new(
+                let job = Job::new(
                     Mopac::new(
                         filename,
                         None,
@@ -779,7 +768,12 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             }
             jobs
         };
-        println!("{n} Cartesian coordinates requires {} points", jobs.len());
+        writeln!(
+            w,
+            "{n} Cartesian coordinates requires {} points",
+            jobs.len()
+        )
+        .unwrap();
 
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
@@ -846,6 +840,7 @@ pub fn make_fcs(
 extern crate test;
 #[bench]
 fn bench_to_keys(b: &mut test::Bencher) {
+    use std::str::FromStr;
     let mol = Molecule::from_str(
         "
     C        0.000000   -0.888844    0.000000

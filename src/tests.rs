@@ -151,11 +151,8 @@ fn build_pts() {
     let mut target_map = BigHash::new(mol.clone(), pg);
 
     let geoms = Cart.build_points(
-        "pts",
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
-        config.charge,
-        0,
         ref_energy,
         nfc2,
         nfc3,
