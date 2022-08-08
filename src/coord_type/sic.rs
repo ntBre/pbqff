@@ -50,8 +50,9 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
                 config.geometry.clone(),
                 template.clone(),
                 config.charge,
-            );
-	    let geom = Geom::Xyz(geom.cart_geom);
+            )
+            .expect("optimization failed");
+            let geom = Geom::Xyz(geom.cart_geom);
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
@@ -89,7 +90,9 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
             .unwrap();
 
         let mut energies = vec![0.0; jobs.len()];
-        queue.drain(&mut jobs, &mut energies);
+        queue
+            .drain(&mut jobs, &mut energies)
+            .expect("single-point energies failed");
 
         let _ = std::fs::create_dir("freqs");
         freqs(

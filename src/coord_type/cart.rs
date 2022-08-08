@@ -729,7 +729,8 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
                 config.geometry.clone(),
                 template.clone(),
                 config.charge,
-            );
+            )
+            .expect("optimization failed");
             (Geom::Xyz(res.cart_geom), res.energy)
         } else {
             let ref_energy = ref_energy(
@@ -796,7 +797,9 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
 
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
-        queue.drain(&mut jobs, &mut energies);
+        queue
+            .drain(&mut jobs, &mut energies)
+            .expect("single-point calculations failed");
 
         make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
 
