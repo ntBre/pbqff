@@ -304,7 +304,9 @@ fn make4d(
 #[derive(Clone, Debug)]
 enum Buddy {
     C1,
-    C2,
+    C2 {
+        axis: Vec<usize>,
+    },
     Cs {
         plane: Vec<usize>,
     },
@@ -323,8 +325,12 @@ impl Buddy {
     fn apply(&self, mol: &Molecule) -> Vec<Molecule> {
         let mut ret = Vec::new();
         match self {
-            Buddy::C1 => todo!(),
-            Buddy::C2 => todo!(),
+            Buddy::C1 => (),
+            Buddy::C2 { axis } => {
+                ret.push(Molecule::new(
+                    axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                ));
+            }
             Buddy::Cs { plane } => {
                 ret.push(Molecule::new(
                     plane.iter().map(|i| mol.atoms[*i].clone()).collect(),
@@ -387,12 +393,13 @@ impl BigHash {
     /// NOTE: assumes mol is already normalized
     pub fn new(mol: Molecule, pg: PointGroup) -> Self {
         let buddy = match &pg {
-            PointGroup::C1 => todo!(),
-            PointGroup::C2 { axis: _ } => todo!(),
-            PointGroup::Cs { plane } => {
-                let plane = mol.detect_buddies(&mol.reflect(plane), 1e-8);
-                Buddy::Cs { plane }
-            }
+            PointGroup::C1 => Buddy::C1,
+            PointGroup::C2 { axis } => Buddy::C2 {
+                axis: mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8),
+            },
+            PointGroup::Cs { plane } => Buddy::Cs {
+                plane: mol.detect_buddies(&mol.reflect(plane), 1e-8),
+            },
             PointGroup::C2v { axis, planes } => {
                 let axis = mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
                 let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
@@ -451,8 +458,21 @@ impl BigHash {
 
         // TODO DRY this out
         match &self.pg {
-            C1 => todo!(),
-            C2 { axis: _ } => todo!(),
+            C1 => (),
+            C2 { axis } => {
+                // check C2 axis
+                let mol = Self::to_keys(&orig.rotate(180.0, &axis));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
+                }
+                for buddy in self.buddy.apply(orig) {
+                    // check C2 axis
+                    let mol = Self::to_keys(&buddy.rotate(180.0, &axis));
+                    if self.map.contains_key(&mol) {
+                        return Some(self.map.get_mut(&mol).unwrap());
+                    }
+                }
+            }
             Cs { plane } => {
                 // check first mirror plane
                 let mol = Self::to_keys(&orig.reflect(plane));
@@ -469,10 +489,9 @@ impl BigHash {
             }
             C2v { axis, planes } => {
                 // check C2 axis
-                let mol = &orig.rotate(180.0, &axis);
-                let key = Self::to_keys(mol);
-                if self.map.contains_key(&key) {
-                    return Some(self.map.get_mut(&key).unwrap());
+                let mol = Self::to_keys(&orig.rotate(180.0, &axis));
+                if self.map.contains_key(&mol) {
+                    return Some(self.map.get_mut(&mol).unwrap());
                 }
                 // check first mirror plane
                 let mol = Self::to_keys(&orig.reflect(&planes[0]));
