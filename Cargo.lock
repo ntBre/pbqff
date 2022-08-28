@@ -41,6 +41,7 @@ dependencies = [
  "psqs",
  "regex",
  "symm",
+ "tensor",
 ]
 
 [[package]]
@@ -310,6 +311,7 @@ dependencies = [
  "intder",
  "nalgebra 0.30.1",
  "symm",
+ "tensor",
 ]
 
 [[package]]
@@ -344,6 +346,10 @@ dependencies = [
 
 [[package]]
 name = "taylor"
+version = "0.1.0"
+
+[[package]]
+name = "tensor"
 version = "0.1.0"
 
 [[package]]
