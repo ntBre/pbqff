@@ -131,7 +131,8 @@ fn build_pts() {
             config.geometry.clone(),
             template.clone(),
             config.charge,
-        );
+        )
+        .expect("optimization failed in build_pts");
         (Geom::Xyz(res.cart_geom), res.energy)
     };
 
@@ -145,7 +146,6 @@ fn build_pts() {
 
     let mut mol = Molecule::new(geom.to_vec());
     mol.normalize();
-    mol.reorder();
     let pg = mol.point_group();
     println!("normalized geometry:\n{}", mol);
     let mut target_map = BigHash::new(mol.clone(), pg);

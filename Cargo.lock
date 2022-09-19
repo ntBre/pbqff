@@ -33,26 +33,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdead85bdec19c194affaeeb670c0e41fe23de31459efd1c174d049269cf02cc"
 
 [[package]]
-name = "cc"
-version = "1.0.73"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2fff2a6927b3bb87f9595d67196a70493f627687a71d87a0d692242c33f58c11"
-
-[[package]]
-name = "cmake"
-version = "0.1.48"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e8ad8cef104ac57b68b89df3208164d228503abbdce70f6880ffa3d970e7443a"
-dependencies = [
- "cc",
-]
-
-[[package]]
 name = "intder"
 version = "0.1.0"
 dependencies = [
  "approx",
- "nalgebra 0.30.1",
+ "nalgebra",
  "psqs",
  "regex",
  "symm",
@@ -64,35 +49,6 @@ name = "itoa"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "112c678d4050afce233f4f2852bb2eb519230b3cf12f33585275537d7e41578d"
-
-[[package]]
-name = "lapack"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad676a6b4df7e76a9fd80a0c50c619a3948d6105b62a0ab135f064d99c51d207"
-dependencies = [
- "lapack-sys",
- "libc",
- "num-complex",
-]
-
-[[package]]
-name = "lapack-src"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32a3cb33e1ac8989473dde32d37edc8cd0da00b655306eb5bb1cb0b7968612b2"
-dependencies = [
- "netlib-src",
-]
-
-[[package]]
-name = "lapack-sys"
-version = "0.14.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "447f56c85fb410a7a3d36701b2153c1018b1d2b908c5fbaf01c1b04fac33bcbe"
-dependencies = [
- "libc",
-]
 
 [[package]]
 name = "lazy_static"
@@ -123,22 +79,6 @@ checksum = "2dffe52ecf27772e601905b7522cb4ef790d2cc203488bbd0e2fe85fcb74566d"
 
 [[package]]
 name = "nalgebra"
-version = "0.30.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4fb2d0de08694bed883320212c18ee3008576bfe8c306f4c3c4a58b4876998be"
-dependencies = [
- "approx",
- "matrixmultiply",
- "nalgebra-macros",
- "num-complex",
- "num-rational",
- "num-traits",
- "simba",
- "typenum",
-]
-
-[[package]]
-name = "nalgebra"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e9e0a04ce089f9401aac565c740ed30c46291260f27d4911fdbaa6ca65fa3044"
@@ -154,20 +94,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "nalgebra-lapack"
-version = "0.22.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "747531076105140d84e943ac58506999c5e1f4798f48a979bec439f6dd6f84ea"
-dependencies = [
- "lapack",
- "lapack-src",
- "nalgebra 0.31.1",
- "num-complex",
- "num-traits",
- "simba",
-]
-
-[[package]]
 name = "nalgebra-macros"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -176,15 +102,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "netlib-src"
-version = "0.8.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "39f41f36bb4d46906d5a72da5b73a804d9de1a7282eb7c89617201acda7b8212"
-dependencies = [
- "cmake",
 ]
 
 [[package]]
@@ -246,7 +163,7 @@ name = "psqs"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
- "nalgebra 0.30.1",
+ "nalgebra",
  "regex",
  "symm",
 ]
@@ -288,7 +205,7 @@ name = "rust-anpass"
 version = "0.1.0"
 dependencies = [
  "approx",
- "nalgebra 0.30.1",
+ "nalgebra",
  "regex",
 ]
 
@@ -299,7 +216,7 @@ dependencies = [
  "approx",
  "intder",
  "libc",
- "nalgebra 0.30.1",
+ "nalgebra",
  "psqs",
  "rust-anpass",
  "serde",
@@ -375,8 +292,7 @@ name = "spectro"
 version = "0.1.0"
 dependencies = [
  "approx",
- "nalgebra 0.31.1",
- "nalgebra-lapack",
+ "nalgebra",
  "symm",
  "tensor",
 ]
@@ -386,7 +302,7 @@ name = "summarize"
 version = "0.1.0"
 dependencies = [
  "lazy_static",
- "nalgebra 0.31.1",
+ "nalgebra",
  "regex",
  "symm",
 ]
@@ -396,7 +312,7 @@ name = "symm"
 version = "0.1.0"
 dependencies = [
  "approx",
- "nalgebra 0.31.1",
+ "nalgebra",
  "serde",
 ]
 

@@ -178,6 +178,7 @@ fn make_taylor_checks(
             (Some(checks.clone()), Some(checks))
         }
         D2h { axes: _, planes: _ } => todo!(),
+        C3v { axis, plane } => todo!(),
     }
 }
 

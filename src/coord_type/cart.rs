@@ -395,15 +395,19 @@ impl BigHash {
         let buddy = match &pg {
             PointGroup::C1 => Buddy::C1,
             PointGroup::C2 { axis } => Buddy::C2 {
-                axis: mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8),
+                axis: mol
+                    .detect_buddies_unchecked(&mol.rotate(180.0, &axis), 1e-8),
             },
             PointGroup::Cs { plane } => Buddy::Cs {
-                plane: mol.detect_buddies(&mol.reflect(plane), 1e-8),
+                plane: mol.detect_buddies_unchecked(&mol.reflect(plane), 1e-8),
             },
             PointGroup::C2v { axis, planes } => {
-                let axis = mol.detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
-                let plane0 = mol.detect_buddies(&mol.reflect(&planes[0]), 1e-8);
-                let plane1 = mol.detect_buddies(&mol.reflect(&planes[1]), 1e-8);
+                let axis = mol
+                    .detect_buddies_unchecked(&mol.rotate(180.0, &axis), 1e-8);
+                let plane0 = mol
+                    .detect_buddies_unchecked(&mol.reflect(&planes[0]), 1e-8);
+                let plane1 = mol
+                    .detect_buddies_unchecked(&mol.reflect(&planes[1]), 1e-8);
                 Buddy::C2v {
                     axis,
                     plane0,
@@ -413,20 +417,23 @@ impl BigHash {
             PointGroup::D2h { axes, planes } => {
                 let mut new_axes = Vec::new();
                 for axis in axes {
-                    new_axes.push(
-                        mol.detect_buddies(&mol.rotate(180.0, axis), 1e-8),
-                    );
+                    new_axes.push(mol.detect_buddies_unchecked(
+                        &mol.rotate(180.0, axis),
+                        1e-8,
+                    ));
                 }
                 let mut new_planes = Vec::new();
                 for plane in planes {
-                    new_planes
-                        .push(mol.detect_buddies(&mol.reflect(plane), 1e-8))
+                    new_planes.push(
+                        mol.detect_buddies_unchecked(&mol.reflect(plane), 1e-8),
+                    )
                 }
                 Buddy::D2h {
                     axes: new_axes,
                     planes: new_planes,
                 }
             }
+            PointGroup::C3v { axis, plane } => todo!(),
         };
         Self {
             map: HashMap::<Vec<Key>, Target>::new(),
@@ -555,6 +562,7 @@ impl BigHash {
                     }
                 }
             }
+            PointGroup::C3v { axis, plane } => todo!(),
         }
         None
     }
@@ -752,7 +760,6 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
 
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
-        mol.reorder();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{}", mol).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
