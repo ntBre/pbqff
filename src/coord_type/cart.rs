@@ -433,7 +433,7 @@ impl BigHash {
                     planes: new_planes,
                 }
             }
-            PointGroup::C3v { axis, plane } => todo!(),
+            PointGroup::C3v { axis: _, plane: _ } => todo!(),
         };
         Self {
             map: HashMap::<Vec<Key>, Target>::new(),
@@ -562,7 +562,7 @@ impl BigHash {
                     }
                 }
             }
-            PointGroup::C3v { axis, plane } => todo!(),
+            PointGroup::C3v { axis: _, plane: _ } => todo!(),
         }
         None
     }
