@@ -681,26 +681,25 @@ impl Cart {
     }
 }
 
-pub fn freqs(dir: &str, spectro: &Spectro, mol: &Molecule) -> Output {
-    let mut spectro = spectro.clone();
+pub fn freqs(
+    dir: &str,
+    mol: &Molecule,
+    fc2: nalgebra::DMatrix<f64>,
+    f3: &[f64],
+    f4: &[f64],
+) -> Output {
     let mut mol = mol.clone();
-    spectro.geom = {
-        mol.to_bohr();
-        mol
-    };
+    mol.to_bohr();
+    let spectro = Spectro::from(mol);
 
     // write input
     let input = format!("{}/spectro.in", dir);
     spectro.write(&input).unwrap();
 
-    let spectro = Spectro::load(&input);
+    let fc3 = spectro::new_fc3(spectro.n3n, f3);
+    let fc4 = spectro::new_fc4(spectro.n3n, f4);
 
-    let dir = Path::new(dir);
-    let (output, _) = spectro.run(
-        dir.join("fort.15"),
-        dir.join("fort.30"),
-        dir.join("fort.40"),
-    );
+    let (output, _) = spectro.run(fc2, fc3, fc4);
     output
 }
 
@@ -812,23 +811,31 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             .drain(&mut jobs, &mut energies)
             .expect("single-point calculations failed");
 
-        make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
+        let (fc2, f3, f4) = make_fcs(
+            &mut target_map,
+            &energies,
+            &mut fcs,
+            n,
+            nfc2,
+            nfc3,
+            "freqs",
+        );
 
-        freqs("freqs", spectro, &mol)
+        freqs("freqs", &mol, fc2, f3, f4)
     }
 }
 
-/// use `target_map` to symmetrize the force constants and dump them to the
-/// files expected by spectro in `dir`
-pub fn make_fcs(
+/// use `target_map` to symmetrize the force constants and return them in the
+/// form wanted by spectro
+pub fn make_fcs<'a>(
     target_map: &mut BigHash,
     energies: &[f64],
-    fcs: &mut [f64],
+    fcs: &'a mut [f64],
     n: usize,
     nfc2: usize,
     nfc3: usize,
     dir: &str,
-) {
+) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
     // copy energies into all of the places they're needed
     for target in target_map.values() {
         if DEBUG == "fcs" {
@@ -855,6 +862,7 @@ pub fn make_fcs(
             fc2[(j, i)] = f;
         }
     }
+
     let _ = std::fs::create_dir(dir);
     intder::Intder::dump_fcs(
         dir,
@@ -862,6 +870,8 @@ pub fn make_fcs(
         &fcs[nfc2..nfc2 + nfc3],
         &fcs[nfc2 + nfc3..],
     );
+
+    (fc2, &fcs[nfc2..nfc2 + nfc3], &fcs[nfc2 + nfc3..])
 }
 
 extern crate test;

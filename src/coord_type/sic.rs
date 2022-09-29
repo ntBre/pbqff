@@ -414,21 +414,19 @@ pub fn freqs<W: std::io::Write>(
     Intder::dump_fcs(dir, &f2, &f3, &f4);
 
     // spectro
-    let mut spectro = spectro.clone();
-    spectro.geom = mol;
+    let spectro = Spectro::from(mol);
+
+    let fc3 = spectro::new_fc3(spectro.n3n, &f3);
+    let fc4 = spectro::new_fc4(spectro.n3n, &f4);
+
     let input = format!("{}/spectro.in", dir);
     if DEBUG {
         writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
     }
     spectro.write(&input).unwrap();
-    let spectro = Spectro::load(&input);
 
     let dir = Path::new(dir);
-    let (output, _) = spectro.run(
-        dir.join("fort.15"),
-        dir.join("fort.30"),
-        dir.join("fort.40"),
-    );
+    let (output, _) = spectro.run(f2, fc3, fc4);
 
     output
 }
