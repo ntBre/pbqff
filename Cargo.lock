@@ -327,7 +327,6 @@ dependencies = [
  "serde",
  "serde_json",
  "spectro",
- "summarize",
  "symm",
  "taylor",
  "toml",
@@ -410,16 +409,6 @@ name = "strsim"
 version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
-
-[[package]]
-name = "summarize"
-version = "0.1.0"
-dependencies = [
- "lazy_static",
- "nalgebra",
- "regex",
- "symm",
-]
 
 [[package]]
 name = "symm"

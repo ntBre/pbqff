@@ -6,7 +6,6 @@ use rust_pbqff::{
     coord_type::{Cart, CoordType, SIC},
     Intder, Spectro,
 };
-use summarize::Summary;
 
 fn cleanup() {
     let _ = std::fs::remove_dir("opt");
@@ -14,7 +13,7 @@ fn cleanup() {
     let _ = std::fs::remove_dir("freqs");
 }
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     let outfile = File::create("pbqff.out").expect("failed to create outfile");
     let logfile = File::create("pbqff.log").expect("failed to create log file");
     let out_fd = outfile.as_raw_fd();
@@ -29,20 +28,17 @@ fn main() {
     let config = Config::load("pbqff.toml");
     let spectro = Spectro::nocurvil();
     let queue = Slurm::new(32, 2048, 2, "pts");
-    match config.coord_type {
-        config::CoordType::cart => {
-            Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
-        }
-        config::CoordType::sic => {
-            SIC::new(Intder::load_file("intder.in")).run(
-                &mut std::io::stdout(),
-                &queue,
-                &config,
-                &spectro,
-            );
-        }
-    }
-    let summ = Summary::new("freqs/spectro2.out");
-    println!("\nvibrational frequencies:\n{}", summ);
+    let output =
+        match config.coord_type {
+            config::CoordType::cart => {
+                Cart.run(&mut std::io::stdout(), &queue, &config, &spectro)
+            }
+            config::CoordType::sic => SIC::new(Intder::load_file("intder.in"))
+                .run(&mut std::io::stdout(), &queue, &config, &spectro),
+        };
+
+    spectro.write_output(&mut std::io::stdout(), output)?;
     println!("normal termination of pbqff");
+
+    Ok(())
 }

@@ -6,9 +6,8 @@ use rust_pbqff::{
     coord_type::{Cart, CoordType},
     Spectro,
 };
-use summarize::Summary;
 
-fn main() {
+fn main() -> Result<(), std::io::Error> {
     // inlined cleanup from main
     let _ = std::fs::remove_dir("opt");
     let _ = std::fs::remove_dir("pts");
@@ -23,13 +22,14 @@ fn main() {
     };
 
     let now = Instant::now();
-    Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
+    let output = Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
     println!(
         "Finished Cart run after {} seconds.",
         now.elapsed().as_secs()
     );
 
-    let summ = Summary::new("freqs/spectro2.out");
-    println!("\nvibrational frequencies:\n{}", summ);
+    spectro.write_output(&mut std::io::stdout(), output)?;
     println!("normal termination of pbqff");
+
+    Ok(())
 }
