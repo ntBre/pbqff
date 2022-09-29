@@ -11,14 +11,6 @@ struct RawConfig {
     /// whether or not to optimize the structure first
     optimize: bool,
 
-    /// the path to the wrapper SPECTRO program to be called, eventually this
-    /// will be deprecated when I have a Rust version of gspectro
-    gspectro_cmd: String,
-
-    /// the path to the real SPECTRO executable to be passed to gspectro,
-    /// deprecated when I rewrite SPECTRO
-    spectro_cmd: String,
-
     /// charge on the molecule
     charge: isize,
 
@@ -43,8 +35,6 @@ impl RawConfig {
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,
-    pub gspectro_cmd: String,
-    pub spectro_cmd: String,
     pub charge: isize,
     pub step_size: f64,
     pub coord_type: CoordType,
@@ -57,8 +47,6 @@ impl Config {
         Self {
             geometry: rc.geometry.parse().unwrap(),
             optimize: rc.optimize,
-            gspectro_cmd: rc.gspectro_cmd,
-            spectro_cmd: rc.spectro_cmd,
             charge: rc.charge,
             step_size: rc.step_size,
             coord_type: rc.coord_type,
@@ -77,8 +65,6 @@ geometry = {{
 {}
 }}
 optimize = {}
-gspectro_cmd = {}
-spectro_cmd = {}
 charge = {}
 step_size = {}
 coord_type = {}
@@ -86,8 +72,6 @@ template = {}
 ",
             self.geometry.to_string().trim(),
             self.optimize,
-            self.gspectro_cmd,
-            self.spectro_cmd,
             self.charge,
             self.step_size,
             self.coord_type,
@@ -117,10 +101,6 @@ HCC =               147.81488230
 "
             .to_string(),
             optimize: true,
-            gspectro_cmd:
-                "/home/brent/Projects/chemutils/spectro/spectro/spectro"
-                    .to_string(),
-            spectro_cmd: "/home/brent/Projects/pbqff/bin/spectro".to_string(),
             charge: 0,
             step_size: 0.005,
             coord_type: CoordType::sic,

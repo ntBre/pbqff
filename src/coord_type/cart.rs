@@ -2,6 +2,7 @@ use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     io,
+    path::Path,
     rc::Rc,
 };
 
@@ -11,8 +12,7 @@ use psqs::{
     program::{mopac::Mopac, Job, Template},
     queue::Queue,
 };
-use spectro::Spectro;
-use summarize::Summary;
+use spectro::{Output, Spectro};
 use symm::{Atom, Molecule, PointGroup};
 
 use nalgebra as na;
@@ -51,7 +51,7 @@ struct Proto {
     coeff: f64,
 }
 
-fn zip_atoms(names: Vec<&str>, coords: na::DVector<f64>) -> Vec<Atom> {
+fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
     // this makes sure they match and that coords is divisible by 3
     assert!(3 * names.len() == coords.len());
     names
@@ -64,7 +64,7 @@ fn zip_atoms(names: Vec<&str>, coords: na::DVector<f64>) -> Vec<Atom> {
 }
 
 fn new_geom(
-    names: Vec<&str>,
+    names: &[&str],
     coords: na::DVector<f64>,
     step_size: f64,
     steps: Vec<isize>,
@@ -103,7 +103,7 @@ macro_rules! proto {
 }
 
 fn make2d(
-    names: &Vec<&str>,
+    names: &[&str],
     coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
@@ -129,7 +129,7 @@ fn make2d(
 }
 
 fn make3d(
-    names: &Vec<&str>,
+    names: &[&str],
     coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
@@ -182,7 +182,7 @@ fn make3d(
 // there is an issue with the all same case => index 0, also an issue with the
 // 2-2 case => index 2
 fn make4d(
-    names: &Vec<&str>,
+    names: &[&str],
     coords: &na::DVector<f64>,
     step_size: f64,
     i: usize,
@@ -332,14 +332,14 @@ impl Buddy {
             Buddy::C2 { axis } => {
                 if let Some(axis) = axis {
                     ret.push(Molecule::new(
-                        axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                        axis.iter().map(|i| mol.atoms[*i]).collect(),
                     ));
                 }
             }
             Buddy::Cs { plane } => {
                 if let Some(plane) = plane {
                     ret.push(Molecule::new(
-                        plane.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                        plane.iter().map(|i| mol.atoms[*i]).collect(),
                     ));
                 }
             }
@@ -350,39 +350,30 @@ impl Buddy {
             } => {
                 if let Some(axis) = axis {
                     ret.push(Molecule::new(
-                        axis.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                        axis.iter().map(|i| mol.atoms[*i]).collect(),
                     ));
                 }
                 if let Some(plane0) = plane0 {
                     ret.push(Molecule::new(
-                        plane0.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                        plane0.iter().map(|i| mol.atoms[*i]).collect(),
                     ));
                 }
                 if let Some(plane1) = plane1 {
                     ret.push(Molecule::new(
-                        plane1.iter().map(|i| mol.atoms[*i].clone()).collect(),
+                        plane1.iter().map(|i| mol.atoms[*i]).collect(),
                     ));
                 }
             }
             Buddy::D2h { axes, planes } => {
-                for axis in axes {
-                    if let Some(axis) = axis {
-                        ret.push(Molecule::new(
-                            axis.iter()
-                                .map(|i| mol.atoms[*i].clone())
-                                .collect(),
-                        ));
-                    }
+                for axis in axes.iter().flatten() {
+                    ret.push(Molecule::new(
+                        axis.iter().map(|i| mol.atoms[*i]).collect(),
+                    ));
                 }
-                for plane in planes {
-                    if let Some(plane) = plane {
-                        ret.push(Molecule::new(
-                            plane
-                                .iter()
-                                .map(|i| mol.atoms[*i].clone())
-                                .collect(),
-                        ));
-                    }
+                for plane in planes.iter().flatten() {
+                    ret.push(Molecule::new(
+                        plane.iter().map(|i| mol.atoms[*i]).collect(),
+                    ));
                 }
             }
         }
@@ -413,14 +404,14 @@ impl BigHash {
         let buddy = match &pg {
             PointGroup::C1 => Buddy::C1,
             PointGroup::C2 { axis } => Buddy::C2 {
-                axis: mol.try_detect_buddies(&mol.rotate(180.0, &axis), 1e-8),
+                axis: mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8),
             },
             PointGroup::Cs { plane } => Buddy::Cs {
                 plane: mol.try_detect_buddies(&mol.reflect(plane), 1e-8),
             },
             PointGroup::C2v { axis, planes } => {
                 let axis =
-                    mol.try_detect_buddies(&mol.rotate(180.0, &axis), 1e-8);
+                    mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8);
                 let plane0 =
                     mol.try_detect_buddies(&mol.reflect(&planes[0]), 1e-8);
                 let plane1 =
@@ -473,7 +464,7 @@ impl BigHash {
     fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
         use symm::PointGroup::{C2v, Cs, C1, C2};
         // first check the original structure
-        let mol = &Self::to_keys(&orig);
+        let mol = &Self::to_keys(orig);
         if self.map.contains_key(mol) {
             return Some(self.map.get_mut(mol).unwrap());
         }
@@ -483,13 +474,13 @@ impl BigHash {
             C1 => (),
             C2 { axis } => {
                 // check C2 axis
-                let mol = Self::to_keys(&orig.rotate(180.0, &axis));
+                let mol = Self::to_keys(&orig.rotate(180.0, axis));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
                 for buddy in self.buddy.apply(orig) {
                     // check C2 axis
-                    let mol = Self::to_keys(&buddy.rotate(180.0, &axis));
+                    let mol = Self::to_keys(&buddy.rotate(180.0, axis));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
@@ -511,7 +502,7 @@ impl BigHash {
             }
             C2v { axis, planes } => {
                 // check C2 axis
-                let mol = Self::to_keys(&orig.rotate(180.0, &axis));
+                let mol = Self::to_keys(&orig.rotate(180.0, axis));
                 if self.map.contains_key(&mol) {
                     return Some(self.map.get_mut(&mol).unwrap());
                 }
@@ -527,7 +518,7 @@ impl BigHash {
                 }
                 for buddy in self.buddy.apply(orig) {
                     // check C2 axis
-                    let mol = &buddy.rotate(180.0, &axis);
+                    let mol = &buddy.rotate(180.0, axis);
                     let key = Self::to_keys(mol);
                     if self.map.contains_key(&key) {
                         return Some(self.map.get_mut(&key).unwrap());
@@ -555,7 +546,7 @@ impl BigHash {
                 }
                 // check the mirror planes
                 for plane in planes {
-                    let mol = Self::to_keys(&orig.reflect(&plane));
+                    let mol = Self::to_keys(&orig.reflect(plane));
                     if self.map.contains_key(&mol) {
                         return Some(self.map.get_mut(&mol).unwrap());
                     }
@@ -570,7 +561,7 @@ impl BigHash {
                     }
                     // check the mirror planes
                     for plane in planes {
-                        let mol = Self::to_keys(&buddy.reflect(&plane));
+                        let mol = Self::to_keys(&buddy.reflect(plane));
                         if self.map.contains_key(&mol) {
                             return Some(self.map.get_mut(&mol).unwrap());
                         }
@@ -593,9 +584,15 @@ impl BigHash {
     pub fn len(&self) -> usize {
         self.map.len()
     }
+
+    #[must_use]
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl Cart {
+    #[allow(clippy::too_many_arguments)]
     pub fn build_points(
         &self,
         geom: Geom,
@@ -684,13 +681,7 @@ impl Cart {
     }
 }
 
-pub fn freqs(
-    dir: &str,
-    spectro: &Spectro,
-    gspectro_cmd: &String,
-    spectro_cmd: &String,
-    mol: &Molecule,
-) -> Summary {
+pub fn freqs(dir: &str, spectro: &Spectro, mol: &Molecule) -> Output {
     let mut spectro = spectro.clone();
     let mut mol = mol.clone();
     spectro.geom = {
@@ -702,15 +693,13 @@ pub fn freqs(
     let input = format!("{}/spectro.in", dir);
     spectro.write(&input).unwrap();
 
-    // run gspectro
-    let spectro_arg = String::from("-cmd=") + spectro_cmd;
-    std::process::Command::new(gspectro_cmd.clone())
-        .arg(spectro_arg)
-        .arg(input)
-        .output()
-        .unwrap();
-
-    Summary::new(&format!("{}/spectro2.out", dir))
+    let dir = Path::new(dir);
+    let (output, _) = spectro.run(
+        dir.join("fort.15"),
+        dir.join("fort.30"),
+        dir.join("fort.40"),
+    );
+    output
 }
 
 /// compute the index in the force constant array
@@ -744,7 +733,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         queue: &Q,
         config: &Config,
         spectro: &Spectro,
-    ) -> Summary {
+    ) -> Output {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(
@@ -791,11 +780,9 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
 
         let mut jobs = {
             let dir = "pts";
-            let mut job_num = 0;
             let mut jobs = Vec::new();
-            for mol in geoms {
+            for (job_num, mol) in geoms.into_iter().enumerate() {
                 let filename = format!("{dir}/job.{:08}", job_num);
-                job_num += 1;
                 let job = Job::new(
                     Mopac::new(
                         filename,
@@ -825,13 +812,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
 
         make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
 
-        freqs(
-            "freqs",
-            &spectro,
-            &config.gspectro_cmd,
-            &config.spectro_cmd,
-            &mol,
-        )
+        freqs("freqs", spectro, &mol)
     }
 }
 

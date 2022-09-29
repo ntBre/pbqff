@@ -2,7 +2,7 @@ use serde::Deserialize;
 use std::fmt::Display;
 
 #[allow(non_camel_case_types)]
-#[derive(Deserialize, Debug, PartialEq)]
+#[derive(Deserialize, Debug, PartialEq, Eq)]
 pub enum CoordType {
     cart,
     sic,

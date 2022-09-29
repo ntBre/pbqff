@@ -1,8 +1,7 @@
 use std::io::Write;
 
 use psqs::{program::mopac::Mopac, queue::Queue};
-use spectro::Spectro;
-use summarize::Summary;
+use spectro::{Output, Spectro};
 
 use crate::config::Config;
 
@@ -23,5 +22,5 @@ pub trait CoordType<W: Write, Q: Queue<Mopac>> {
         queue: &Q,
         config: &Config,
         spectro: &Spectro,
-    ) -> Summary;
+    ) -> Output;
 }

@@ -30,14 +30,14 @@ fn sic() {
 
     // harmonics
     approx::assert_abs_diff_eq!(
-        Dvec::from(summ.harm),
+        Dvec::from(summ.harms),
         Dvec::from(vec![
             2820.227, 2799.282, 1819.161, 1198.887, 1060.531, 963.513, 931.318,
             929.900, 912.358,
         ]),
         epsilon = 2e-3
     );
-    let got = Dvec::from(summ.corr);
+    let got = Dvec::from(summ.corrs);
     let want = Dvec::from(vec![
         2783.9552, 2764.3024, 1775.6603, 1177.1131, 1040.6267, 960.1012,
         919.9009, 926.9755, 905.3032,
@@ -65,10 +65,10 @@ fn cart() {
         chunk_size: 512,
     };
     let summ = Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
-    assert_eq!(summ.harm.len(), 9);
+    assert_eq!(summ.harms.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(
-        Dvec::from(summ.harm),
+        Dvec::from(summ.harms),
         Dvec::from(vec![
             2819.297, 2798.273, 1819.846, 1199.526, 1061.197, 964.357, 932.103,
             930.917, 913.221,
@@ -77,7 +77,7 @@ fn cart() {
     );
     // corr
     approx::assert_abs_diff_eq!(
-        Dvec::from(summ.corr),
+        Dvec::from(summ.corrs),
         Dvec::from(vec![
             2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
         ]),

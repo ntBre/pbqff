@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{path::Path, rc::Rc};
 
 use intder::Intder;
 use na::vector;
@@ -9,8 +9,7 @@ use psqs::{
     queue::Queue,
 };
 use rust_anpass::Anpass;
-use spectro::Spectro;
-use summarize::Summary;
+use spectro::{Output, Spectro};
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Checks, Taylor};
 
@@ -40,7 +39,7 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
         queue: &Q,
         config: &Config,
         spectro: &Spectro,
-    ) -> Summary {
+    ) -> Output {
         let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
@@ -83,7 +82,7 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
             1.0,
             0,
             config.charge,
-            template.clone(),
+            template,
         );
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
@@ -104,8 +103,6 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
             &taylor_disps,
             &atomic_numbers,
             spectro,
-            &config.gspectro_cmd,
-            &config.spectro_cmd,
             config.step_size,
         )
     }
@@ -304,7 +301,7 @@ pub fn generate_pts<W: std::io::Write>(
             atomic_numbers.clone(),
             &disp[..disp.len() - 3 * ndum],
         );
-        let irrep = match m.irrep_approx(&pg, SYMM_EPS) {
+        let irrep = match m.irrep_approx(pg, SYMM_EPS) {
             Ok(rep) => rep,
             Err(e) => panic!("failed on coord {} with {}", i, e.msg()),
         };
@@ -325,7 +322,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder.print_sics(w, &just_irreps);
 
     // generate checks
-    let checks = make_taylor_checks(irreps, &pg);
+    let checks = make_taylor_checks(irreps, pg);
     // run taylor.py to get fcs and disps
     let taylor = Taylor::new(5, nsic, checks.0, checks.1);
     let taylor_disps = taylor.disps();
@@ -356,6 +353,7 @@ pub fn generate_pts<W: std::io::Write>(
 
 /// run the frequency portion of a QFF in `dir`. The caller is responsible for
 /// ensuring this directory exists.
+#[allow(clippy::too_many_arguments)]
 pub fn freqs<W: std::io::Write>(
     w: &mut W,
     dir: &str,
@@ -365,17 +363,15 @@ pub fn freqs<W: std::io::Write>(
     taylor_disps: &TaylorDisps,
     atomic_numbers: &AtomicNumbers,
     spectro: &Spectro,
-    gspectro_cmd: &String,
-    spectro_cmd: &String,
     step_size: f64,
-) -> Summary {
+) -> Output {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
         *energy -= min;
     }
 
     // run anpass
-    let anpass = taylor_to_anpass(&taylor, &taylor_disps, &energies, step_size);
+    let anpass = taylor_to_anpass(taylor, taylor_disps, energies, step_size);
     let (fcs, long_line) = if DEBUG {
         writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
         let (fcs, long_line) = anpass.run_debug(w);
@@ -426,13 +422,12 @@ pub fn freqs<W: std::io::Write>(
     }
     spectro.write(&input).unwrap();
 
-    // run gspectro
-    let spectro_arg = String::from("-cmd=") + spectro_cmd;
-    std::process::Command::new(gspectro_cmd.clone())
-        .arg(spectro_arg)
-        .arg(input)
-        .output()
-        .unwrap();
+    let dir = Path::new(dir);
+    let (output, _) = spectro.run(
+        dir.join("fort.15"),
+        dir.join("fort.30"),
+        dir.join("fort.40"),
+    );
 
-    Summary::new(&format!("{}/spectro2.out", dir))
+    output
 }
