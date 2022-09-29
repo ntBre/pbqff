@@ -4,7 +4,7 @@ use psqs::queue::slurm::Slurm;
 use rust_pbqff::{
     config::{self, Config},
     coord_type::{Cart, CoordType, SIC},
-    Intder, Spectro,
+    Intder,
 };
 
 fn cleanup() {
@@ -26,15 +26,14 @@ fn main() -> Result<(), std::io::Error> {
     cleanup();
     let _ = std::fs::create_dir("pts");
     let config = Config::load("pbqff.toml");
-    let spectro = Spectro::nocurvil();
     let queue = Slurm::new(32, 2048, 2, "pts");
-    let output =
+    let (spectro, output) =
         match config.coord_type {
             config::CoordType::cart => {
-                Cart.run(&mut std::io::stdout(), &queue, &config, &spectro)
+                Cart.run(&mut std::io::stdout(), &queue, &config)
             }
             config::CoordType::sic => SIC::new(Intder::load_file("intder.in"))
-                .run(&mut std::io::stdout(), &queue, &config, &spectro),
+                .run(&mut std::io::stdout(), &queue, &config),
         };
 
     spectro.write_output(&mut std::io::stdout(), output)?;

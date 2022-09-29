@@ -16,11 +16,5 @@ pub trait CoordType<W: Write, Q: Queue<Mopac>> {
     /// the simple internal and symmetry internal coordinates are read from the
     /// intder template. The input options, weights, and curvils are copied from
     /// the spectro template, but the geometry will be updated
-    fn run(
-        &self,
-        w: &mut W,
-        queue: &Q,
-        config: &Config,
-        spectro: &Spectro,
-    ) -> Output;
+    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
 }

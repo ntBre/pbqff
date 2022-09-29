@@ -2,7 +2,6 @@ use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     io,
-    path::Path,
     rc::Rc,
 };
 
@@ -687,7 +686,7 @@ pub fn freqs(
     fc2: nalgebra::DMatrix<f64>,
     f3: &[f64],
     f4: &[f64],
-) -> Output {
+) -> (Spectro, Output) {
     let mut mol = mol.clone();
     mol.to_bohr();
     let spectro = Spectro::from(mol);
@@ -700,7 +699,7 @@ pub fn freqs(
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
 
     let (output, _) = spectro.run(fc2, fc3, fc4);
-    output
+    (spectro, output)
 }
 
 /// compute the index in the force constant array
@@ -733,8 +732,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
         w: &mut W,
         queue: &Q,
         config: &Config,
-        spectro: &Spectro,
-    ) -> Output {
+    ) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(

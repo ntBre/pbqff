@@ -1,4 +1,4 @@
-use std::{path::Path, rc::Rc};
+use std::rc::Rc;
 
 use intder::Intder;
 use na::vector;
@@ -33,13 +33,7 @@ impl SIC {
 }
 
 impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
-    fn run(
-        &self,
-        w: &mut W,
-        queue: &Q,
-        config: &Config,
-        spectro: &Spectro,
-    ) -> Output {
+    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
@@ -102,7 +96,6 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
             &taylor,
             &taylor_disps,
             &atomic_numbers,
-            spectro,
             config.step_size,
         )
     }
@@ -362,9 +355,8 @@ pub fn freqs<W: std::io::Write>(
     taylor: &Taylor,
     taylor_disps: &TaylorDisps,
     atomic_numbers: &AtomicNumbers,
-    spectro: &Spectro,
     step_size: f64,
-) -> Output {
+) -> (Spectro, Output) {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
         *energy -= min;
@@ -425,8 +417,7 @@ pub fn freqs<W: std::io::Write>(
     }
     spectro.write(&input).unwrap();
 
-    let dir = Path::new(dir);
     let (output, _) = spectro.run(f2, fc3, fc4);
 
-    output
+    (spectro, output)
 }

@@ -3,7 +3,6 @@ use psqs::geom::Geom;
 use psqs::program::Template;
 use psqs::queue::local::LocalQueue;
 use rust_anpass::Dvec;
-use spectro::Spectro;
 use symm::Molecule;
 
 use crate::config::Config;
@@ -18,12 +17,11 @@ use crate::optimize;
 fn sic() {
     let config = Config::load("testfiles/test.toml");
     let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
-    let spectro = Spectro::load("testfiles/spectro.in");
     let queue = LocalQueue {
         dir: "pts".to_string(),
         chunk_size: 512,
     };
-    let summ = coord.run(&mut std::io::stdout(), &queue, &config, &spectro);
+    let (_, summ) = coord.run(&mut std::io::stdout(), &queue, &config);
 
     // these match the Go version from
     // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
@@ -59,12 +57,11 @@ fn cart() {
     let _ = std::fs::create_dir("freqs");
 
     let config = Config::load("testfiles/cart.toml");
-    let spectro = Spectro::load("testfiles/spectro.in");
     let queue = LocalQueue {
         dir: "pts".to_string(),
         chunk_size: 512,
     };
-    let summ = Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
+    let (_, summ) = Cart.run(&mut std::io::stdout(), &queue, &config);
     assert_eq!(summ.harms.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(
