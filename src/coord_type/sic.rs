@@ -421,6 +421,7 @@ pub fn freqs<W: std::io::Write>(
         writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
     }
     spectro.write(&input).unwrap();
+    let spectro = Spectro::load(&input);
 
     let dir = Path::new(dir);
     let (output, _) = spectro.run(

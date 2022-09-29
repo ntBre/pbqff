@@ -693,6 +693,8 @@ pub fn freqs(dir: &str, spectro: &Spectro, mol: &Molecule) -> Output {
     let input = format!("{}/spectro.in", dir);
     spectro.write(&input).unwrap();
 
+    let spectro = Spectro::load(&input);
+
     let dir = Path::new(dir);
     let (output, _) = spectro.run(
         dir.join("fort.15"),
