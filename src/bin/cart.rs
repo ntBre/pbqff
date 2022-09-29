@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use psqs::queue::local::LocalQueue;
 use rust_pbqff::{
     config::Config,
@@ -19,7 +21,14 @@ fn main() {
         chunk_size: 128,
         dir: "pts".to_string(),
     };
+
+    let now = Instant::now();
     Cart.run(&mut std::io::stdout(), &queue, &config, &spectro);
+    println!(
+        "Finished Cart run after {} seconds.",
+        now.elapsed().as_secs()
+    );
+
     let summ = Summary::new("freqs/spectro2.out");
     println!("\nvibrational frequencies:\n{}", summ);
     println!("normal termination of pbqff");
