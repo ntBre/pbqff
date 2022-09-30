@@ -1,11 +1,9 @@
-use std::rc::Rc;
-
 use intder::Intder;
 use na::vector;
 use nalgebra as na;
 use psqs::{
     geom::Geom,
-    program::{mopac::Mopac, Template},
+    program::{Program, Template},
     queue::Queue,
 };
 use rust_anpass::Anpass;
@@ -32,7 +30,9 @@ impl SIC {
     }
 }
 
-impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
+impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
+    for SIC
+{
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
@@ -45,7 +45,7 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
                 config.charge,
             )
             .expect("optimization failed");
-            let geom = Geom::Xyz(geom.cart_geom);
+            let geom = Geom::Xyz(geom.cart_geom.unwrap());
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
@@ -68,16 +68,8 @@ impl<W: std::io::Write, Q: Queue<Mopac>> CoordType<W, Q> for SIC {
 
         // TODO switch on Program type eventually
 
-        let mut jobs = Mopac::build_jobs(
-            &geoms,
-            None,
-            "pts",
-            0,
-            1.0,
-            0,
-            config.charge,
-            template,
-        );
+        let mut jobs =
+            P::build_jobs(&geoms, "pts", 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
@@ -228,7 +220,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder: &mut Intder,
     step_size: f64,
     dummies: &Vec<(usize, usize)>,
-) -> (Vec<Rc<Geom>>, Taylor, TaylorDisps, AtomicNumbers) {
+) -> (Vec<Geom>, Taylor, TaylorDisps, AtomicNumbers) {
     let atomic_numbers = mol.atomic_numbers();
 
     // load the initial intder
@@ -336,10 +328,10 @@ pub fn generate_pts<W: std::io::Write>(
     for geom in file07 {
         // this is a bit unsightly, but I also don't want to duplicate the
         // `from_slices` code in psqs
-        geoms.push(Rc::new(Geom::from(Molecule::from_slices(
+        geoms.push(Geom::from(Molecule::from_slices(
             atomic_numbers.clone(),
             &geom.as_slice()[..geom.len() - 3 * ndum],
-        ))));
+        )));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
 }

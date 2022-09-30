@@ -9,6 +9,9 @@ endif
 test:
 	RUST_BACKTRACE=1 cargo test ${TESTFLAGS} ${ARGS}
 
+clean:
+	cargo clean
+
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
 

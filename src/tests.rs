@@ -1,5 +1,8 @@
+use std::io::Stdout;
+
 use intder::Intder;
 use psqs::geom::Geom;
+use psqs::program::mopac::Mopac;
 use psqs::program::Template;
 use psqs::queue::local::LocalQueue;
 use rust_anpass::Dvec;
@@ -21,7 +24,12 @@ fn sic() {
         dir: "pts".to_string(),
         chunk_size: 512,
     };
-    let (_, summ) = coord.run(&mut std::io::stdout(), &queue, &config);
+    let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        &coord,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
 
     // these match the Go version from
     // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
@@ -61,7 +69,12 @@ fn cart() {
         dir: "pts".to_string(),
         chunk_size: 512,
     };
-    let (_, summ) = Cart.run(&mut std::io::stdout(), &queue, &config);
+    let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        &Cart,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
     assert_eq!(summ.harms.len(), 9);
     // harmonics
     approx::assert_abs_diff_eq!(
@@ -123,14 +136,14 @@ fn build_pts() {
     };
     let template = Template::from(&config.template);
     let (geom, ref_energy) = {
-        let res = optimize(
+        let res = optimize::<LocalQueue, Mopac>(
             &queue,
             config.geometry.clone(),
             template.clone(),
             config.charge,
         )
         .expect("optimization failed in build_pts");
-        (Geom::Xyz(res.cart_geom), res.energy)
+        (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
     };
 
     let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");

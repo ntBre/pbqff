@@ -2,13 +2,12 @@ use std::{
     collections::{hash_map::Values, HashMap},
     hash::Hash,
     io,
-    rc::Rc,
 };
 
 use intder::ANGBOHR;
 use psqs::{
     geom::Geom,
-    program::{mopac::Mopac, Job, Template},
+    program::{Job, Program, Template},
     queue::Queue,
 };
 use spectro::{Output, Spectro};
@@ -726,13 +725,10 @@ pub struct Target {
     indices: Vec<Index>,
 }
 
-impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
-    fn run(
-        &self,
-        w: &mut W,
-        queue: &Q,
-        config: &Config,
-    ) -> (Spectro, Output) {
+impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
+    for Cart
+{
+    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(
@@ -742,7 +738,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
                 config.charge,
             )
             .expect("optimization failed");
-            (Geom::Xyz(res.cart_geom), res.energy)
+            (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
         } else {
             let ref_energy = ref_energy(
                 queue,
@@ -783,13 +779,7 @@ impl<W: io::Write, Q: Queue<Mopac>> CoordType<W, Q> for Cart {
             for (job_num, mol) in geoms.into_iter().enumerate() {
                 let filename = format!("{dir}/job.{:08}", job_num);
                 let job = Job::new(
-                    Mopac::new(
-                        filename,
-                        None,
-                        Rc::new(mol.geom),
-                        config.charge,
-                        template.clone(),
-                    ),
+                    P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
                 );
                 jobs.push(job);

@@ -1,6 +1,6 @@
-use std::time::Instant;
+use std::{io::Stdout, time::Instant};
 
-use psqs::queue::local::LocalQueue;
+use psqs::{program::mopac::Mopac, queue::local::LocalQueue};
 use rust_pbqff::{
     config::Config,
     coord_type::{Cart, CoordType},
@@ -20,7 +20,12 @@ fn main() -> Result<(), std::io::Error> {
     };
 
     let now = Instant::now();
-    let (spectro, output) = Cart.run(&mut std::io::stdout(), &queue, &config);
+    let (spectro, output) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        &Cart,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
     println!(
         "Finished Cart run after {} seconds.",
         now.elapsed().as_secs()

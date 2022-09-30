@@ -5,34 +5,24 @@ pub mod coord_type;
 #[cfg(test)]
 mod tests;
 
-use std::rc::Rc;
-
 pub use intder::Intder;
 use psqs::{
     geom::Geom,
-    program::{mopac::Mopac, Job, ProgramResult, Template},
+    program::{Job, Program, ProgramResult, Template},
     queue::Queue,
 };
 pub use spectro::Spectro;
 
 /// Some if the optimization succeeds, None otherwise
-pub fn optimize<Q: Queue<Mopac>>(
+pub fn optimize<Q: Queue<P>, P: Program + Clone>(
     queue: &Q,
     geom: Geom,
     template: Template,
     charge: isize,
 ) -> Option<ProgramResult> {
     let _ = std::fs::create_dir("opt");
-    let opt = Job::new(
-        Mopac::new(
-            "opt/opt".to_string(),
-            None,
-            Rc::new(geom),
-            charge,
-            template,
-        ),
-        0,
-    );
+    let opt =
+        Job::new(P::new("opt/opt".to_string(), template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
     let status = queue.energize(&mut [opt], &mut res);
     if status.is_err() {
@@ -41,27 +31,19 @@ pub fn optimize<Q: Queue<Mopac>>(
     Some(res.pop().unwrap())
 }
 
-// TODO this is immensely stupid, just take the energy from the original
-// optimization, but that's now how I wrote the queue stuff
-pub fn ref_energy<Q: Queue<Mopac>>(
+pub fn ref_energy<Q: Queue<P>, P: Program + Clone>(
     queue: &Q,
     geom: Geom,
     template: Template,
     charge: isize,
 ) -> f64 {
     let _ = std::fs::create_dir("opt");
-    let opt = Job::new(
-        Mopac::new(
-            "opt/ref".to_string(),
-            None,
-            Rc::new(geom),
-            charge,
-            template,
-        ),
-        0,
-    );
+    let opt =
+        Job::new(P::new("opt/ref".to_string(), template, charge, geom), 0);
     let mut res = vec![0.0; 1];
-    queue.drain(&mut [opt], &mut res).expect("reference energy failed");
+    queue
+        .drain(&mut [opt], &mut res)
+        .expect("reference energy failed");
     res.pop().unwrap()
 }
 
