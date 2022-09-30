@@ -22,6 +22,10 @@ struct RawConfig {
 
     /// the template to use for the quantum chemistry program
     template: String,
+
+    /// the quantum chemistry program to use. options supported currently are
+    /// mopac and molpro
+    program: Program,
 }
 
 impl RawConfig {
@@ -32,6 +36,14 @@ impl RawConfig {
     }
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Program {
+    #[serde(alias = "mopac")]
+    Mopac,
+    #[serde(alias = "molpro")]
+    Molpro,
+}
+
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,
@@ -39,6 +51,7 @@ pub struct Config {
     pub step_size: f64,
     pub coord_type: CoordType,
     pub template: String,
+    pub program: Program,
 }
 
 impl Config {
@@ -51,6 +64,7 @@ impl Config {
             step_size: rc.step_size,
             coord_type: rc.coord_type,
             template: rc.template,
+            program: rc.program,
         }
     }
 }
@@ -103,10 +117,11 @@ HCC =               147.81488230
             optimize: true,
             charge: 0,
             step_size: 0.005,
-            coord_type: CoordType::sic,
+            coord_type: CoordType::Sic,
 	    template: String::from(
 		"A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 		),
+            program: Program::Mopac,
         };
         assert_eq!(got, want);
     }

@@ -1,6 +1,9 @@
-use std::{fs::File, os::unix::prelude::AsRawFd};
+use std::{fs::File, io::Stdout, os::unix::prelude::AsRawFd};
 
-use psqs::queue::slurm::Slurm;
+use psqs::{
+    program::{molpro::Molpro, mopac::Mopac},
+    queue::slurm::Slurm,
+};
 use rust_pbqff::{
     config::{self, Config},
     coord_type::{Cart, CoordType, SIC},
@@ -27,14 +30,42 @@ fn main() -> Result<(), std::io::Error> {
     let _ = std::fs::create_dir("pts");
     let config = Config::load("pbqff.toml");
     let queue: Slurm = Slurm::new(32, 2048, 2, "pts");
-    let (spectro, output) =
-        match config.coord_type {
-            config::CoordType::cart => {
-                Cart.run(&mut std::io::stdout(), &queue, &config)
-            }
-            config::CoordType::sic => SIC::new(Intder::load_file("intder.in"))
-                .run(&mut std::io::stdout(), &queue, &config),
-        };
+    let (spectro, output) = match (config.coord_type, config.program) {
+        (config::CoordType::Cart, config::Program::Mopac) => {
+            <Cart as CoordType<Stdout, Slurm, Mopac>>::run(
+                &Cart,
+                &mut std::io::stdout(),
+                &queue,
+                &config,
+            )
+        }
+        (config::CoordType::Sic, config::Program::Mopac) => {
+            let sic = SIC::new(Intder::load_file("intder.in"));
+            <SIC as CoordType<Stdout, Slurm, Mopac>>::run(
+                &sic,
+                &mut std::io::stdout(),
+                &queue,
+                &config,
+            )
+        }
+        (config::CoordType::Cart, config::Program::Molpro) => {
+            <Cart as CoordType<Stdout, Slurm, Molpro>>::run(
+                &Cart,
+                &mut std::io::stdout(),
+                &queue,
+                &config,
+            )
+        }
+        (config::CoordType::Sic, config::Program::Molpro) => {
+            let sic = SIC::new(Intder::load_file("intder.in"));
+            <SIC as CoordType<Stdout, Slurm, Molpro>>::run(
+                &sic,
+                &mut std::io::stdout(),
+                &queue,
+                &config,
+            )
+        }
+    };
 
     spectro.write_output(&mut std::io::stdout(), output)?;
     println!("normal termination of pbqff");

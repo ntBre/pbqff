@@ -1,11 +1,12 @@
 use serde::Deserialize;
 use std::fmt::Display;
 
-#[allow(non_camel_case_types)]
-#[derive(Deserialize, Debug, PartialEq, Eq)]
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum CoordType {
-    cart,
-    sic,
+    #[serde(alias = "cart")]
+    Cart,
+    #[serde(alias = "sic")]
+    Sic,
 }
 
 impl CoordType {
@@ -14,7 +15,7 @@ impl CoordType {
     /// [`cart`]: CoordType::cart
     #[must_use]
     pub fn is_cart(&self) -> bool {
-        matches!(self, Self::cart)
+        matches!(self, Self::Cart)
     }
 
     /// Returns `true` if the coord type is [`sic`].
@@ -22,7 +23,7 @@ impl CoordType {
     /// [`sic`]: CoordType::sic
     #[must_use]
     pub fn is_sic(&self) -> bool {
-        matches!(self, Self::sic)
+        matches!(self, Self::Sic)
     }
 }
 
@@ -32,8 +33,8 @@ impl Display for CoordType {
             f,
             "{}",
             match self {
-                CoordType::cart => "cart",
-                CoordType::sic => "sic",
+                CoordType::Cart => "cart",
+                CoordType::Sic => "sic",
             }
         )
     }
