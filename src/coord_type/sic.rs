@@ -332,10 +332,12 @@ pub fn generate_pts<W: std::io::Write>(
     for geom in file07 {
         // this is a bit unsightly, but I also don't want to duplicate the
         // `from_slices` code in psqs
-        geoms.push(Geom::from(Molecule::from_slices(
+        let mut mol = Molecule::from_slices(
             atomic_numbers.clone(),
             &geom.as_slice()[..geom.len() - 3 * ndum],
-        )));
+        );
+        mol.to_angstrom();
+        geoms.push(Geom::from(mol));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
 }

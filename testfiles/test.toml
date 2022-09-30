@@ -19,4 +19,4 @@ sleep_int = 2
 job_limit = 2048
 chunk_size = 1
 template = """
-A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat"""
+scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat"""
