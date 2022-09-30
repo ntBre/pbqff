@@ -38,13 +38,17 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
         let geom = if config.optimize {
-            let geom = optimize(
+            let res = optimize(
                 queue,
                 config.geometry.clone(),
                 template.clone(),
                 config.charge,
-            )
-            .expect("optimization failed");
+            );
+            let geom = if let Err(e) = res {
+                panic!("optimize failed with {:?}", e);
+            } else {
+                res.unwrap()
+            };
             let geom = Geom::Xyz(geom.cart_geom.unwrap());
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom

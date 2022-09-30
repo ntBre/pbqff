@@ -8,7 +8,7 @@ mod tests;
 pub use intder::Intder;
 use psqs::{
     geom::Geom,
-    program::{Job, Program, ProgramResult, Template},
+    program::{Job, Program, ProgramError, ProgramResult, Template},
     queue::Queue,
 };
 pub use spectro::Spectro;
@@ -19,16 +19,13 @@ pub fn optimize<Q: Queue<P>, P: Program + Clone>(
     geom: Geom,
     template: Template,
     charge: isize,
-) -> Option<ProgramResult> {
+) -> Result<ProgramResult, ProgramError> {
     let _ = std::fs::create_dir("opt");
     let opt =
         Job::new(P::new("opt/opt".to_string(), template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
-    let status = queue.energize(&mut [opt], &mut res);
-    if status.is_err() {
-        return None;
-    }
-    Some(res.pop().unwrap())
+    queue.energize(&mut [opt], &mut res)?;
+    Ok(res.pop().unwrap())
 }
 
 pub fn ref_energy<Q: Queue<P>, P: Program + Clone>(
