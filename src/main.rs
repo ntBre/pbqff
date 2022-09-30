@@ -29,7 +29,12 @@ fn main() -> Result<(), std::io::Error> {
     cleanup();
     let _ = std::fs::create_dir("pts");
     let config = Config::load("pbqff.toml");
-    let queue: Slurm = Slurm::new(32, 2048, 2, "pts");
+    let queue: Slurm = Slurm::new(
+        config.chunk_size,
+        config.job_limit,
+        config.sleep_int,
+        "pts",
+    );
     let (spectro, output) = match (config.coord_type, config.program) {
         (config::CoordType::Cart, config::Program::Mopac) => {
             <Cart as CoordType<Stdout, Slurm, Mopac>>::run(

@@ -17,6 +17,15 @@ struct RawConfig {
     /// distance in Å to displace the atoms
     step_size: f64,
 
+    /// how long to sleep between intervals polling running jobs
+    sleep_int: usize,
+
+    /// limit for the number of jobs to run at once
+    job_limit: usize,
+
+    /// the number of jobs to include a single submit script
+    chunk_size: usize,
+
     /// whether to use SICs or Cartesian coordinates
     coord_type: CoordType,
 
@@ -52,6 +61,9 @@ pub struct Config {
     pub coord_type: CoordType,
     pub template: String,
     pub program: Program,
+    pub sleep_int: usize,
+    pub job_limit: usize,
+    pub chunk_size: usize,
 }
 
 impl Config {
@@ -65,6 +77,9 @@ impl Config {
             coord_type: rc.coord_type,
             template: rc.template,
             program: rc.program,
+            sleep_int: rc.sleep_int,
+            job_limit: rc.job_limit,
+            chunk_size: rc.chunk_size,
         }
     }
 }
@@ -122,6 +137,9 @@ HCC =               147.81488230
 		"A0 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
 		),
             program: Program::Mopac,
+            sleep_int: 2,
+            job_limit: 2048,
+            chunk_size: 1,
         };
         assert_eq!(got, want);
     }
