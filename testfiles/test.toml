@@ -15,6 +15,7 @@ charge = 0
 step_size = 0.005
 coord_type = "sic"
 program = "mopac"
+queue = "slurm"
 sleep_int = 2
 job_limit = 2048
 chunk_size = 1
