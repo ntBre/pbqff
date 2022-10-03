@@ -35,6 +35,10 @@ struct RawConfig {
     /// the quantum chemistry program to use. options supported currently are
     /// mopac and molpro
     program: Program,
+
+    /// the type of queuing system to use. options supported currently are pbs
+    /// and slurm
+    queue: Queue,
 }
 
 impl RawConfig {
@@ -53,6 +57,14 @@ pub enum Program {
     Molpro,
 }
 
+#[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+pub enum Queue {
+    #[serde(alias = "pbs")]
+    Pbs,
+    #[serde(alias = "slurm")]
+    Slurm,
+}
+
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,
@@ -61,6 +73,7 @@ pub struct Config {
     pub coord_type: CoordType,
     pub template: String,
     pub program: Program,
+    pub queue: Queue,
     pub sleep_int: usize,
     pub job_limit: usize,
     pub chunk_size: usize,
@@ -80,6 +93,7 @@ impl Config {
             sleep_int: rc.sleep_int,
             job_limit: rc.job_limit,
             chunk_size: rc.chunk_size,
+            queue: rc.queue,
         }
     }
 }
@@ -140,6 +154,7 @@ HCC =               147.81488230
             sleep_int: 2,
             job_limit: 2048,
             chunk_size: 1,
+            queue: Queue::Slurm,
         };
         assert_eq!(got, want);
     }
