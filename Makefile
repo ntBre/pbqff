@@ -30,3 +30,6 @@ profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
 
 profile.cart:
 	$(call profile,cart)
+
+profile.build_points:
+	$(call profile,build_points)
