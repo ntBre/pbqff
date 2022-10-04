@@ -15,13 +15,21 @@ clean:
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
 
-BASE = /home/brent/Projects/rust-pbqff
-ELAND_DEST = 'eland:programs/rust-pbqff/.'
-eland:
-# see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
+build:
+    # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
 	cargo build --release --target x86_64-unknown-linux-gnu
-	scp -C ${BASE}/target/x86_64-unknown-linux-gnu/release/rust-pbqff ${ELAND_DEST}
+
+BASE = /home/brent/Projects/rust-pbqff
+TARGET = target/x86_64-unknown-linux-gnu/release/rust-pbqff
+ELAND_DEST = 'eland:programs/rust-pbqff/.'
+WOODS_DEST = 'woods:Programs/rpbqff/rpbqff'
+
+eland: build
+	scp -C ${BASE}/${TARGET} ${ELAND_DEST}
+
+woods: build
+	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
 
 profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
 	valgrind --tool=callgrind --callgrind-out-file=callgrind.out	\
