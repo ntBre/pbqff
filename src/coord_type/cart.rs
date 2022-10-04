@@ -753,7 +753,8 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             w,
             "finished opt after {:.1} sec",
             now.elapsed().as_millis() as f64 / 1000.0
-        ).unwrap();
+        )
+        .unwrap();
         now = Instant::now();
 
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
@@ -784,11 +785,12 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             w,
             "finished building points after {:.1} sec",
             now.elapsed().as_millis() as f64 / 1000.0
-        ).unwrap();
+        )
+        .unwrap();
         now = Instant::now();
 
+        let dir = "pts";
         let mut jobs = {
-            let dir = "pts";
             let mut jobs = Vec::new();
             for (job_num, mol) in geoms.into_iter().enumerate() {
                 let filename = format!("{dir}/job.{:08}", job_num);
@@ -810,14 +812,15 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
         // drain into energies
         let mut energies = vec![0.0; jobs.len()];
         queue
-            .drain(&mut jobs, &mut energies)
+            .drain(dir, &mut jobs, &mut energies)
             .expect("single-point calculations failed");
 
         writeln!(
             w,
             "finished draining points after {:.1} sec",
             now.elapsed().as_millis() as f64 / 1000.0
-        ).unwrap();
+        )
+        .unwrap();
         now = Instant::now();
 
         let (fc2, f3, f4) = make_fcs(
@@ -835,7 +838,8 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             w,
             "finished freqs after {:.1} sec",
             now.elapsed().as_millis() as f64 / 1000.0
-        ).unwrap();
+        )
+        .unwrap();
         r
     }
 }

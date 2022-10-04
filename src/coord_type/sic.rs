@@ -72,15 +72,16 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
 
         // TODO switch on Program type eventually
 
+        let dir = "pts";
         let mut jobs =
-            P::build_jobs(&geoms, "pts", 0, 1.0, 0, config.charge, template);
+            P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
 
         let mut energies = vec![0.0; jobs.len()];
         queue
-            .drain(&mut jobs, &mut energies)
+            .drain(dir, &mut jobs, &mut energies)
             .expect("single-point energies failed");
 
         let _ = std::fs::create_dir("freqs");
