@@ -729,6 +729,8 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
     for Cart
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+        let mut now = Instant::now();
+
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(
@@ -748,6 +750,13 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             );
             (config.geometry.clone(), ref_energy)
         };
+
+        writeln!(
+            w,
+            "finished opt after {:.1} sec",
+            now.elapsed().as_millis() as f64 / 1000.0
+        ).unwrap();
+        now = Instant::now();
 
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
@@ -772,6 +781,13 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             &mut fcs,
             &mut target_map,
         );
+
+        writeln!(
+            w,
+            "finished building points after {:.1} sec",
+            now.elapsed().as_millis() as f64 / 1000.0
+        ).unwrap();
+        now = Instant::now();
 
         let mut jobs = {
             let dir = "pts";
@@ -799,6 +815,13 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             .drain(&mut jobs, &mut energies)
             .expect("single-point calculations failed");
 
+        writeln!(
+            w,
+            "finished draining points after {:.1} sec",
+            now.elapsed().as_millis() as f64 / 1000.0
+        ).unwrap();
+        now = Instant::now();
+
         let (fc2, f3, f4) = make_fcs(
             &mut target_map,
             &energies,
@@ -809,7 +832,13 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
             "freqs",
         );
 
-        freqs("freqs", &mol, fc2, f3, f4)
+        let r = freqs("freqs", &mol, fc2, f3, f4);
+        writeln!(
+            w,
+            "finished freqs after {:.1} sec",
+            now.elapsed().as_millis() as f64 / 1000.0
+        ).unwrap();
+        r
     }
 }
 
