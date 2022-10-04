@@ -17,6 +17,7 @@ spectro = { path = "/home/brent/Projects/spectro/spectro" }
 symm = { path = "/home/brent/Projects/symm" }
 taylor = { path = "/home/brent/Projects/taylor" }
 toml = "0.5.8"
+rustc-hash = "1.1.0"
 
 [dev-dependencies]
 approx = "0.5.1"

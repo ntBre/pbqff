@@ -1,8 +1,6 @@
-use std::{
-    collections::{hash_map::Values, HashMap},
-    hash::Hash,
-    io,
-};
+use std::{collections::hash_map::Values, hash::Hash, io, time::Instant};
+
+use rustc_hash::FxHashMap;
 
 use intder::ANGBOHR;
 use psqs::{
@@ -389,7 +387,7 @@ pub struct Key {
 
 #[derive(Clone, Debug)]
 pub struct BigHash {
-    map: HashMap<Vec<Key>, Target>,
+    map: FxHashMap<Vec<Key>, Target>,
     pg: PointGroup,
     // buddies are pairs of atoms that are interchanged across symmetry
     // operations
@@ -440,7 +438,7 @@ impl BigHash {
             PointGroup::C3v { axis: _, plane: _ } => todo!(),
         };
         Self {
-            map: HashMap::<Vec<Key>, Target>::new(),
+            map: FxHashMap::<Vec<Key>, Target>::default(),
             pg,
             buddy,
         }
