@@ -166,6 +166,12 @@ fn make_taylor_checks(
         }
         D2h { axes: _, planes: _ } => todo!(),
         C3v { axis: _, plane: _ } => todo!(),
+        D3h {
+            c3: _,
+            c2: _,
+            sh: _,
+            sv: _,
+        } => todo!(),
     }
 }
 

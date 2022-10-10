@@ -436,6 +436,12 @@ impl BigHash {
                 }
             }
             PointGroup::C3v { axis: _, plane: _ } => todo!(),
+            PointGroup::D3h {
+                c3: _,
+                c2: _,
+                sh: _,
+                sv: _,
+            } => todo!(),
         };
         Self {
             map: FxHashMap::<Vec<Key>, Target>::default(),
@@ -565,6 +571,12 @@ impl BigHash {
                 }
             }
             PointGroup::C3v { axis: _, plane: _ } => todo!(),
+            PointGroup::D3h {
+                c3: _,
+                c2: _,
+                sh: _,
+                sv: _,
+            } => todo!(),
         }
         None
     }
