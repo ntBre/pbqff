@@ -18,7 +18,7 @@ cover:
 build:
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --release --target x86_64-unknown-linux-gnu
+	cargo build --bin rust-pbqff --release --target x86_64-unknown-linux-gnu
 
 BASE = /home/brent/Projects/rust-pbqff
 TARGET = target/x86_64-unknown-linux-gnu/release/rust-pbqff
