@@ -14,7 +14,7 @@ use psqs::{
 pub use spectro::Spectro;
 
 /// Some if the optimization succeeds, None otherwise
-pub fn optimize<Q: Queue<P>, P: Program + Clone>(
+pub fn optimize<Q: Queue<P>, P: Program + Clone + Send>(
     queue: &Q,
     geom: Geom,
     template: Template,
@@ -28,7 +28,7 @@ pub fn optimize<Q: Queue<P>, P: Program + Clone>(
     Ok(res.pop().unwrap())
 }
 
-pub fn ref_energy<Q: Queue<P>, P: Program + Clone>(
+pub fn ref_energy<Q: Queue<P>, P: Program + Clone + Send>(
     queue: &Q,
     geom: Geom,
     template: Template,

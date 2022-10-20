@@ -30,8 +30,8 @@ impl SIC {
     }
 }
 
-impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
-    for SIC
+impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
+    CoordType<W, Q, P> for SIC
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);

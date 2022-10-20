@@ -735,7 +735,7 @@ pub struct Target {
     indices: Vec<Index>,
 }
 
-impl<W: io::Write, Q: Queue<P>, P: Program + Clone> CoordType<W, Q, P>
+impl<W: io::Write, Q: Queue<P>, P: Program + Clone + Send> CoordType<W, Q, P>
     for Cart
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {

@@ -10,7 +10,7 @@ pub use sic::*;
 pub mod cart;
 pub mod sic;
 
-pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone> {
+pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send> {
     /// run a full qff, taking the configuration from `config`, the intder
     /// template from `intder`, and the spectro template from `spectro`. Only
     /// the simple internal and symmetry internal coordinates are read from the
