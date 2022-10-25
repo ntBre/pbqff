@@ -781,6 +781,7 @@ impl<W: io::Write, Q: Queue<P>, P: Program + Clone + Send> CoordType<W, Q, P>
         mol.normalize();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{}", mol).unwrap();
+        writeln!(w, "point group:{}", pg).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
 
         let geoms = self.build_points(
