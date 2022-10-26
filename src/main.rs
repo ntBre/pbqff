@@ -140,7 +140,12 @@ fn main() -> Result<(), std::io::Error> {
             }
         };
 
-    spectro.write_output(&mut std::io::stdout(), output)?;
+    spectro.write_output(&mut std::io::stdout(), &output)?;
+
+    let mut f = std::fs::File::create("spectro.json")?;
+    use std::io::Write;
+    writeln!(f, "{}", serde_json::to_string_pretty(&output)?)?;
+
     println!("normal termination of pbqff");
 
     Ok(())
