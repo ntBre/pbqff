@@ -23,7 +23,7 @@ build:
 BASE = /home/brent/Projects/rust-pbqff
 TARGET = target/x86_64-unknown-linux-gnu/release/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
-WOODS_DEST = 'woods:Programs/rpbqff/rpbqff'
+WOODS_DEST = 'woods:bin/rpbqff'
 
 eland: build
 	scp -C ${BASE}/${TARGET} ${ELAND_DEST}
