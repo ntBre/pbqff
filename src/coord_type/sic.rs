@@ -55,7 +55,9 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
-            todo!();
+	    // expecting cartesian geometry in angstroms
+	    assert!(config.geometry.is_xyz());
+            config.geometry.clone()
         };
 
         let mol = {
@@ -248,47 +250,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder.geom = intder::geom::Geom::from(mol.clone());
     intder.geom.to_bohr();
     intder.disps = disps;
-    // add the dummy atoms
-    let mut ndum = 0;
-    const ZERO: f64 = 1e-8;
-    for dummy in dummies {
-        // atom the dummy attaches to
-        let real_coord = intder.geom[dummy.1];
-        // two of them should be zero and one is non-zero
-        let mut zeros = vec![];
-        let mut nonzero = 0;
-        for (i, c) in real_coord.iter().enumerate() {
-            if c.abs() < ZERO {
-                zeros.push(i);
-            } else {
-                nonzero = i;
-            }
-        }
-        if zeros.len() != 2 {
-            dbg!(real_coord);
-            dbg!(zeros);
-            dbg!(nonzero);
-            panic!("dummy atom for non-linear molecule");
-        }
-
-        let mut coord = [0.0; 3];
-        // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[dummy.1][nonzero];
-        coord[zeros[0]] = 1.1111111111;
-        coord[zeros[1]] = 0.0;
-        intder.geom.push(na::Vector3::from(coord));
-
-        let mut coord = [0.0; 3];
-        // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[dummy.1][nonzero];
-        coord[zeros[1]] = 1.1111111111;
-        coord[zeros[0]] = 0.0;
-        intder.geom.push(na::Vector3::from(coord));
-
-        // push dummy atoms perpendicular in both directions
-
-        ndum += 2;
-    }
+    let ndum = dummy_stuff(dummies, intder);
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
     // convert displacements -> symm::Molecules and determine irrep
@@ -352,6 +314,51 @@ pub fn generate_pts<W: std::io::Write>(
         geoms.push(Geom::from(mol));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
+}
+
+fn dummy_stuff(dummies: &Vec<(usize, usize)>, intder: &mut Intder) -> usize {
+    // add the dummy atoms
+    let mut ndum = 0;
+    const ZERO: f64 = 1e-8;
+    for dummy in dummies {
+        // atom the dummy attaches to
+        let real_coord = intder.geom[dummy.1];
+        // two of them should be zero and one is non-zero
+        let mut zeros = vec![];
+        let mut nonzero = 0;
+        for (i, c) in real_coord.iter().enumerate() {
+            if c.abs() < ZERO {
+                zeros.push(i);
+            } else {
+                nonzero = i;
+            }
+        }
+        if zeros.len() != 2 {
+            dbg!(real_coord);
+            dbg!(zeros);
+            dbg!(nonzero);
+            panic!("dummy atom for non-linear molecule");
+        }
+
+        let mut coord = [0.0; 3];
+        // match the nonzero field in the real geometry
+        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[zeros[0]] = 1.1111111111;
+        coord[zeros[1]] = 0.0;
+        intder.geom.push(na::Vector3::from(coord));
+
+        let mut coord = [0.0; 3];
+        // match the nonzero field in the real geometry
+        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[zeros[1]] = 1.1111111111;
+        coord[zeros[0]] = 0.0;
+        intder.geom.push(na::Vector3::from(coord));
+
+        // push dummy atoms perpendicular in both directions
+
+        ndum += 2;
+    }
+    ndum
 }
 
 fn write_file(f: impl AsRef<Path>, d: impl Display) -> std::io::Result<()> {
