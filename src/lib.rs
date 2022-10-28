@@ -13,6 +13,17 @@ use psqs::{
 };
 pub use spectro::Spectro;
 
+/// clean up from a previous run, emitting warnings on failures
+pub fn cleanup() {
+    std::fs::remove_dir_all("opt")
+        .unwrap_or_else(|e| eprintln!("failed to remove 'opt' with {e}"));
+    std::fs::remove_dir_all("pts")
+        .unwrap_or_else(|e| eprintln!("failed to remove 'pts' with {e}"));
+    std::fs::remove_dir_all("freqs")
+        .unwrap_or_else(|e| eprintln!("failed to remove 'freqs' with {e}"));
+}
+
+
 /// Some if the optimization succeeds, None otherwise
 pub fn optimize<Q: Queue<P>, P: Program + Clone + Send>(
     queue: &Q,

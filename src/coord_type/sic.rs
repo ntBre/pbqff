@@ -72,7 +72,7 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
 
         // TODO switch on Program type eventually
 
-        let dir = "pts";
+        let dir = "pts/inp";
         let mut jobs =
             P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
 
@@ -328,13 +328,18 @@ pub fn generate_pts<W: std::io::Write>(
         writeln!(w, "\nIntder Input:\n{}", intder).unwrap();
     }
 
+    // build and run the points using psqs
+    // TODO handle error
+    let _ = std::fs::create_dir_all("pts/inp");
+
+    let mut f = std::fs::File::create("pts/intder.in").unwrap();
+    use std::io::Write;
+    writeln!(f, "{}", intder).unwrap();
+
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
     let file07 = intder.convert_disps();
 
-    // build and run the points using psqs
-    // TODO handle error
-    let _ = std::fs::create_dir("pts");
     let mut geoms = Vec::with_capacity(file07.len());
     for geom in file07 {
         // this is a bit unsightly, but I also don't want to duplicate the

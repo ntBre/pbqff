@@ -8,6 +8,7 @@ use psqs::queue::local::LocalQueue;
 use rust_anpass::Dvec;
 use symm::Molecule;
 
+use crate::cleanup;
 use crate::config::Config;
 use crate::coord_type::BigHash;
 use crate::coord_type::Cart;
@@ -18,6 +19,7 @@ use crate::optimize;
 #[test]
 #[ignore]
 fn sic() {
+    cleanup();
     let config = Config::load("testfiles/test.toml");
     let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
     let queue = LocalQueue {
