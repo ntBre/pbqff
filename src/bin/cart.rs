@@ -31,7 +31,7 @@ fn main() -> Result<(), std::io::Error> {
         now.elapsed().as_secs()
     );
 
-    spectro.write_output(&mut std::io::stdout(), output)?;
+    spectro.write_output(&mut std::io::stdout(), &output)?;
     println!("normal termination of pbqff");
 
     Ok(())
