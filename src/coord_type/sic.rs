@@ -1,3 +1,5 @@
+use std::{fmt::Display, path::Path};
+
 use intder::Intder;
 use na::vector;
 use nalgebra as na;
@@ -332,9 +334,7 @@ pub fn generate_pts<W: std::io::Write>(
     // TODO handle error
     let _ = std::fs::create_dir_all("pts/inp");
 
-    let mut f = std::fs::File::create("pts/intder.in").unwrap();
-    use std::io::Write;
-    writeln!(f, "{}", intder).unwrap();
+    write_file("pts/intder.in", &intder).unwrap();
 
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
@@ -352,6 +352,12 @@ pub fn generate_pts<W: std::io::Write>(
         geoms.push(Geom::from(mol));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
+}
+
+fn write_file(f: impl AsRef<Path>, d: impl Display) -> std::io::Result<()> {
+    use std::io::Write;
+    let mut f = std::fs::File::create(f)?;
+    writeln!(f, "{}", d)
 }
 
 /// run the frequency portion of a QFF in `dir`. The caller is responsible for
@@ -374,6 +380,7 @@ pub fn freqs<W: std::io::Write>(
 
     // run anpass
     let anpass = taylor_to_anpass(taylor, taylor_disps, energies, step_size);
+    write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
     let (fcs, long_line) = if DEBUG {
         writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
         let (fcs, long_line) = anpass.run_debug(w);
@@ -385,6 +392,7 @@ pub fn freqs<W: std::io::Write>(
 
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
+    write_file(format!("{dir}/intder_geom.in"), &intder).unwrap();
     let refit_geom = intder.convert_disps();
     let refit_geom = refit_geom[0].as_slice();
     let l = refit_geom.len() - 3 * intder.ndum();
@@ -411,6 +419,8 @@ pub fn freqs<W: std::io::Write>(
     if DEBUG {
         writeln!(w, "Intder Freqs Input\n{}", intder).unwrap();
     }
+
+    write_file(format!("{dir}/intder.in"), &intder).unwrap();
 
     let (f2, f3, f4) = intder.convert_fcs();
     Intder::dump_fcs(dir, &f2, &f3, &f4);
