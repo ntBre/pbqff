@@ -1,4 +1,3 @@
-use psqs::program::molpro;
 use serde::Deserialize;
 
 mod coord_type;
@@ -40,8 +39,6 @@ struct RawConfig {
     /// the type of queuing system to use. options supported currently are pbs
     /// and slurm
     queue: Queue,
-
-    energy_line: Option<String>,
 }
 
 impl RawConfig {
@@ -85,16 +82,6 @@ pub struct Config {
 impl Config {
     pub fn load(filename: &str) -> Self {
         let rc = RawConfig::load(filename);
-        match rc.program {
-            Program::Mopac => (),
-            Program::Molpro => {
-                if let Some(re) = rc.energy_line {
-                    molpro::set_energy_line(Some(
-                        regex::Regex::new(&re).unwrap(),
-                    ));
-                }
-            }
-        };
         Self {
             geometry: rc.geometry.parse().unwrap(),
             optimize: rc.optimize,
@@ -168,7 +155,6 @@ HCC =               147.81488230
             job_limit: 2048,
             chunk_size: 1,
             queue: Queue::Slurm,
-            energy_line: Some(r"^ CCCRE\s+=".to_owned()),
         };
         assert_eq!(got, want);
     }

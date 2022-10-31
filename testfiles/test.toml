@@ -21,5 +21,3 @@ job_limit = 2048
 chunk_size = 1
 template = """
 scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat"""
-
-energy_line = '^ CCCRE\s+='

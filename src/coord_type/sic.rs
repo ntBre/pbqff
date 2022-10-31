@@ -228,7 +228,6 @@ type AtomicNumbers = Vec<usize>;
 // needed *after* the optimization, which obviously doesn't include them. Right
 // now I'm specifying the dummy atoms in a pretty terrible format in the
 // rust-semp config file and they aren't really used within this package
-/// `mol` should be in angstroms because it will be converted to bohr
 pub fn generate_pts<W: std::io::Write>(
     w: &mut W,
     mol: &Molecule,
