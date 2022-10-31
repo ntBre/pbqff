@@ -8,10 +8,9 @@ use psqs::{
     program::{Program, Template},
     queue::Queue,
 };
-use rust_anpass::Anpass;
 use spectro::{Output, Spectro};
-use symm::{Irrep, Molecule, PointGroup};
-use taylor::{Checks, Taylor};
+use symm::{Molecule, PointGroup};
+use taylor::Taylor;
 
 use super::CoordType;
 use crate::{config::Config, optimize};
@@ -102,125 +101,6 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
     }
 }
 
-/// generate the Taylor series mod and equivalence checks from `irreps` in `pg`
-fn make_taylor_checks(
-    irreps: Vec<(usize, Irrep)>,
-    pg: &PointGroup,
-) -> (Option<Checks>, Option<Checks>) {
-    use symm::Irrep::*;
-    use symm::PointGroup::*;
-    match pg {
-        C1 => (None, None),
-        C2 { axis: _ } => {
-            todo!();
-        }
-        Cs { plane: _ } => {
-            // only A'' modes go in checks[0], other two checks are 0-0
-            let mut checks = Checks::default();
-            for i in irreps {
-                match i.1 {
-                    Ap => (),
-                    App => {
-                        if checks[(0, 0)] == 0 {
-                            checks[(0, 0)] = i.0 + 1;
-                            checks[(0, 1)] = i.0 + 1;
-                        } else if i.0 + 1 > checks[(0, 1)] {
-                            checks[(0, 1)] = i.0 + 1;
-                        }
-                    }
-                    _ => panic!("non-Cs irrep found in Cs point group"),
-                }
-            }
-            (Some(checks.clone()), Some(checks))
-        }
-        C2v { axis: _, planes: _ } => {
-            let mut checks = Checks::default();
-            // first one you hit goes in checks.0, second goes in checks.1
-            for i in irreps {
-                match i.1 {
-                    A1 => (),
-                    B1 => {
-                        if checks[(0, 0)] == 0 {
-                            checks[(0, 0)] = i.0 + 1;
-                            checks[(0, 1)] = i.0 + 1;
-                        } else if i.0 + 1 > checks[(0, 1)] {
-                            checks[(0, 1)] = i.0 + 1;
-                        }
-                    }
-                    B2 => {
-                        if checks[(1, 0)] == 0 {
-                            checks[(1, 0)] = i.0 + 1;
-                            checks[(1, 1)] = i.0 + 1;
-                        } else if i.0 + 1 > checks[(1, 1)] {
-                            checks[(1, 1)] = i.0 + 1;
-                        }
-                    }
-                    A2 => {
-                        if checks[(2, 0)] == 0 {
-                            checks[(2, 0)] = i.0 + 1;
-                            checks[(2, 1)] = i.0 + 1;
-                        } else if i.0 + 1 > checks[(2, 1)] {
-                            checks[(2, 1)] = i.0 + 1;
-                        }
-                    }
-                    _ => panic!("non-C2v irrep found in C2v point group"),
-                }
-            }
-            (Some(checks.clone()), Some(checks))
-        }
-        D2h { axes: _, planes: _ } => todo!(),
-        C3v { axis: _, plane: _ } => todo!(),
-        D3h {
-            c3: _,
-            c2: _,
-            sh: _,
-            sv: _,
-        } => todo!(),
-    }
-}
-
-fn taylor_to_anpass(
-    taylor: &Taylor,
-    taylor_disps: &Vec<Vec<isize>>,
-    energies: &[f64],
-    step_size: f64,
-) -> Anpass {
-    let mut disps = Vec::new();
-    for disp in taylor_disps {
-        for coord in disp {
-            disps.push(*coord as f64 * step_size);
-        }
-    }
-    let tdl = taylor_disps.len();
-    let fl = taylor.forces.len();
-    let mut fs = Vec::new();
-    for row in &taylor.forces {
-        for c in row {
-            fs.push(*c as i32);
-        }
-    }
-    Anpass {
-        disps: na::DMatrix::from_row_slice(tdl, disps.len() / tdl, &disps),
-        energies: na::DVector::from_row_slice(energies),
-        exponents: na::DMatrix::from_column_slice(
-            taylor.forces[0].len(),
-            fl,
-            &fs,
-        ),
-        bias: None,
-    }
-}
-
-fn disp_to_intder(disps: &Vec<Vec<isize>>, step_size: f64) -> Vec<Vec<f64>> {
-    let mut ret = Vec::new();
-    for disp in disps {
-        let disp: Vec<_> = disp.iter().map(|i| *i as f64 * step_size).collect();
-        ret.push(disp);
-    }
-    ret
-}
-
-type TaylorDisps = Vec<Vec<isize>>;
 type AtomicNumbers = Vec<usize>;
 
 // TODO clean up this dummy atom interface. this is the difficulty of not
@@ -235,7 +115,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder: &mut Intder,
     step_size: f64,
     dummies: &Vec<(usize, usize)>,
-) -> (Vec<Geom>, Taylor, TaylorDisps, AtomicNumbers) {
+) -> (Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers) {
     let atomic_numbers = mol.atomic_numbers();
 
     // load the initial intder
@@ -282,11 +162,11 @@ pub fn generate_pts<W: std::io::Write>(
     intder.print_sics(w, &just_irreps);
 
     // generate checks
-    let checks = make_taylor_checks(irreps, pg);
+    let checks = Taylor::make_checks(irreps, pg);
     // run taylor.py to get fcs and disps
     let taylor = Taylor::new(5, nsic, checks.0, checks.1);
     let taylor_disps = taylor.disps();
-    intder.disps = disp_to_intder(&taylor_disps, step_size);
+    intder.disps = taylor_disps.to_intder(step_size);
 
     if DEBUG {
         writeln!(w, "\nIntder Input:\n{}", intder).unwrap();
@@ -376,7 +256,7 @@ pub fn freqs<W: std::io::Write>(
     energies: &mut [f64],
     intder: &mut Intder,
     taylor: &Taylor,
-    taylor_disps: &TaylorDisps,
+    taylor_disps: &taylor::Disps,
     atomic_numbers: &AtomicNumbers,
     step_size: f64,
 ) -> (Spectro, Output) {
@@ -386,7 +266,7 @@ pub fn freqs<W: std::io::Write>(
     }
 
     // run anpass
-    let anpass = taylor_to_anpass(taylor, taylor_disps, energies, step_size);
+    let anpass = Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
     write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
     let (fcs, long_line) = if DEBUG {
         writeln!(w, "Anpass Input:\n{}", anpass).unwrap();

@@ -101,6 +101,7 @@ name = "intder"
 version = "0.1.0"
 dependencies = [
  "approx",
+ "lazy_static",
  "nalgebra",
  "psqs",
  "regex",
@@ -440,6 +441,11 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
+dependencies = [
+ "nalgebra",
+ "rust-anpass",
+ "symm",
+]
 
 [[package]]
 name = "tensor"
