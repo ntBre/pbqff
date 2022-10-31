@@ -326,6 +326,7 @@ dependencies = [
  "libc",
  "nalgebra",
  "psqs",
+ "regex",
  "rust-anpass",
  "rustc-hash",
  "serde",
