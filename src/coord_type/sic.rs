@@ -55,8 +55,8 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
             writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
             geom
         } else {
-	    // expecting cartesian geometry in angstroms
-	    assert!(config.geometry.is_xyz());
+            // expecting cartesian geometry in angstroms
+            assert!(config.geometry.is_xyz());
             config.geometry.clone()
         };
 
@@ -116,7 +116,7 @@ fn make_taylor_checks(
         }
         Cs { plane: _ } => {
             // only A'' modes go in checks[0], other two checks are 0-0
-            let mut checks = Checks::new();
+            let mut checks = Checks::default();
             for i in irreps {
                 match i.1 {
                     Ap => (),
@@ -134,7 +134,7 @@ fn make_taylor_checks(
             (Some(checks.clone()), Some(checks))
         }
         C2v { axis: _, planes: _ } => {
-            let mut checks = Checks::new();
+            let mut checks = Checks::default();
             // first one you hit goes in checks.0, second goes in checks.1
             for i in irreps {
                 match i.1 {
