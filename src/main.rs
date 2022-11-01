@@ -34,20 +34,25 @@ struct Args {
     #[arg(value_parser, default_value_t = String::from("pbqff.toml"))]
     infile: String,
 
-    /// Number of times to greet
+    /// whether or not to overwrite existing output
     #[arg(short, long, default_value_t = false)]
     overwrite: bool,
+
+    /// print the git commit hash and exit
+    #[arg(short, long, default_value_t = false)]
+    version: bool,
 }
 
 fn main() -> Result<(), std::io::Error> {
     let args = Args::parse();
+    if args.version {
+        println!("version: {}", version());
+        return Ok(());
+    }
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
         eprintln!("existing pbqff output. overwrite with -o/--overwrite");
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::AlreadyExists,
-            "output exists",
-        ));
+        return Ok(());
     }
     let outfile = File::create(path).expect("failed to create outfile");
     let logfile = File::create("pbqff.log").expect("failed to create log file");
