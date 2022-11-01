@@ -32,6 +32,7 @@ fn main() -> Result<(), std::io::Error> {
         libc::dup2(out_fd, 1);
         libc::dup2(log_fd, 2);
     }
+    println!("PID: {}", std::process::id());
     cleanup();
     let _ = std::fs::create_dir("pts");
     let config = Config::load("pbqff.toml");
