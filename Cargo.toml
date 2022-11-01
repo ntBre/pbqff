@@ -18,6 +18,7 @@ symm = { path = "/home/brent/Projects/symm" }
 taylor = { path = "/home/brent/Projects/taylor" }
 toml = "0.5.8"
 rustc-hash = "1.1.0"
+clap = { version = "4.0.18", features = ["derive"] }
 
 [dev-dependencies]
 approx = "0.5.1"

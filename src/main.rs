@@ -1,4 +1,4 @@
-use std::{fs::File, os::unix::prelude::AsRawFd};
+use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
 use psqs::{
     program::{molpro::Molpro, mopac::Mopac},
@@ -24,8 +24,32 @@ macro_rules! queue {
     };
 }
 
+use clap::Parser;
+
+/// push button quartic force fields
+#[derive(Parser, Debug)]
+#[command(author, about, long_about = None)]
+struct Args {
+    /// input file
+    #[arg(value_parser, default_value_t = String::from("pbqff.toml"))]
+    infile: String,
+
+    /// Number of times to greet
+    #[arg(short, long, default_value_t = false)]
+    overwrite: bool,
+}
+
 fn main() -> Result<(), std::io::Error> {
-    let outfile = File::create("pbqff.out").expect("failed to create outfile");
+    let args = Args::parse();
+    let path = Path::new("pbqff.out");
+    if path.exists() && !args.overwrite {
+        eprintln!("existing pbqff output. overwrite with -o/--overwrite");
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::AlreadyExists,
+            "output exists",
+        ));
+    }
+    let outfile = File::create(path).expect("failed to create outfile");
     let logfile = File::create("pbqff.log").expect("failed to create log file");
     let out_fd = outfile.as_raw_fd();
     let log_fd = logfile.as_raw_fd();
@@ -38,7 +62,7 @@ fn main() -> Result<(), std::io::Error> {
     println!("version: {}", version());
     cleanup();
     let _ = std::fs::create_dir("pts");
-    let config = Config::load("pbqff.toml");
+    let config = Config::load(&args.infile);
     let (spectro, output) =
         match (config.coord_type, config.program, config.queue) {
             (
