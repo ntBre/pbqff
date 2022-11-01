@@ -11,6 +11,8 @@ use rust_pbqff::{
     Intder,
 };
 
+include!(concat!(env!("OUT_DIR"), "/version.rs"));
+
 macro_rules! queue {
     ($q: ty, $config: ident) => {
         <$q>::new(
@@ -33,6 +35,7 @@ fn main() -> Result<(), std::io::Error> {
         libc::dup2(log_fd, 2);
     }
     println!("PID: {}", std::process::id());
+    println!("version: {}", version());
     cleanup();
     let _ = std::fs::create_dir("pts");
     let config = Config::load("pbqff.toml");
