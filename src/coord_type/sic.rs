@@ -268,14 +268,16 @@ pub fn freqs<W: std::io::Write>(
     // run anpass
     let anpass = Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
     write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
-    let (fcs, long_line) = if DEBUG {
+    let (fcs, long_line, res) = if DEBUG {
         writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
-        let (fcs, long_line) = anpass.run_debug(w);
+        let (fcs, long_line, res) = anpass.run_debug(w);
         writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
-        (fcs, long_line)
+        (fcs, long_line, res)
     } else {
         anpass.run()
     };
+
+    writeln!(w, "anpass sum of squared residuals: {:17.8e}", res).unwrap();
 
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
