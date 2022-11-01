@@ -9,7 +9,7 @@ use psqs::{
     queue::Queue,
 };
 use spectro::{Output, Spectro};
-use symm::{Molecule, PointGroup};
+use symm::{Molecule, Pg, PointGroup};
 use taylor::Taylor;
 
 use super::CoordType;
@@ -64,7 +64,13 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
             mol.normalize();
             mol
         };
-        let pg = mol.point_group_approx(SYMM_EPS);
+        let mut pg = mol.point_group_approx(SYMM_EPS);
+
+        // use c2v subgroup for d2h
+        if pg.is_d2h() {
+            writeln!(w, "full point group is D2h, using C2v subgroup").unwrap();
+            pg = pg.subgroup(Pg::C2v).unwrap();
+        };
 
         writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
