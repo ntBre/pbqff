@@ -1,6 +1,7 @@
 use std::{env, fs, path::Path};
 
 fn main() {
+    println!("cargo:rerun-if-changed=.git/HEAD");
     let repo = git2::Repository::discover(".").unwrap();
     let head = repo.head().unwrap();
     let id = &head.peel_to_commit().unwrap().id().to_string()[..8];
