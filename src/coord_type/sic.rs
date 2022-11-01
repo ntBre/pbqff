@@ -1,6 +1,6 @@
-use std::{fmt::Display, path::Path};
+use std::{collections::HashSet, fmt::Display, path::Path};
 
-use intder::Intder;
+use intder::{Intder, Siic};
 use na::vector;
 use nalgebra as na;
 use psqs::{
@@ -69,11 +69,25 @@ impl<W: std::io::Write, Q: Queue<P>, P: Program + Clone + Send>
         writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
 
+        // need to add dummy atoms. these are represented here as just the index
+        // of the atom it attaches to. `dummy_stuff` takes care of the axis
+        // checking
+        let dummies: HashSet<usize> = self
+            .intder
+            .simple_internals
+            .iter()
+            .filter_map(|sic| {
+                if let Siic::Lin1(_, b, _, _) = sic {
+                    Some(*b)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(w, &mol, &pg, &mut intder, config.step_size, &vec![]);
-
-        // TODO switch on Program type eventually
+            generate_pts(w, &mol, &pg, &mut intder, config.step_size, &dummies);
 
         let dir = "pts/inp";
         let mut jobs =
@@ -108,13 +122,13 @@ type AtomicNumbers = Vec<usize>;
 // needed *after* the optimization, which obviously doesn't include them. Right
 // now I'm specifying the dummy atoms in a pretty terrible format in the
 // rust-semp config file and they aren't really used within this package
-pub fn generate_pts<W: std::io::Write>(
+pub fn generate_pts<'a, W: std::io::Write>(
     w: &mut W,
     mol: &Molecule,
     pg: &PointGroup,
     intder: &mut Intder,
     step_size: f64,
-    dummies: &Vec<(usize, usize)>,
+    dummies: impl IntoIterator<Item = &'a usize>,
 ) -> (Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers) {
     let atomic_numbers = mol.atomic_numbers();
 
@@ -130,6 +144,7 @@ pub fn generate_pts<W: std::io::Write>(
     intder.geom = intder::geom::Geom::from(mol.clone());
     intder.geom.to_bohr();
     intder.disps = disps;
+
     let ndum = dummy_stuff(dummies, intder);
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
@@ -143,7 +158,9 @@ pub fn generate_pts<W: std::io::Write>(
         );
         let irrep = match m.irrep_approx(pg, SYMM_EPS) {
             Ok(rep) => rep,
-            Err(e) => panic!("failed on coord {} with {}", i, e.msg()),
+            Err(e) => {
+                panic!("failed on coord {i}/{} with {}", disps.len(), e.msg())
+            }
         };
         irreps.push((i, irrep));
     }
@@ -196,13 +213,16 @@ pub fn generate_pts<W: std::io::Write>(
     (geoms, taylor, taylor_disps, atomic_numbers)
 }
 
-fn dummy_stuff(dummies: &Vec<(usize, usize)>, intder: &mut Intder) -> usize {
+fn dummy_stuff<'a>(
+    dummies: impl IntoIterator<Item = &'a usize>,
+    intder: &mut Intder,
+) -> usize {
     // add the dummy atoms
     let mut ndum = 0;
     const ZERO: f64 = 1e-8;
     for dummy in dummies {
         // atom the dummy attaches to
-        let real_coord = intder.geom[dummy.1];
+        let real_coord = intder.geom[*dummy];
         // two of them should be zero and one is non-zero
         let mut zeros = vec![];
         let mut nonzero = 0;
@@ -222,14 +242,14 @@ fn dummy_stuff(dummies: &Vec<(usize, usize)>, intder: &mut Intder) -> usize {
 
         let mut coord = [0.0; 3];
         // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[nonzero] = intder.geom[*dummy][nonzero];
         coord[zeros[0]] = 1.1111111111;
         coord[zeros[1]] = 0.0;
         intder.geom.push(na::Vector3::from(coord));
 
         let mut coord = [0.0; 3];
         // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[dummy.1][nonzero];
+        coord[nonzero] = intder.geom[*dummy][nonzero];
         coord[zeros[1]] = 1.1111111111;
         coord[zeros[0]] = 0.0;
         intder.geom.push(na::Vector3::from(coord));
@@ -238,6 +258,7 @@ fn dummy_stuff(dummies: &Vec<(usize, usize)>, intder: &mut Intder) -> usize {
 
         ndum += 2;
     }
+    intder.input_options[7] = ndum;
     ndum
 }
 

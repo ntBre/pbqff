@@ -1,3 +1,12 @@
+* Usage
+** Linear molecules
+*** SICs
+   - LIN1 coordinates must be used instead of LINX/LINY
+   - Two LIN1 coordinates must be used for each X/Y pair. The code will detect
+     these pairs based on their shared central atoms and add two dummy atoms per
+     pair, one along each axis perpendicular to the principal axis of the
+     molecule
+
 * Tasks [4/12]
 ** WAIT parse input - for now no processing
    - initial geometry
