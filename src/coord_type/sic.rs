@@ -12,7 +12,7 @@ use spectro::{Output, Spectro};
 use symm::{Molecule, Pg, PointGroup};
 use taylor::Taylor;
 
-use super::CoordType;
+use super::{CoordType, SPECTRO_HEADER};
 use crate::{config::Config, optimize};
 
 /// whether or not to print the input files used for intder, anpass, and spectro
@@ -342,7 +342,8 @@ pub fn freqs<W: std::io::Write>(
     Intder::dump_fcs(dir, &f2, &f3, &f4);
 
     // spectro
-    let spectro = Spectro::from(mol);
+    let mut spectro = Spectro::from(mol);
+    spectro.header = SPECTRO_HEADER.to_vec();
 
     let fc3 = spectro::new_fc3(spectro.n3n, &f3);
     let fc4 = spectro::new_fc4(spectro.n3n, &f4);

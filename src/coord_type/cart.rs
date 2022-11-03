@@ -15,7 +15,7 @@ use nalgebra as na;
 
 use crate::{config::Config, optimize, ref_energy};
 
-use super::CoordType;
+use super::{CoordType, SPECTRO_HEADER};
 
 /// debugging options. currently supported options: disp, fcs, none
 pub(crate) static DEBUG: &str = "none";
@@ -698,7 +698,8 @@ pub fn freqs(
 ) -> (Spectro, Output) {
     let mut mol = mol.clone();
     mol.to_bohr();
-    let spectro = Spectro::from(mol);
+    let mut spectro = Spectro::from(mol);
+    spectro.header = SPECTRO_HEADER.to_vec();
 
     // write input
     let input = format!("{}/spectro.in", dir);

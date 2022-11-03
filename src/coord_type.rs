@@ -10,6 +10,13 @@ pub use sic::*;
 pub mod cart;
 pub mod sic;
 
+/// default spectro header to write to the input files for use by the fortran
+/// version
+const SPECTRO_HEADER: [usize; 30] = [
+    99, 1, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+];
+
 pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send> {
     /// run a full qff, taking the configuration from `config`, the intder
     /// template from `intder`, and the spectro template from `spectro`. Only
