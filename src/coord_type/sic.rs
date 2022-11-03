@@ -336,6 +336,12 @@ pub fn freqs<W: std::io::Write>(
         writeln!(w, "Intder Freqs Input\n{}", intder).unwrap();
     }
 
+    intder.atoms = mol.atoms.iter().map(intder::Atom::from).collect();
+    intder.input_options[3] = 4;
+    intder.input_options[6] = 2;
+    intder.input_options[10] = 3;
+    intder.input_options[13] = 0;
+    intder.input_options[14] = 0;
     write_file(format!("{dir}/intder.in"), &intder).unwrap();
 
     let (f2, f3, f4) = intder.convert_fcs();
