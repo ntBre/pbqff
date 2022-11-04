@@ -23,9 +23,8 @@ pub fn cleanup() {
         .unwrap_or_else(|e| eprintln!("failed to remove 'freqs' with {e}"));
 }
 
-
 /// Some if the optimization succeeds, None otherwise
-pub fn optimize<Q: Queue<P>, P: Program + Clone + Send>(
+pub fn optimize<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
     queue: &Q,
     geom: Geom,
     template: Template,
@@ -39,7 +38,7 @@ pub fn optimize<Q: Queue<P>, P: Program + Clone + Send>(
     Ok(res.pop().unwrap())
 }
 
-pub fn ref_energy<Q: Queue<P>, P: Program + Clone + Send>(
+pub fn ref_energy<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
     queue: &Q,
     geom: Geom,
     template: Template,

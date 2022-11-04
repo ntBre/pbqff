@@ -736,8 +736,11 @@ pub struct Target {
     indices: Vec<Index>,
 }
 
-impl<W: io::Write, Q: Queue<P>, P: Program + Clone + Send> CoordType<W, Q, P>
-    for Cart
+impl<
+        W: io::Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + std::marker::Sync,
+    > CoordType<W, Q, P> for Cart
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let mut now = Instant::now();

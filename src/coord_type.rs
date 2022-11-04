@@ -17,7 +17,7 @@ const SPECTRO_HEADER: [usize; 30] = [
     0, 0, 0, 0, 0,
 ];
 
-pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send> {
+pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send + Sync> {
     /// run a full qff, taking the configuration from `config`, the intder
     /// template from `intder`, and the spectro template from `spectro`. Only
     /// the simple internal and symmetry internal coordinates are read from the

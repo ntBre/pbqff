@@ -148,7 +148,7 @@ HCC =               147.81488230
             step_size: 0.005,
             coord_type: CoordType::Sic,
 	    template: String::from(
-		"scfcrt=1.D-21 aux(precision=14) PM6 external=testfiles/params.dat",
+		"scfcrt=1.D-21 aux(precision=14) PM6 THREADS=1 external=testfiles/params.dat",
 		),
             program: Program::Mopac,
             sleep_int: 2,
