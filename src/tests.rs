@@ -25,6 +25,7 @@ fn sic() {
     let queue = LocalQueue {
         dir: "pts".to_string(),
         chunk_size: 512,
+        ..Default::default()
     };
     let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
         &coord,
@@ -70,6 +71,7 @@ fn cart() {
     let queue = LocalQueue {
         dir: "pts".to_string(),
         chunk_size: 512,
+        ..Default::default()
     };
     let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
         &Cart,
@@ -135,13 +137,13 @@ fn build_pts() {
     let queue = LocalQueue {
         dir: "pts".to_string(),
         chunk_size: 512,
+        ..Default::default()
     };
-    let template = Template::from(&config.template);
     let (geom, ref_energy) = {
         let res = optimize::<LocalQueue, Mopac>(
             &queue,
             config.geometry.clone(),
-            template.clone(),
+            Template::from(&config.template),
             config.charge,
         )
         .expect("optimization failed in build_pts");

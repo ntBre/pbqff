@@ -17,6 +17,7 @@ fn main() {
     let queue = LocalQueue {
         chunk_size: 128,
         dir: "pts".to_string(),
+	..Default::default()
     };
     let (geom, ref_energy) = if config.optimize {
         let res = optimize::<LocalQueue, Mopac>(

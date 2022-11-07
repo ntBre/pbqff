@@ -63,6 +63,8 @@ pub enum Queue {
     Pbs,
     #[serde(alias = "slurm")]
     Slurm,
+    #[serde(alias = "local")]
+    Local,
 }
 
 pub struct Config {

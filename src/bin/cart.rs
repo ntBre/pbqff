@@ -17,6 +17,7 @@ fn main() -> Result<(), std::io::Error> {
     let queue = LocalQueue {
         chunk_size: 128,
         dir: "pts".to_string(),
+	..Default::default()
     };
 
     let now = Instant::now();
