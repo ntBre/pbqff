@@ -12,6 +12,9 @@ test:
 clean:
 	cargo clean
 
+clippy:
+	cargo clippy --tests
+
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
 
