@@ -1,6 +1,6 @@
-use std::{collections::HashSet, fmt::Display, marker::Sync, path::Path};
+use std::{fmt::Display, marker::Sync, path::Path};
 
-use intder::{Intder, Siic};
+use intder::Intder;
 use na::vector;
 use nalgebra as na;
 use psqs::{
@@ -78,25 +78,9 @@ impl<
         writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
 
-        // need to add dummy atoms. these are represented here as just the index
-        // of the atom it attaches to. `dummy_stuff` takes care of the axis
-        // checking
-        let dummies: HashSet<usize> = self
-            .intder
-            .simple_internals
-            .iter()
-            .filter_map(|sic| {
-                if let Siic::Lin1(_, b, _, _) = sic {
-                    Some(*b)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(w, &mol, &pg, &mut intder, config.step_size, &dummies);
+            generate_pts(w, &mol, &pg, &mut intder, config.step_size);
 
         let dir = "pts/inp";
         let mut jobs =
@@ -131,14 +115,16 @@ type AtomicNumbers = Vec<usize>;
 // needed *after* the optimization, which obviously doesn't include them. Right
 // now I'm specifying the dummy atoms in a pretty terrible format in the
 // rust-semp config file and they aren't really used within this package
-pub fn generate_pts<'a, W: std::io::Write>(
+pub fn generate_pts<W: std::io::Write>(
     w: &mut W,
     mol: &Molecule,
     pg: &PointGroup,
     intder: &mut Intder,
     step_size: f64,
-    dummies: impl IntoIterator<Item = &'a usize>,
 ) -> (Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers) {
+    // need to add dummy atoms. these are represented here as just the index
+    // of the atom it attaches to. `dummy_stuff` takes care of the axis
+    // checking
     let atomic_numbers = mol.atomic_numbers();
 
     // load the initial intder
@@ -154,7 +140,13 @@ pub fn generate_pts<'a, W: std::io::Write>(
     intder.geom.to_bohr();
     intder.disps = disps;
 
-    let ndum = dummy_stuff(dummies, intder);
+    // this doesn't mean there are dummy atoms, but it means we can try
+    // add_dummies at least
+    let ndum = if let Some(axis) = pg.axis() {
+        intder.add_dummies(axis)
+    } else {
+        0
+    };
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
     // convert displacements -> symm::Molecules and determine irrep
@@ -220,55 +212,6 @@ pub fn generate_pts<'a, W: std::io::Write>(
         geoms.push(Geom::from(mol));
     }
     (geoms, taylor, taylor_disps, atomic_numbers)
-}
-
-fn dummy_stuff<'a>(
-    dummies: impl IntoIterator<Item = &'a usize>,
-    intder: &mut Intder,
-) -> usize {
-    // add the dummy atoms
-    let mut ndum = 0;
-    const ZERO: f64 = 1e-8;
-    for dummy in dummies {
-        // atom the dummy attaches to
-        let real_coord = intder.geom[*dummy];
-        // two of them should be zero and one is non-zero
-        let mut zeros = vec![];
-        let mut nonzero = 0;
-        for (i, c) in real_coord.iter().enumerate() {
-            if c.abs() < ZERO {
-                zeros.push(i);
-            } else {
-                nonzero = i;
-            }
-        }
-        if zeros.len() != 2 {
-            dbg!(real_coord);
-            dbg!(zeros);
-            dbg!(nonzero);
-            panic!("dummy atom for non-linear molecule");
-        }
-
-        let mut coord = [0.0; 3];
-        // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[*dummy][nonzero];
-        coord[zeros[0]] = 1.1111111111;
-        coord[zeros[1]] = 0.0;
-        intder.geom.push(na::Vector3::from(coord));
-
-        let mut coord = [0.0; 3];
-        // match the nonzero field in the real geometry
-        coord[nonzero] = intder.geom[*dummy][nonzero];
-        coord[zeros[1]] = 1.1111111111;
-        coord[zeros[0]] = 0.0;
-        intder.geom.push(na::Vector3::from(coord));
-
-        // push dummy atoms perpendicular in both directions
-
-        ndum += 2;
-    }
-    intder.input_options[7] = ndum;
-    ndum
 }
 
 fn write_file(f: impl AsRef<Path>, d: impl Display) -> std::io::Result<()> {
