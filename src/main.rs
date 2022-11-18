@@ -41,6 +41,10 @@ struct Args {
     /// print the git commit hash and exit
     #[arg(short, long, default_value_t = false)]
     version: bool,
+
+    /// the maximum number of threads to use by rayon
+    #[arg(short, long, default_value_t = 0)]
+    threads: usize,
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -65,6 +69,7 @@ fn main() -> Result<(), std::io::Error> {
     }
     println!("PID: {}", std::process::id());
     println!("version: {}", version());
+    psqs::max_threads(args.threads);
     cleanup();
     let _ = std::fs::create_dir("pts");
     let config = Config::load(&args.infile);
