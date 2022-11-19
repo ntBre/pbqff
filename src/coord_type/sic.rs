@@ -1,6 +1,6 @@
 use std::{fmt::Display, marker::Sync, path::Path};
 
-use intder::Intder;
+use intder::{Intder, Siic};
 use na::vector;
 use nalgebra as na;
 use psqs::{
@@ -122,9 +122,6 @@ pub fn generate_pts<W: std::io::Write>(
     intder: &mut Intder,
     step_size: f64,
 ) -> (Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers) {
-    // need to add dummy atoms. these are represented here as just the index
-    // of the atom it attaches to. `dummy_stuff` takes care of the axis
-    // checking
     let atomic_numbers = mol.atomic_numbers();
 
     // load the initial intder
@@ -140,13 +137,21 @@ pub fn generate_pts<W: std::io::Write>(
     intder.geom.to_bohr();
     intder.disps = disps;
 
-    // this doesn't mean there are dummy atoms, but it means we can try
-    // add_dummies at least
-    let ndum = if let Some(axis) = pg.axis() {
-        intder.add_dummies(axis)
+    // LIN1 is the only coordinate with dummies
+    let ndum = if intder
+        .simple_internals
+        .iter()
+        .any(|s| matches!(s, Siic::Lin1(..)))
+    {
+        // default to Z, hopefully this only applies for semp disaster
+        intder.add_dummies(pg.axis().unwrap_or_else(|| {
+            eprintln!("LIN1 but no axis in point group, using z");
+            symm::Axis::Z
+        }))
     } else {
         0
     };
+
     // convert them to Cartesian coordinates
     let disps = intder.convert_disps();
     // convert displacements -> symm::Molecules and determine irrep
