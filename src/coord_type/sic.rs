@@ -105,6 +105,7 @@ impl<
             &atomic_numbers,
             config.step_size,
         )
+        .unwrap()
     }
 }
 
@@ -225,6 +226,10 @@ fn write_file(f: impl AsRef<Path>, d: impl Display) -> std::io::Result<()> {
     writeln!(f, "{}", d)
 }
 
+/// an Error type containing information about a failure to run `freqs`
+#[derive(Debug)]
+pub struct FreqError(pub String);
+
 /// run the frequency portion of a QFF in `dir`. The caller is responsible for
 /// ensuring this directory exists.
 #[allow(clippy::too_many_arguments)]
@@ -237,7 +242,7 @@ pub fn freqs<W: std::io::Write>(
     taylor_disps: &taylor::Disps,
     atomic_numbers: &AtomicNumbers,
     step_size: f64,
-) -> (Spectro, Output) {
+) -> Result<(Spectro, Output), FreqError> {
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
         *energy -= min;
@@ -248,11 +253,17 @@ pub fn freqs<W: std::io::Write>(
     write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
     let (fcs, long_line, res) = if DEBUG {
         writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
-        let (fcs, long_line, res) = anpass.run_debug(w);
+        let (fcs, long_line, res) = match anpass.run_debug(w) {
+            Ok(v) => v,
+            Err(e) => return Err(FreqError(e.0)),
+        };
         writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
         (fcs, long_line, res)
     } else {
-        anpass.run()
+        match anpass.run() {
+            Ok(v) => v,
+            Err(e) => return Err(FreqError(e.0)),
+        }
     };
 
     writeln!(w, "anpass sum of squared residuals: {:17.8e}", res).unwrap();
@@ -313,5 +324,5 @@ pub fn freqs<W: std::io::Write>(
 
     let (output, _) = spectro.run(f2, fc3, fc4);
 
-    (spectro, output)
+    Ok((spectro, output))
 }
