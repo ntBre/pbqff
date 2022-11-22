@@ -9,7 +9,7 @@ use psqs::{
     queue::Queue,
 };
 use spectro::{Output, Spectro};
-use symm::{Molecule, Pg, PointGroup};
+use symm::{Irrep, Molecule, Pg, PointGroup};
 use taylor::Taylor;
 
 use super::{CoordType, SPECTRO_HEADER};
@@ -166,7 +166,12 @@ pub fn generate_pts<W: std::io::Write>(
         let irrep = match m.irrep_approx(pg, SYMM_EPS) {
             Ok(rep) => rep,
             Err(e) => {
-                panic!("failed on coord {i}/{} with {}", disps.len(), e.msg())
+                eprintln!(
+                    "irrep determination failed on coord {i}/{} with {}",
+                    disps.len(),
+                    e.msg()
+                );
+                Irrep::A
             }
         };
         irreps.push((i, irrep));
