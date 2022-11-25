@@ -1,5 +1,6 @@
 use std::{fmt::Display, marker::Sync, path::Path};
 
+pub use intder::IntderError;
 use intder::{Intder, Siic};
 use na::vector;
 use nalgebra as na;
@@ -80,7 +81,7 @@ impl<
 
         let mut intder = self.intder.clone();
         let (geoms, taylor, taylor_disps, atomic_numbers) =
-            generate_pts(w, &mol, &pg, &mut intder, config.step_size);
+            generate_pts(w, &mol, &pg, &mut intder, config.step_size).unwrap();
 
         let dir = "pts/inp";
         let mut jobs =
@@ -111,18 +112,13 @@ impl<
 
 type AtomicNumbers = Vec<usize>;
 
-// TODO clean up this dummy atom interface. this is the difficulty of not
-// reading a template geometry. Somehow I have to add dummy atoms when they are
-// needed *after* the optimization, which obviously doesn't include them. Right
-// now I'm specifying the dummy atoms in a pretty terrible format in the
-// rust-semp config file and they aren't really used within this package
 pub fn generate_pts<W: std::io::Write>(
     w: &mut W,
     mol: &Molecule,
     pg: &PointGroup,
     intder: &mut Intder,
     step_size: f64,
-) -> (Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers) {
+) -> Result<(Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers), IntderError> {
     let atomic_numbers = mol.atomic_numbers();
 
     // load the initial intder
@@ -154,7 +150,7 @@ pub fn generate_pts<W: std::io::Write>(
     };
 
     // convert them to Cartesian coordinates
-    let disps = intder.convert_disps();
+    let disps = intder.convert_disps()?;
     // convert displacements -> symm::Molecules and determine irrep
     let mut irreps = Vec::new();
     for (i, disp) in disps.iter().enumerate() {
@@ -209,7 +205,7 @@ pub fn generate_pts<W: std::io::Write>(
 
     // these are the displacements that go in file07, but I'll use them from
     // memory to build the jobs
-    let file07 = intder.convert_disps();
+    let file07 = intder.convert_disps()?;
 
     let mut geoms = Vec::with_capacity(file07.len());
     for geom in file07 {
@@ -222,7 +218,7 @@ pub fn generate_pts<W: std::io::Write>(
         mol.to_angstrom();
         geoms.push(Geom::from(mol));
     }
-    (geoms, taylor, taylor_disps, atomic_numbers)
+    Ok((geoms, taylor, taylor_disps, atomic_numbers))
 }
 
 fn write_file(f: impl AsRef<Path>, d: impl Display) -> std::io::Result<()> {
@@ -276,7 +272,7 @@ pub fn freqs<W: std::io::Write>(
     // intder_geom
     intder.disps = vec![long_line.disp.as_slice().to_vec()];
     write_file(format!("{dir}/intder_geom.in"), &intder).unwrap();
-    let refit_geom = intder.convert_disps();
+    let refit_geom = intder.convert_disps().unwrap();
     let refit_geom = refit_geom[0].as_slice();
     let l = refit_geom.len() - 3 * intder.ndum();
     let dummies = &refit_geom[l..];
