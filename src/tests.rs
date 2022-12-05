@@ -1,6 +1,9 @@
 use std::io::Stdout;
 
+use approx::abs_diff_ne;
+use approx::assert_abs_diff_eq;
 use intder::Intder;
+use nalgebra::dvector;
 use psqs::geom::Geom;
 use psqs::program::mopac::Mopac;
 use psqs::program::Template;
@@ -15,6 +18,43 @@ use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::SIC;
 use crate::optimize;
+
+#[test]
+#[ignore]
+fn h2o_sic() {
+    cleanup();
+    let config = Config::load("testfiles/water.toml");
+    let coord = SIC::new(Intder::load_file("testfiles/h2o.intder"));
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        &coord,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+
+    // these match the Go version from
+    // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
+
+    // harmonics
+    assert_abs_diff_eq!(
+        Dvec::from(summ.harms),
+        dvector![2603.972868873955, 2523.265599529732, 1315.3583799359571],
+        epsilon = 2e-3
+    );
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![2636.08089954, 2437.94844727, 1283.99909982];
+    // corr
+    if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
+        println!("got={:.8}", got);
+        println!("want={:.8}", want);
+        println!("diff={:.8}", got.clone() - want.clone());
+    }
+}
 
 #[test]
 #[ignore]
