@@ -16,29 +16,11 @@ use super::{make_fcs, Cart, CoordType, SPECTRO_HEADER};
 
 pub struct Normal;
 
-pub fn harm_freqs(
-    dir: &str,
-    mol: &Molecule,
-    fc2: nalgebra::DMatrix<f64>,
-) -> (Spectro, Output) {
-    let mut mol = mol.clone();
-    mol.to_bohr();
-    let mut spectro = Spectro::from(mol);
-    spectro.header = SPECTRO_HEADER.to_vec();
-
-    // write input
-    let input = format!("{}/spectro.in", dir);
-    spectro.write(&input).unwrap();
-
-    let (output, _) = spectro.run(spectro::Derivative::Harmonic(fc2));
-    (spectro, output)
-}
-
 impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
     CoordType<W, Q, P> for Normal
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
-        let r = cart_part(config, queue, w);
+        let r = self.cart_part(config, queue, w);
         println!("r.1.lxm={:#?}", r.1.lxm);
 
         // TODO at this point we have what we need for the normal coordinate
@@ -55,21 +37,51 @@ impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
     }
 }
 
-/// run the Cartesian harmonic force field and return the spectro output, from
-/// which we can extract the geometry and normal coordinates (lxm)
-fn cart_part<P, Q, W>(
-    config: &Config,
-    queue: &Q,
-    w: &mut W,
-) -> (Spectro, Output)
-where
-    P: Program + Clone + Send + Sync,
-    Q: Queue<P> + Sync,
-    W: Write,
-{
-    let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
-        Cart.first_part(w, config, queue);
-    let (fc2, _, _) =
-        make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
-    harm_freqs("freqs", &mol, fc2)
+impl Normal {
+    /// run the Cartesian harmonic force field and return the spectro output, from
+    /// which we can extract the geometry and normal coordinates (lxm)
+    fn cart_part<P, Q, W>(
+        &self,
+        config: &Config,
+        queue: &Q,
+        w: &mut W,
+    ) -> (Spectro, Output)
+    where
+        P: Program + Clone + Send + Sync,
+        Q: Queue<P> + Sync,
+        W: Write,
+    {
+        let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
+            Cart.first_part(w, config, queue);
+        let (fc2, _, _) = make_fcs(
+            &mut target_map,
+            &energies,
+            &mut fcs,
+            n,
+            nfc2,
+            nfc3,
+            "freqs",
+        );
+        self.harm_freqs("freqs", &mol, fc2)
+    }
+
+    /// run the harmonic frequencies through spectro
+    fn harm_freqs(
+        &self,
+        dir: &str,
+        mol: &Molecule,
+        fc2: nalgebra::DMatrix<f64>,
+    ) -> (Spectro, Output) {
+        let mut mol = mol.clone();
+        mol.to_bohr();
+        let mut spectro = Spectro::from(mol);
+        spectro.header = SPECTRO_HEADER.to_vec();
+
+        // write input
+        let input = format!("{}/spectro.in", dir);
+        spectro.write(&input).unwrap();
+
+        let (output, _) = spectro.run(spectro::Derivative::Harmonic(fc2));
+        (spectro, output)
+    }
 }
