@@ -59,10 +59,7 @@ fn sic() {
 #[test]
 #[ignore]
 fn cart() {
-    let _ = std::fs::remove_dir_all("opt");
-    let _ = std::fs::remove_dir_all("pts");
-    let _ = std::fs::remove_dir_all("freqs");
-
+    cleanup();
     let _ = std::fs::create_dir("opt");
     let _ = std::fs::create_dir("pts");
     let _ = std::fs::create_dir("freqs");
