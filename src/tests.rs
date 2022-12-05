@@ -13,11 +13,52 @@ use symm::Molecule;
 
 use crate::cleanup;
 use crate::config::Config;
+use crate::coord_type::normal::Normal;
 use crate::coord_type::BigHash;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::SIC;
 use crate::optimize;
+
+#[test]
+#[ignore]
+fn normal() {
+    cleanup();
+    let _ = std::fs::create_dir("opt");
+    let _ = std::fs::create_dir("pts");
+    let _ = std::fs::create_dir("freqs");
+    let config = Config::load("testfiles/water.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        &Normal,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+
+    // these match the Go version from
+    // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
+
+    // harmonics
+    assert_abs_diff_eq!(
+        Dvec::from(summ.harms),
+        dvector![2602.732027773963, 2523.471527899651, 1315.4979243007172],
+        epsilon = 2e-3
+    );
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![2584.12640107, 2467.79949790, 1118.91300446];
+    // corr
+    if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
+        println!("got={:.8}", got);
+        println!("want={:.8}", want);
+        println!("diff={:.8}", got - want);
+        panic!("mismatch");
+    }
+}
 
 #[test]
 #[ignore]
