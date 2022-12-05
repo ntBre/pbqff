@@ -11,12 +11,12 @@ pub mod bighash;
 /// geom is None if no displacement is required, i.e. this is the reference
 /// geometry
 #[derive(Debug, PartialEq)]
-struct Proto {
+pub struct Proto {
     geom: Option<Geom>,
     coeff: f64,
 }
 
-fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
+pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
     // this makes sure they match and that coords is divisible by 3
     assert!(3 * names.len() == coords.len());
     names
@@ -28,34 +28,16 @@ fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
         .collect()
 }
 
-fn new_geom(
-    names: &[&str],
-    coords: na::DVector<f64>,
-    step_size: f64,
-    steps: Vec<isize>,
-) -> Geom {
-    let mut v = vec![0.0; coords.len()];
-    for step in steps {
-        if step < 1 {
-            v[(-step - 1) as usize] -= step_size;
-        } else {
-            v[(step - 1) as usize] += step_size;
-        }
-    }
-    let coords = coords + na::DVector::from(v);
-    Geom::Xyz(zip_atoms(names, coords))
-}
-
 macro_rules! geom {
-    ( $names: ident, $coords: ident, $step_size: ident, $( $steps: expr ),* ) => {
-	Some(new_geom($names.clone(), $coords.clone(), $step_size, vec![$($steps),*]))
+    ($s:ident, $names:ident, $coords:ident, $step_size:ident, $($steps: expr),* ) => {
+	Some($s.new_geom($names.clone(), $coords.clone(), $step_size, vec![$($steps),*]))
     };
 }
 
 macro_rules! proto {
-    ( $names: ident, $coords: ident, $step_size: ident, $scale: expr, $( $steps: expr ),* ) => {
+    ($s:ident, $names: ident, $coords: ident, $step_size: ident, $scale: expr, $( $steps: expr ),* ) => {
 	Proto {
-	    geom: geom!($names, $coords, $step_size, $($steps),*),
+	    geom: geom!($s, $names, $coords, $step_size, $($steps),*),
 	    coeff: $scale,
 	}
     };
@@ -64,203 +46,6 @@ macro_rules! proto {
 	    geom: None,
 	    coeff: $coeff,
 	}
-    }
-}
-
-fn make2d(
-    names: &[&str],
-    coords: &na::DVector<f64>,
-    step_size: f64,
-    i: usize,
-    j: usize,
-) -> Vec<Proto> {
-    let scale = ANGBOHR * ANGBOHR / (4.0 * step_size * step_size);
-    let i = i as isize;
-    let j = j as isize;
-    if i == j {
-        vec![
-            proto!(names, coords, step_size, scale, i, i),
-            proto!(-2. * scale),
-            proto!(names, coords, step_size, scale, -i, -i),
-        ]
-    } else {
-        vec![
-            proto!(names, coords, step_size, scale, i, j),
-            proto!(names, coords, step_size, -scale, i, -j),
-            proto!(names, coords, step_size, -scale, -i, j),
-            proto!(names, coords, step_size, scale, -i, -j),
-        ]
-    }
-}
-
-fn make3d(
-    names: &[&str],
-    coords: &na::DVector<f64>,
-    step_size: f64,
-    i: usize,
-    j: usize,
-    k: usize,
-) -> Vec<Proto> {
-    let scale =
-        ANGBOHR * ANGBOHR * ANGBOHR / (8.0 * step_size * step_size * step_size);
-    let i = i as isize;
-    let j = j as isize;
-    let k = k as isize;
-
-    let make3d_2_1 = |i, _, k| {
-        vec![
-            proto!(names, coords, step_size, scale, i, i, k),
-            proto!(names, coords, step_size, -2. * scale, k),
-            proto!(names, coords, step_size, scale, -i, -i, k),
-            proto!(names, coords, step_size, -scale, i, i, -k),
-            proto!(names, coords, step_size, 2. * scale, -k),
-            proto!(names, coords, step_size, -scale, -i, -i, -k),
-        ]
-    };
-    if i == j && i == k {
-        vec![
-            proto!(names, coords, step_size, scale, i, i, i),
-            proto!(names, coords, step_size, -3. * scale, i),
-            proto!(names, coords, step_size, 3. * scale, -i),
-            proto!(names, coords, step_size, -scale, -i, -i, -i),
-        ]
-    } else if i == j {
-        make3d_2_1(i, j, k)
-    } else if i == k {
-        make3d_2_1(i, k, j) // unreachable
-    } else if j == k {
-        make3d_2_1(j, k, i)
-    } else {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, j, k),
-            proto!(names, coords, step_size, -1. * scale, i, -j, k),
-            proto!(names, coords, step_size, -1. * scale, -i, j, k),
-            proto!(names, coords, step_size, 1. * scale, -i, -j, k),
-            proto!(names, coords, step_size, -1. * scale, i, j, -k),
-            proto!(names, coords, step_size, 1. * scale, i, -j, -k),
-            proto!(names, coords, step_size, 1. * scale, -i, j, -k),
-            proto!(names, coords, step_size, -1. * scale, -i, -j, -k),
-        ]
-    }
-}
-
-// there is an issue with the all same case => index 0, also an issue with the
-// 2-2 case => index 2
-fn make4d(
-    names: &[&str],
-    coords: &na::DVector<f64>,
-    step_size: f64,
-    i: usize,
-    j: usize,
-    k: usize,
-    l: usize,
-) -> Vec<Proto> {
-    let scale = ANGBOHR.powi(4) / (16.0 * step_size.powi(4));
-    let i = i as isize;
-    let j = j as isize;
-    let k = k as isize;
-    let l = l as isize;
-
-    let make4d_3_1 = |i, _, _, l| {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, i, i, l),
-            proto!(names, coords, step_size, -3. * scale, i, l),
-            proto!(names, coords, step_size, 3. * scale, -i, l),
-            proto!(names, coords, step_size, -1. * scale, -i, -i, -i, l),
-            proto!(names, coords, step_size, -1. * scale, i, i, i, -l),
-            proto!(names, coords, step_size, 3. * scale, i, -l),
-            proto!(names, coords, step_size, -3. * scale, -i, -l),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, -i, -l),
-        ]
-    };
-
-    let make4d_2_2 = |i, _, k, _| {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, i, k, k),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, -k, -k),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, k, k),
-            proto!(names, coords, step_size, 1. * scale, i, i, -k, -k),
-            proto!(names, coords, step_size, -2. * scale, i, i),
-            proto!(names, coords, step_size, -2. * scale, k, k),
-            proto!(names, coords, step_size, -2. * scale, -i, -i),
-            proto!(names, coords, step_size, -2. * scale, -k, -k),
-            proto!(4. * scale),
-        ]
-    };
-
-    let make4d_2_1_1 = |i, _, k, l| {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, i, k, l),
-            proto!(names, coords, step_size, -2. * scale, k, l),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, k, l),
-            proto!(names, coords, step_size, -1. * scale, i, i, -k, l),
-            proto!(names, coords, step_size, 2. * scale, -k, l),
-            proto!(names, coords, step_size, -1. * scale, -i, -i, -k, l),
-            proto!(names, coords, step_size, -1. * scale, i, i, k, -l),
-            proto!(names, coords, step_size, 2. * scale, k, -l),
-            proto!(names, coords, step_size, -1. * scale, -i, -i, k, -l),
-            proto!(names, coords, step_size, 1. * scale, i, i, -k, -l),
-            proto!(names, coords, step_size, -2. * scale, -k, -l),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, -k, -l),
-        ]
-    };
-
-    if i == j && i == k && i == l {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, i, i, i),
-            proto!(names, coords, step_size, -4. * scale, i, i),
-            proto!(6. * scale),
-            proto!(names, coords, step_size, -4. * scale, -i, -i),
-            proto!(names, coords, step_size, 1. * scale, -i, -i, -i, -i),
-        ]
-    // 3 and 1
-    } else if i == j && i == k {
-        make4d_3_1(i, j, k, l)
-    } else if i == j && i == l {
-        make4d_3_1(i, j, l, k) // unreachable
-    } else if i == k && i == l {
-        make4d_3_1(i, k, l, j) // unreachable
-    } else if j == k && j == l {
-        make4d_3_1(j, k, l, i)
-    // 2 and 2
-    } else if i == j && k == l {
-        make4d_2_2(i, j, k, l)
-    } else if i == k && j == l {
-        make4d_2_2(i, k, j, l) // unreachable
-    } else if i == l && j == k {
-        make4d_2_2(i, l, j, k) // unreachable
-                               // 2 and 1 and 1, first two are the equal ones
-    } else if i == j {
-        make4d_2_1_1(i, j, k, l)
-    } else if i == k {
-        make4d_2_1_1(i, k, j, l) // unreachable
-    } else if i == l {
-        make4d_2_1_1(i, l, j, k) // unreachable
-    } else if j == k {
-        make4d_2_1_1(j, k, i, l)
-    } else if j == l {
-        make4d_2_1_1(j, l, i, k) // unreachable
-    } else if k == l {
-        make4d_2_1_1(k, l, i, j)
-    } else {
-        vec![
-            proto!(names, coords, step_size, 1. * scale, i, j, k, l),
-            proto!(names, coords, step_size, -1. * scale, i, -j, k, l),
-            proto!(names, coords, step_size, -1. * scale, -i, j, k, l),
-            proto!(names, coords, step_size, 1. * scale, -i, -j, k, l),
-            proto!(names, coords, step_size, -1. * scale, i, j, -k, l),
-            proto!(names, coords, step_size, 1. * scale, i, -j, -k, l),
-            proto!(names, coords, step_size, 1. * scale, -i, j, -k, l),
-            proto!(names, coords, step_size, -1. * scale, -i, -j, -k, l),
-            proto!(names, coords, step_size, -1. * scale, i, j, k, -l),
-            proto!(names, coords, step_size, 1. * scale, i, -j, k, -l),
-            proto!(names, coords, step_size, 1. * scale, -i, j, k, -l),
-            proto!(names, coords, step_size, -1. * scale, -i, -j, k, -l),
-            proto!(names, coords, step_size, 1. * scale, i, j, -k, -l),
-            proto!(names, coords, step_size, -1. * scale, i, -j, -k, -l),
-            proto!(names, coords, step_size, -1. * scale, -i, j, -k, -l),
-            proto!(names, coords, step_size, 1. * scale, -i, -j, -k, -l),
-        ]
     }
 }
 
@@ -283,6 +68,8 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
+type Idx = (usize, usize, usize, usize);
+
 /// a trait for CoordTypes that rely on finite differences instead of fittings
 pub trait FiniteDifference<
     W: Write,
@@ -290,6 +77,14 @@ pub trait FiniteDifference<
     P: Program + Clone + Send + Sync,
 >: CoordType<W, Q, P>
 {
+    fn new_geom(
+        &self,
+        names: &[&str],
+        coords: na::DVector<f64>,
+        step_size: f64,
+        steps: Vec<isize>,
+    ) -> Geom;
+
     fn build_points(
         &self,
         geom: Geom,
@@ -320,13 +115,18 @@ pub trait FiniteDifference<
                 for k in 0..=min(j, k_max) {
                     for l in 0..=min(k, l_max) {
                         let protos = match (k, l) {
-                            (0, 0) => make2d(&names, &coords, step_size, i, j),
+                            (0, 0) => {
+                                self.make2d(&names, &coords, step_size, i, j)
+                            }
                             (_, 0) => {
-                                make3d(&names, &coords, step_size, i, j, k)
+                                self.make3d(&names, &coords, step_size, i, j, k)
                             }
-                            (_, _) => {
-                                make4d(&names, &coords, step_size, i, j, k, l)
-                            }
+                            (_, _) => self.make4d(
+                                &names,
+                                &coords,
+                                step_size,
+                                (i, j, k, l),
+                            ),
                         };
                         let idx = (i, j, k, l);
                         for p in protos {
@@ -430,5 +230,203 @@ pub trait FiniteDifference<
         );
 
         (fc2, &fcs[nfc2..nfc2 + nfc3], &fcs[nfc2 + nfc3..])
+    }
+
+    fn make2d(
+        &self,
+        names: &[&str],
+        coords: &na::DVector<f64>,
+        step_size: f64,
+        i: usize,
+        j: usize,
+    ) -> Vec<Proto> {
+        let scale = ANGBOHR * ANGBOHR / (4.0 * step_size * step_size);
+        let i = i as isize;
+        let j = j as isize;
+        if i == j {
+            vec![
+                proto!(self, names, coords, step_size, scale, i, i),
+                proto!(-2. * scale),
+                proto!(self, names, coords, step_size, scale, -i, -i),
+            ]
+        } else {
+            vec![
+                proto!(self, names, coords, step_size, scale, i, j),
+                proto!(self, names, coords, step_size, -scale, i, -j),
+                proto!(self, names, coords, step_size, -scale, -i, j),
+                proto!(self, names, coords, step_size, scale, -i, -j),
+            ]
+        }
+    }
+
+    fn make3d(
+        &self,
+        names: &[&str],
+        coords: &na::DVector<f64>,
+        step_size: f64,
+        i: usize,
+        j: usize,
+        k: usize,
+    ) -> Vec<Proto> {
+        let scale = ANGBOHR * ANGBOHR * ANGBOHR
+            / (8.0 * step_size * step_size * step_size);
+        let i = i as isize;
+        let j = j as isize;
+        let k = k as isize;
+
+        let make3d_2_1 = |i, _, k| {
+            vec![
+                proto!(self, names, coords, step_size, scale, i, i, k),
+                proto!(self, names, coords, step_size, -2. * scale, k),
+                proto!(self, names, coords, step_size, scale, -i, -i, k),
+                proto!(self, names, coords, step_size, -scale, i, i, -k),
+                proto!(self, names, coords, step_size, 2. * scale, -k),
+                proto!(self, names, coords, step_size, -scale, -i, -i, -k),
+            ]
+        };
+        if i == j && i == k {
+            vec![
+                proto!(self, names, coords, step_size, scale, i, i, i),
+                proto!(self, names, coords, step_size, -3. * scale, i),
+                proto!(self, names, coords, step_size, 3. * scale, -i),
+                proto!(self, names, coords, step_size, -scale, -i, -i, -i),
+            ]
+        } else if i == j {
+            make3d_2_1(i, j, k)
+        } else if i == k {
+            make3d_2_1(i, k, j) // unreachable
+        } else if j == k {
+            make3d_2_1(j, k, i)
+        } else {
+            vec![
+                proto!(self, names, coords, step_size, 1. * scale, i, j, k),
+                proto!(self, names, coords, step_size, -1. * scale, i, -j, k),
+                proto!(self, names, coords, step_size, -1. * scale, -i, j, k),
+                proto!(self, names, coords, step_size, 1. * scale, -i, -j, k),
+                proto!(self, names, coords, step_size, -1. * scale, i, j, -k),
+                proto!(self, names, coords, step_size, 1. * scale, i, -j, -k),
+                proto!(self, names, coords, step_size, 1. * scale, -i, j, -k),
+                proto!(self, names, coords, step_size, -1. * scale, -i, -j, -k),
+            ]
+        }
+    }
+
+    // there is an issue with the all same case => index 0, also an issue with the
+    // 2-2 case => index 2
+    fn make4d(
+        &self,
+        names: &[&str],
+        coords: &na::DVector<f64>,
+        step: f64,
+        idx: Idx,
+    ) -> Vec<Proto> {
+        let scale = ANGBOHR.powi(4) / (16.0 * step.powi(4));
+        let (i, j, k, l) = idx;
+        let i = i as isize;
+        let j = j as isize;
+        let k = k as isize;
+        let l = l as isize;
+
+        let make4d_3_1 = |i, _, _, l| {
+            vec![
+                proto!(self, names, coords, step, 1. * scale, i, i, i, l),
+                proto!(self, names, coords, step, -3. * scale, i, l),
+                proto!(self, names, coords, step, 3. * scale, -i, l),
+                proto!(self, names, coords, step, -1. * scale, -i, -i, -i, l),
+                proto!(self, names, coords, step, -1. * scale, i, i, i, -l),
+                proto!(self, names, coords, step, 3. * scale, i, -l),
+                proto!(self, names, coords, step, -3. * scale, -i, -l),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -l),
+            ]
+        };
+
+        let make4d_2_2 = |i, _, k, _| {
+            vec![
+                proto!(self, names, coords, step, 1. * scale, i, i, k, k),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, -k, -k),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, k, k),
+                proto!(self, names, coords, step, 1. * scale, i, i, -k, -k),
+                proto!(self, names, coords, step, -2. * scale, i, i),
+                proto!(self, names, coords, step, -2. * scale, k, k),
+                proto!(self, names, coords, step, -2. * scale, -i, -i),
+                proto!(self, names, coords, step, -2. * scale, -k, -k),
+                proto!(4. * scale),
+            ]
+        };
+
+        let make4d_2_1_1 = |i, _, k, l| {
+            vec![
+                proto!(self, names, coords, step, 1. * scale, i, i, k, l),
+                proto!(self, names, coords, step, -2. * scale, k, l),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, k, l),
+                proto!(self, names, coords, step, -1. * scale, i, i, -k, l),
+                proto!(self, names, coords, step, 2. * scale, -k, l),
+                proto!(self, names, coords, step, -1. * scale, -i, -i, -k, l),
+                proto!(self, names, coords, step, -1. * scale, i, i, k, -l),
+                proto!(self, names, coords, step, 2. * scale, k, -l),
+                proto!(self, names, coords, step, -1. * scale, -i, -i, k, -l),
+                proto!(self, names, coords, step, 1. * scale, i, i, -k, -l),
+                proto!(self, names, coords, step, -2. * scale, -k, -l),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, -k, -l),
+            ]
+        };
+
+        if i == j && i == k && i == l {
+            vec![
+                proto!(self, names, coords, step, 1. * scale, i, i, i, i),
+                proto!(self, names, coords, step, -4. * scale, i, i),
+                proto!(6. * scale),
+                proto!(self, names, coords, step, -4. * scale, -i, -i),
+                proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -i),
+            ]
+        // 3 and 1
+        } else if i == j && i == k {
+            make4d_3_1(i, j, k, l)
+        } else if i == j && i == l {
+            make4d_3_1(i, j, l, k) // unreachable
+        } else if i == k && i == l {
+            make4d_3_1(i, k, l, j) // unreachable
+        } else if j == k && j == l {
+            make4d_3_1(j, k, l, i)
+        // 2 and 2
+        } else if i == j && k == l {
+            make4d_2_2(i, j, k, l)
+        } else if i == k && j == l {
+            make4d_2_2(i, k, j, l) // unreachable
+        } else if i == l && j == k {
+            make4d_2_2(i, l, j, k) // unreachable
+                                   // 2 and 1 and 1, first two are the equal ones
+        } else if i == j {
+            make4d_2_1_1(i, j, k, l)
+        } else if i == k {
+            make4d_2_1_1(i, k, j, l) // unreachable
+        } else if i == l {
+            make4d_2_1_1(i, l, j, k) // unreachable
+        } else if j == k {
+            make4d_2_1_1(j, k, i, l)
+        } else if j == l {
+            make4d_2_1_1(j, l, i, k) // unreachable
+        } else if k == l {
+            make4d_2_1_1(k, l, i, j)
+        } else {
+            vec![
+                proto!(self, names, coords, step, 1. * scale, i, j, k, l),
+                proto!(self, names, coords, step, -1. * scale, i, -j, k, l),
+                proto!(self, names, coords, step, -1. * scale, -i, j, k, l),
+                proto!(self, names, coords, step, 1. * scale, -i, -j, k, l),
+                proto!(self, names, coords, step, -1. * scale, i, j, -k, l),
+                proto!(self, names, coords, step, 1. * scale, i, -j, -k, l),
+                proto!(self, names, coords, step, 1. * scale, -i, j, -k, l),
+                proto!(self, names, coords, step, -1. * scale, -i, -j, -k, l),
+                proto!(self, names, coords, step, -1. * scale, i, j, k, -l),
+                proto!(self, names, coords, step, 1. * scale, i, -j, k, -l),
+                proto!(self, names, coords, step, 1. * scale, -i, j, k, -l),
+                proto!(self, names, coords, step, -1. * scale, -i, -j, k, -l),
+                proto!(self, names, coords, step, 1. * scale, i, j, -k, -l),
+                proto!(self, names, coords, step, -1. * scale, i, -j, -k, -l),
+                proto!(self, names, coords, step, -1. * scale, -i, j, -k, -l),
+                proto!(self, names, coords, step, 1. * scale, -i, -j, -k, -l),
+            ]
+        }
     }
 }

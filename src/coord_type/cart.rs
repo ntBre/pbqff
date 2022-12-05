@@ -11,9 +11,13 @@ use symm::Molecule;
 use crate::{config::Config, optimize, ref_energy};
 
 use super::{
-    findiff::bighash::BigHash, findiff::FiniteDifference, CoordType,
-    SPECTRO_HEADER,
+    findiff::bighash::BigHash,
+    findiff::{zip_atoms, FiniteDifference},
+    CoordType, SPECTRO_HEADER,
 };
+
+#[cfg(test)]
+mod bench;
 
 /// debugging options. currently supported options: disp, fcs, none
 pub(crate) static DEBUG: &str = "none";
@@ -32,8 +36,6 @@ pub enum Derivative {
     Cubic(usize, usize),
     Quartic(usize, usize, usize),
 }
-
-impl Cart {}
 
 pub fn freqs(
     dir: &str,
@@ -94,6 +96,24 @@ where
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync,
 {
+    fn new_geom(
+        &self,
+        names: &[&str],
+        coords: nalgebra::DVector<f64>,
+        step_size: f64,
+        steps: Vec<isize>,
+    ) -> Geom {
+        let mut v = vec![0.0; coords.len()];
+        for step in steps {
+            if step < 1 {
+                v[(-step - 1) as usize] -= step_size;
+            } else {
+                v[(step - 1) as usize] += step_size;
+            }
+        }
+        let coords = coords + nalgebra::DVector::from(v);
+        Geom::Xyz(zip_atoms(names, coords))
+    }
 }
 
 impl Cart {
@@ -185,19 +205,3 @@ impl Cart {
     }
 }
 
-extern crate test;
-#[bench]
-fn bench_to_keys(b: &mut test::Bencher) {
-    use std::str::FromStr;
-    let mol = Molecule::from_str(
-        "
-    C        0.000000   -0.888844    0.000000
-    C       -0.662697    0.368254    0.000000
-    C        0.662697    0.368254    0.000000
-    H       -1.595193    0.906925    0.000000
-    H        1.595193    0.906925    0.000000
-",
-    )
-    .unwrap();
-    b.iter(|| BigHash::to_keys(&mol))
-}

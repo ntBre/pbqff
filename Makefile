@@ -14,8 +14,6 @@ clean:
 
 clippy:
 	cargo clippy
-
-clippy.tests:
 	cargo clippy --tests
 
 cover:

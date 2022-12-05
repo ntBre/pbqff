@@ -12,7 +12,9 @@ use symm::Molecule;
 
 use crate::config::Config;
 
-use super::{findiff::FiniteDifference, Cart, CoordType, SPECTRO_HEADER, Derivative};
+use super::{
+    findiff::FiniteDifference, Cart, CoordType, Derivative, SPECTRO_HEADER,
+};
 
 pub struct Normal;
 
@@ -49,6 +51,15 @@ where
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync,
 {
+    fn new_geom(
+        &self,
+        _names: &[&str],
+        _coords: nalgebra::DVector<f64>,
+        _step_size: f64,
+        _steps: Vec<isize>,
+    ) -> psqs::geom::Geom {
+        todo!()
+    }
 }
 
 impl Normal {
@@ -73,10 +84,7 @@ impl Normal {
             &energies,
             &mut fcs,
             n,
-	    Derivative::Quartic(
-            nfc2,
-            nfc3,
-		0),
+            Derivative::Quartic(nfc2, nfc3, 0),
             "freqs",
         );
         self.harm_freqs("freqs", &mol, fc2)
