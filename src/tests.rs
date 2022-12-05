@@ -93,7 +93,8 @@ fn h2o_sic() {
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
         println!("got={:.8}", got);
         println!("want={:.8}", want);
-        println!("diff={:.8}", got.clone() - want.clone());
+        println!("diff={:.8}", got - want);
+        panic!("mismatch");
     }
 }
 
