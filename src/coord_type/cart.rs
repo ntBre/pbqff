@@ -1,4 +1,6 @@
-use std::{collections::hash_map::Values, hash::Hash, io, time::Instant};
+use std::{
+    cmp::min, collections::hash_map::Values, hash::Hash, io, time::Instant,
+};
 
 use rustc_hash::FxHashMap;
 
@@ -599,15 +601,19 @@ impl BigHash {
     }
 }
 
+pub enum Derivative {
+    Harmonic(usize),
+    Cubic(usize, usize),
+    Quartic(usize, usize, usize),
+}
+
 impl Cart {
-    #[allow(clippy::too_many_arguments)]
     pub fn build_points(
         &self,
         geom: Geom,
         step_size: f64,
         ref_energy: f64,
-        nfc2: usize,
-        nfc3: usize,
+        deriv: Derivative,
         fcs: &mut [f64],
         map: &mut BigHash,
     ) -> Vec<CartGeom> {
@@ -616,6 +622,12 @@ impl Cart {
         let ncoords = coords.len();
         let coords = na::DVector::from(coords);
 
+        let (nfc2, nfc3, k_max, l_max) = match deriv {
+            Derivative::Harmonic(x) => (x, 0, 0, 0),
+            Derivative::Cubic(x, y) => (x, y, ncoords, 0),
+            Derivative::Quartic(x, y, _) => (x, y, ncoords, ncoords),
+        };
+
         let mut geoms = Vec::new();
         // counter is the index into the the energies array that the jobs will
         // be run into
@@ -623,8 +635,8 @@ impl Cart {
         // start at 1 so that k = l = 0 indicates second derivative
         for i in 1..=ncoords {
             for j in 1..=i {
-                for k in 0..=j {
-                    for l in 0..=k {
+                for k in 0..=min(j, k_max) {
+                    for l in 0..=min(k, l_max) {
                         let protos = match (k, l) {
                             (0, 0) => make2d(&names, &coords, step_size, i, j),
                             (_, 0) => {
@@ -708,7 +720,7 @@ pub fn freqs(
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
 
-    let (output, _) = spectro.run(fc2, fc3, fc4);
+    let (output, _) = spectro.run(spectro::Derivative::Quartic(fc2, fc3, fc4));
     (spectro, output)
 }
 
@@ -792,8 +804,7 @@ impl<
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
             ref_energy,
-            nfc2,
-            nfc3,
+            Derivative::Quartic(nfc2, nfc3, nfc4),
             &mut fcs,
             &mut target_map,
         );

@@ -48,6 +48,7 @@ fn normal() {
     );
     let got = Dvec::from(summ.corrs);
     let want = dvector![2584.12640107, 2467.79949790, 1118.91300446];
+    assert_eq!(got.len(), want.len());
     // corr
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
         println!("got={:.8}", got);
@@ -214,8 +215,7 @@ fn build_pts() {
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
-        nfc2,
-        nfc3,
+        crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
         &mut fcs,
         &mut target_map,
     );
