@@ -1,4 +1,6 @@
-use std::{cmp::min, collections::hash_map::Values, hash::Hash, io};
+use std::{
+    cmp::min, collections::hash_map::Values, hash::Hash, io, marker::Sync,
+};
 
 use rustc_hash::FxHashMap;
 
@@ -746,13 +748,47 @@ pub struct Target {
     indices: Vec<Index>,
 }
 
-impl<
-        W: io::Write,
-        Q: Queue<P> + Sync,
-        P: Program + Clone + Send + std::marker::Sync,
-    > CoordType<W, Q, P> for Cart
+impl<W, Q, P> CoordType<W, Q, P> for Cart
+where
+    W: io::Write,
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync,
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+        let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
+            Cart.first_part(w, config, queue);
+
+        time!(w, "freqs",
+              let (fc2, f3, f4) = make_fcs(
+              &mut target_map,
+              &energies,
+              &mut fcs,
+              n,
+              nfc2,
+              nfc3,
+              "freqs",
+              );
+
+              let r = freqs("freqs", &mol, fc2, f3, f4);
+        );
+        r
+    }
+}
+
+impl Cart {
+    /// run the "first part" of the Cartesian QFF, including the optimization if
+    /// requested and the generation and running of the single-point energies
+    pub(crate) fn first_part<W, Q, P>(
+        &self,
+        w: &mut W,
+        config: &Config,
+        queue: &Q,
+    ) -> (usize, usize, usize, Vec<f64>, Molecule, Vec<f64>, BigHash)
+    where
+        W: io::Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + Sync,
+    {
         time!(w, "opt",
             let template = Template::from(&config.template);
             let (geom, ref_energy) = if config.optimize {
@@ -774,7 +810,6 @@ impl<
                 (config.geometry.clone(), ref_energy)
             };
         );
-
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
         let n = 3 * geom.len();
@@ -782,14 +817,12 @@ impl<
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
-
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{}", mol).unwrap();
         writeln!(w, "point group:{}", pg).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
-
         time! (w, "building points",
                let geoms = self.build_points(
                Geom::Xyz(mol.atoms.clone()),
@@ -800,7 +833,6 @@ impl<
                &mut target_map,
                );
         );
-
         let dir = "pts";
         let mut jobs = {
             let mut jobs = Vec::new();
@@ -814,14 +846,12 @@ impl<
             }
             jobs
         };
-
         writeln!(
             w,
             "{n} Cartesian coordinates requires {} points",
             jobs.len()
         )
         .unwrap();
-
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
@@ -829,21 +859,7 @@ impl<
               .drain(dir, &mut jobs, &mut energies)
               .expect("single-point calculations failed");
         );
-
-        time!(w, "freqs",
-              let (fc2, f3, f4) = make_fcs(
-              &mut target_map,
-              &energies,
-              &mut fcs,
-              n,
-              nfc2,
-              nfc3,
-              "freqs",
-              );
-
-              let r = freqs("freqs", &mol, fc2, f3, f4);
-        );
-        r
+        (n, nfc2, nfc3, fcs, mol, energies, target_map)
     }
 }
 

@@ -4,19 +4,15 @@
 //! generate the normal coordinate displacements, which can be fed back in
 //! to spectro at the end as f3qcm and f4qcm
 
-use std::io::Write;
+use std::{io::Write, marker::Sync};
 
-use psqs::{
-    geom::Geom,
-    program::{Job, Program, Template},
-    queue::Queue,
-};
+use psqs::{program::Program, queue::Queue};
 use spectro::{Output, Spectro};
 use symm::Molecule;
 
-use crate::{config::Config, optimize, ref_energy};
+use crate::config::Config;
 
-use super::{make_fcs, BigHash, Cart, CoordType, SPECTRO_HEADER};
+use super::{make_fcs, Cart, CoordType, SPECTRO_HEADER};
 
 pub struct Normal;
 
@@ -38,11 +34,8 @@ pub fn harm_freqs(
     (spectro, output)
 }
 
-impl<
-        W: Write,
-        Q: Queue<P> + Sync,
-        P: Program + Clone + Send + std::marker::Sync,
-    > CoordType<W, Q, P> for Normal
+impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
+    CoordType<W, Q, P> for Normal
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let r = cart_part(config, queue, w);
@@ -64,16 +57,19 @@ impl<
 
 /// run the Cartesian harmonic force field and return the spectro output, from
 /// which we can extract the geometry and normal coordinates (lxm)
-fn cart_part<
-    P: Program + Clone + Send + std::marker::Sync,
-    Q: psqs::queue::Queue<P> + std::marker::Sync,
-    W: Write,
->(
+fn cart_part<P, Q, W>(
     config: &Config,
     queue: &Q,
     w: &mut W,
-) -> (Spectro, Output) {
-    // TODO call first part of run from carts
-    // harm_freqs("freqs", &mol, fc2):
-    todo!()
+) -> (Spectro, Output)
+where
+    P: Program + Clone + Send + Sync,
+    Q: Queue<P> + Sync,
+    W: Write,
+{
+    let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
+        Cart.first_part(w, config, queue);
+    let (fc2, _, _) =
+        make_fcs(&mut target_map, &energies, &mut fcs, n, nfc2, nfc3, "freqs");
+    harm_freqs("freqs", &mol, fc2)
 }
