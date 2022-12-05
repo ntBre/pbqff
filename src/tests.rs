@@ -78,12 +78,12 @@ fn sic() {
     // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
 
     // harmonics
-    approx::assert_abs_diff_eq!(
+    assert_abs_diff_eq!(
         Dvec::from(summ.harms),
-        Dvec::from(vec![
+        dvector![
             2820.227, 2799.282, 1819.161, 1198.887, 1060.531, 963.513, 931.318,
-            929.900, 912.358,
-        ]),
+            929.900, 912.358
+        ],
         epsilon = 2e-3
     );
     let got = Dvec::from(summ.corrs);
@@ -93,7 +93,7 @@ fn sic() {
     ]);
     println!("{:.8}", got.clone() - want.clone());
     // corr
-    approx::assert_abs_diff_eq!(got, want, epsilon = 2.6e-1);
+    assert_abs_diff_eq!(got, want, epsilon = 2.6e-1);
 }
 
 #[test]
@@ -118,16 +118,16 @@ fn cart() {
     );
     assert_eq!(summ.harms.len(), 9);
     // harmonics
-    approx::assert_abs_diff_eq!(
+    assert_abs_diff_eq!(
         Dvec::from(summ.harms),
-        Dvec::from(vec![
+        dvector![
             2819.297, 2798.273, 1819.846, 1199.526, 1061.197, 964.357, 932.103,
-            930.917, 913.221,
-        ]),
+            930.917, 913.221
+        ],
         epsilon = 1.0
     );
     // corr
-    approx::assert_abs_diff_eq!(
+    assert_abs_diff_eq!(
         Dvec::from(summ.corrs),
         Dvec::from(vec![
             2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
