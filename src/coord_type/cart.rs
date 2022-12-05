@@ -1,6 +1,4 @@
-use std::{
-    cmp::min, collections::hash_map::Values, hash::Hash, io, time::Instant,
-};
+use std::{cmp::min, collections::hash_map::Values, hash::Hash, io};
 
 use rustc_hash::FxHashMap;
 
@@ -755,35 +753,27 @@ impl<
     > CoordType<W, Q, P> for Cart
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
-        let mut now = Instant::now();
-
-        let template = Template::from(&config.template);
-        let (geom, ref_energy) = if config.optimize {
-            let res = optimize(
-                queue,
-                config.geometry.clone(),
-                template.clone(),
-                config.charge,
-            )
-            .expect("optimization failed");
-            (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
-        } else {
-            let ref_energy = ref_energy(
-                queue,
-                config.geometry.clone(),
-                template.clone(),
-                config.charge,
-            );
-            (config.geometry.clone(), ref_energy)
-        };
-
-        writeln!(
-            w,
-            "finished opt after {:.1} sec",
-            now.elapsed().as_millis() as f64 / 1000.0
-        )
-        .unwrap();
-        now = Instant::now();
+        time!(w, "opt",
+            let template = Template::from(&config.template);
+            let (geom, ref_energy) = if config.optimize {
+                let res = optimize(
+                    queue,
+                    config.geometry.clone(),
+                    template.clone(),
+                    config.charge,
+                )
+                .expect("optimization failed");
+                (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
+            } else {
+                let ref_energy = ref_energy(
+                    queue,
+                    config.geometry.clone(),
+                    template.clone(),
+                    config.charge,
+                );
+                (config.geometry.clone(), ref_energy)
+            };
+        );
 
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
@@ -800,22 +790,16 @@ impl<
         writeln!(w, "point group:{}", pg).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
 
-        let geoms = self.build_points(
-            Geom::Xyz(mol.atoms.clone()),
-            config.step_size,
-            ref_energy,
-            Derivative::Quartic(nfc2, nfc3, nfc4),
-            &mut fcs,
-            &mut target_map,
+        time! (w, "building points",
+               let geoms = self.build_points(
+               Geom::Xyz(mol.atoms.clone()),
+               config.step_size,
+               ref_energy,
+               Derivative::Quartic(nfc2, nfc3, nfc4),
+               &mut fcs,
+               &mut target_map,
+               );
         );
-
-        writeln!(
-            w,
-            "finished building points after {:.1} sec",
-            now.elapsed().as_millis() as f64 / 1000.0
-        )
-        .unwrap();
-        now = Instant::now();
 
         let dir = "pts";
         let mut jobs = {
@@ -830,6 +814,7 @@ impl<
             }
             jobs
         };
+
         writeln!(
             w,
             "{n} Cartesian coordinates requires {} points",
@@ -837,37 +822,27 @@ impl<
         )
         .unwrap();
 
-        // drain into energies
-        let mut energies = vec![0.0; jobs.len()];
-        queue
-            .drain(dir, &mut jobs, &mut energies)
-            .expect("single-point calculations failed");
-
-        writeln!(
-            w,
-            "finished draining points after {:.1} sec",
-            now.elapsed().as_millis() as f64 / 1000.0
-        )
-        .unwrap();
-        now = Instant::now();
-
-        let (fc2, f3, f4) = make_fcs(
-            &mut target_map,
-            &energies,
-            &mut fcs,
-            n,
-            nfc2,
-            nfc3,
-            "freqs",
+        time!(w, "draining points",
+              // drain into energies
+              let mut energies = vec![0.0; jobs.len()];
+              queue
+              .drain(dir, &mut jobs, &mut energies)
+              .expect("single-point calculations failed");
         );
 
-        let r = freqs("freqs", &mol, fc2, f3, f4);
-        writeln!(
-            w,
-            "finished freqs after {:.1} sec",
-            now.elapsed().as_millis() as f64 / 1000.0
-        )
-        .unwrap();
+        time!(w, "freqs",
+              let (fc2, f3, f4) = make_fcs(
+              &mut target_map,
+              &energies,
+              &mut fcs,
+              n,
+              nfc2,
+              nfc3,
+              "freqs",
+              );
+
+              let r = freqs("freqs", &mol, fc2, f3, f4);
+        );
         r
     }
 }

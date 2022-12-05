@@ -5,11 +5,26 @@ use spectro::{Output, Spectro};
 
 use crate::config::Config;
 
+#[macro_export]
+macro_rules! time {
+    ($w:expr, $label:expr, $($s:stmt;)*) => {
+        let now = ::std::time::Instant::now();
+	$($s)*
+        writeln!(
+            $w,
+            "finished {} after {:.1} sec",
+            $label,
+            now.elapsed().as_millis() as f64 / 1000.0
+        )
+        .unwrap();
+    };
+}
+
 pub use cart::*;
 pub use sic::*;
 pub mod cart;
-pub mod sic;
 pub mod normal;
+pub mod sic;
 
 /// default spectro header to write to the input files for use by the fortran
 /// version
