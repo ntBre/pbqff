@@ -40,9 +40,6 @@ fn normal() {
         &config,
     );
 
-    // these match the Go version from
-    // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
-
     // harmonics
     assert_abs_diff_eq!(
         Dvec::from(summ.harms),
