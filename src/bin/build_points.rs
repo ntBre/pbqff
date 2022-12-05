@@ -1,3 +1,5 @@
+use std::io::Stdout;
+
 use psqs::{
     geom::Geom,
     program::{mopac::Mopac, Template},
@@ -5,7 +7,10 @@ use psqs::{
 };
 use rust_pbqff::{
     config::Config,
-    coord_type::{BigHash, Cart, Derivative},
+    coord_type::{
+        findiff::{bighash::BigHash, FiniteDifference},
+        Cart, Derivative,
+    },
     optimize,
 };
 use symm::Molecule;
@@ -45,7 +50,8 @@ fn main() {
     let pg = mol.point_group();
     let mut target_map = BigHash::new(mol.clone(), pg);
 
-    Cart.build_points(
+    <Cart as FiniteDifference<Stdout, LocalQueue, Mopac>>::build_points(
+        &Cart,
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,

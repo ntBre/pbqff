@@ -25,6 +25,7 @@ pub use sic::*;
 pub mod cart;
 pub mod normal;
 pub mod sic;
+pub mod findiff;
 
 /// default spectro header to write to the input files for use by the fortran
 /// version
@@ -41,3 +42,4 @@ pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send + Sync> {
     /// the spectro template, but the geometry will be updated
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
 }
+

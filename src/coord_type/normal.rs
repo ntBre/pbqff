@@ -12,12 +12,15 @@ use symm::Molecule;
 
 use crate::config::Config;
 
-use super::{make_fcs, Cart, CoordType, SPECTRO_HEADER};
+use super::{findiff::FiniteDifference, Cart, CoordType, SPECTRO_HEADER, Derivative};
 
 pub struct Normal;
 
-impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
-    CoordType<W, Q, P> for Normal
+impl<W, Q, P> CoordType<W, Q, P> for Normal
+where
+    W: Write,
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync,
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let r = self.cart_part(config, queue, w);
@@ -33,8 +36,19 @@ impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
         // the slight downside of having to pass self to the macros, but it
         // might be the best bet
 
+        // Cart and Normal share a whole lot in common. I think I should define
+        // a trait like FinDiff to represent that commonality
+
         r
     }
+}
+
+impl<W, Q, P> FiniteDifference<W, Q, P> for Normal
+where
+    W: Write,
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync,
+{
 }
 
 impl Normal {
@@ -53,13 +67,16 @@ impl Normal {
     {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
             Cart.first_part(w, config, queue);
-        let (fc2, _, _) = make_fcs(
+        let (fc2, _, _) = <Self as FiniteDifference<W, Q, P>>::make_fcs(
+            self,
             &mut target_map,
             &energies,
             &mut fcs,
             n,
+	    Derivative::Quartic(
             nfc2,
             nfc3,
+		0),
             "freqs",
         );
         self.harm_freqs("freqs", &mol, fc2)
