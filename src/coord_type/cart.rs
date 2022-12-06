@@ -71,8 +71,7 @@ where
             Cart.first_part(w, config, queue);
 
         time!(w, "freqs",
-          let (fc2, f3, f4) = <Self as FiniteDifference<W, Q, P>>::make_fcs(
-          self,
+          let (fc2, f3, f4) = self.make_fcs(
           &mut target_map,
           &energies,
           &mut fcs,
@@ -90,12 +89,7 @@ where
     }
 }
 
-impl<W, Q, P> FiniteDifference<W, Q, P> for Cart
-where
-    W: io::Write,
-    Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync,
-{
+impl FiniteDifference for Cart {
     fn new_geom(
         &self,
         names: &[&str],
@@ -165,8 +159,7 @@ impl Cart {
         writeln!(w, "point group:{}", pg).unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
         time! (w, "building points",
-               let geoms = <Self as FiniteDifference<W,Q, P>>::build_points(
-           self,
+               let geoms = self.build_points(
                Geom::Xyz(mol.atoms.clone()),
                config.step_size,
                ref_energy,
@@ -176,7 +169,7 @@ impl Cart {
                );
         );
         let dir = "pts";
-        let mut jobs = {
+        let jobs = {
             let mut jobs = Vec::new();
             for (job_num, mol) in geoms.into_iter().enumerate() {
                 let filename = format!("{dir}/job.{:08}", job_num);
@@ -198,10 +191,9 @@ impl Cart {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               queue
-              .drain(dir, &mut jobs, &mut energies)
+              .drain(dir, jobs, &mut energies)
               .expect("single-point calculations failed");
         );
         (n, nfc2, nfc3, fcs, mol, energies, target_map)
     }
 }
-

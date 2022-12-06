@@ -1,9 +1,9 @@
-use super::{CartGeom, CoordType, Derivative, DEBUG};
+use super::{CartGeom, Derivative, DEBUG};
 use bighash::Index;
 use intder::ANGBOHR;
 use nalgebra as na;
-use psqs::{geom::Geom, program::Program, queue::Queue};
-use std::{cmp::min, io::Write, marker::Sync};
+use psqs::geom::Geom;
+use std::cmp::min;
 use symm::{Atom, Molecule};
 
 pub mod bighash;
@@ -71,12 +71,7 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
 type Idx = (usize, usize, usize, usize);
 
 /// a trait for CoordTypes that rely on finite differences instead of fittings
-pub trait FiniteDifference<
-    W: Write,
-    Q: Queue<P>,
-    P: Program + Clone + Send + Sync,
->: CoordType<W, Q, P>
-{
+pub trait FiniteDifference {
     fn new_geom(
         &self,
         names: &[&str],

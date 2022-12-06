@@ -45,12 +45,7 @@ where
     }
 }
 
-impl<W, Q, P> FiniteDifference<W, Q, P> for Normal
-where
-    W: Write,
-    Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync,
-{
+impl FiniteDifference for Normal {
     fn new_geom(
         &self,
         _names: &[&str],
@@ -78,8 +73,7 @@ impl Normal {
     {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
             Cart.first_part(w, config, queue);
-        let (fc2, _, _) = <Self as FiniteDifference<W, Q, P>>::make_fcs(
-            self,
+        let (fc2, _, _) = self.make_fcs(
             &mut target_map,
             &energies,
             &mut fcs,

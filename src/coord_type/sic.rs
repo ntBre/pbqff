@@ -84,7 +84,7 @@ impl<
             generate_pts(w, &mol, &pg, &mut intder, config.step_size).unwrap();
 
         let dir = "pts/inp";
-        let mut jobs =
+        let jobs =
             P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
@@ -92,7 +92,7 @@ impl<
 
         let mut energies = vec![0.0; jobs.len()];
         queue
-            .drain(dir, &mut jobs, &mut energies)
+            .drain(dir, jobs, &mut energies)
             .expect("single-point energies failed");
 
         let _ = std::fs::create_dir("freqs");

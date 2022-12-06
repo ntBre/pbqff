@@ -212,15 +212,13 @@ fn build_pts() {
     println!("normalized geometry:\n{}", mol);
     let mut target_map = BigHash::new(mol.clone(), pg);
 
-    let geoms =
-        <Cart as FiniteDifference<Stdout, LocalQueue, Mopac>>::build_points(
-            &Cart,
-            Geom::Xyz(mol.atoms.clone()),
-            config.step_size,
-            ref_energy,
-            crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
-            &mut fcs,
-            &mut target_map,
-        );
+    let geoms = Cart.build_points(
+        Geom::Xyz(mol.atoms.clone()),
+        config.step_size,
+        ref_energy,
+        crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
+        &mut fcs,
+        &mut target_map,
+    );
     assert_eq!(geoms.len(), 11952);
 }

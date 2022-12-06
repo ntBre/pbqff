@@ -1,5 +1,3 @@
-use std::io::Stdout;
-
 use psqs::{
     geom::Geom,
     program::{mopac::Mopac, Template},
@@ -50,8 +48,7 @@ fn main() {
     let pg = mol.point_group();
     let mut target_map = BigHash::new(mol.clone(), pg);
 
-    <Cart as FiniteDifference<Stdout, LocalQueue, Mopac>>::build_points(
-        &Cart,
+    Cart.build_points(
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
