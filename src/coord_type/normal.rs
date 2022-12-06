@@ -13,7 +13,8 @@ use symm::Molecule;
 use crate::config::Config;
 
 use super::{
-    findiff::FiniteDifference, Cart, CoordType, Derivative, SPECTRO_HEADER, Nderiv,
+    findiff::FiniteDifference, Cart, CoordType, Derivative, Nderiv,
+    SPECTRO_HEADER,
 };
 
 pub struct Normal;
@@ -25,8 +26,18 @@ where
     P: Program + Clone + Send + Sync,
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
-        let r = self.cart_part(config, queue, w);
-        println!("r.1.lxm={:#?}", r.1.lxm);
+        let (r, o) = self.cart_part(config, queue, w);
+        // pretty sure I assert lxm is square somewhere in spectro though. lxm
+        // should be in column-major order so I think this is all right
+        let cols = o.lxm.len();
+        let rows = o.lxm[0].len();
+        let lxm = nalgebra::DMatrix::from_iterator(
+            rows,
+            cols,
+            o.lxm.iter().flatten().cloned(),
+        );
+
+        println!("lxm={:.8}", lxm);
 
         // TODO at this point we have what we need for the normal coordinate
         // displacements. I need to write Normal.build_points, trying to reuse
@@ -41,7 +52,7 @@ where
         // Cart and Normal share a whole lot in common. I think I should define
         // a trait like FinDiff to represent that commonality
 
-        r
+        (r, o)
     }
 }
 
