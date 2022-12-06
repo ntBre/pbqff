@@ -80,7 +80,7 @@ fn main() -> Result<(), std::io::Error> {
             config::Program::Mopac,
             config::Queue::Pbs,
         ) => <Cart as CoordType<_, _, Mopac>>::run(
-            &Cart,
+            Cart,
             &mut std::io::stdout(),
             &queue!(Pbs, config),
             &config,
@@ -90,7 +90,7 @@ fn main() -> Result<(), std::io::Error> {
             config::Program::Mopac,
             config::Queue::Slurm,
         ) => <Cart as CoordType<_, _, Mopac>>::run(
-            &Cart,
+            Cart,
             &mut std::io::stdout(),
             &queue!(Slurm, config),
             &config,
@@ -100,7 +100,7 @@ fn main() -> Result<(), std::io::Error> {
             config::Program::Molpro,
             config::Queue::Pbs,
         ) => <Cart as CoordType<_, _, Molpro>>::run(
-            &Cart,
+            Cart,
             &mut std::io::stdout(),
             &queue!(Pbs, config),
             &config,
@@ -110,7 +110,7 @@ fn main() -> Result<(), std::io::Error> {
             config::Program::Molpro,
             config::Queue::Slurm,
         ) => <Cart as CoordType<_, _, Molpro>>::run(
-            &Cart,
+            Cart,
             &mut std::io::stdout(),
             &queue!(Slurm, config),
             &config,
@@ -122,7 +122,7 @@ fn main() -> Result<(), std::io::Error> {
         ) => {
             let sic = SIC::new(Intder::load_file("intder.in"));
             <SIC as CoordType<_, _, Mopac>>::run(
-                &sic,
+                sic,
                 &mut std::io::stdout(),
                 &queue!(Pbs, config),
                 &config,
@@ -135,7 +135,7 @@ fn main() -> Result<(), std::io::Error> {
         ) => {
             let sic = SIC::new(Intder::load_file("intder.in"));
             <SIC as CoordType<_, _, Mopac>>::run(
-                &sic,
+                sic,
                 &mut std::io::stdout(),
                 &queue!(Slurm, config),
                 &config,
@@ -148,7 +148,7 @@ fn main() -> Result<(), std::io::Error> {
         ) => {
             let sic = SIC::new(Intder::load_file("intder.in"));
             <SIC as CoordType<_, _, Molpro>>::run(
-                &sic,
+                sic,
                 &mut std::io::stdout(),
                 &queue!(Pbs, config),
                 &config,
@@ -161,7 +161,7 @@ fn main() -> Result<(), std::io::Error> {
         ) => {
             let sic = SIC::new(Intder::load_file("intder.in"));
             <SIC as CoordType<_, _, Molpro>>::run(
-                &sic,
+                sic,
                 &mut std::io::stdout(),
                 &queue!(Slurm, config),
                 &config,

@@ -35,7 +35,7 @@ fn normal() {
         ..Default::default()
     };
     let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &Normal,
+        Normal::default(),
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -71,7 +71,7 @@ fn h2o_sic() {
         ..Default::default()
     };
     let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &coord,
+        coord,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -109,7 +109,7 @@ fn sic() {
         ..Default::default()
     };
     let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &coord,
+        coord,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -152,7 +152,7 @@ fn cart() {
         ..Default::default()
     };
     let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &Cart,
+        Cart,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -219,6 +219,7 @@ fn build_pts() {
         crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
         &mut fcs,
         &mut target_map,
+        n,
     );
     assert_eq!(geoms.len(), 11952);
 }

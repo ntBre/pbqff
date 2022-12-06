@@ -22,7 +22,7 @@ fn main() -> Result<(), std::io::Error> {
 
     let now = Instant::now();
     let (spectro, output) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &Cart,
+        Cart,
         &mut std::io::stdout(),
         &queue,
         &config,

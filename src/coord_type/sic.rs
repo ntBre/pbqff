@@ -38,7 +38,7 @@ impl<
         P: Program + Clone + Send + Sync,
     > CoordType<W, Q, P> for SIC
 {
-    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry

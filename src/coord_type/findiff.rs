@@ -80,6 +80,11 @@ pub trait FiniteDifference {
         steps: Vec<isize>,
     ) -> Geom;
 
+    /// generate the points for `self` using the reference `geom` and reference
+    /// energy. `fcs` and `map` are out parameters. `fcs` will be filled
+    /// directly with derivatives that only rely on the reference energy, and
+    /// `map` will describe how where the rest of the energies in the return
+    /// value should end up
     fn build_points(
         &self,
         geom: Geom,
@@ -88,10 +93,10 @@ pub trait FiniteDifference {
         deriv: Derivative,
         fcs: &mut [f64],
         map: &mut bighash::BigHash,
+        ncoords: usize,
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
-        let ncoords = coords.len();
         let coords = nalgebra::DVector::from(coords);
 
         let (nfc2, nfc3, k_max, l_max) = match deriv {

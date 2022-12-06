@@ -6,7 +6,7 @@ use psqs::{
     queue::Queue,
 };
 use spectro::{Output, Spectro};
-use symm::Molecule;
+use symm::{Molecule, PointGroup};
 
 use crate::{config::Config, optimize, ref_energy};
 
@@ -71,8 +71,8 @@ where
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync,
 {
-    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
-        let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
+    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+        let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map, _, _) =
             Cart.first_part(w, config, queue, Nderiv::Four);
 
         time!(w, "freqs",
@@ -124,7 +124,17 @@ impl Cart {
         config: &Config,
         queue: &Q,
         nderiv: Nderiv,
-    ) -> (usize, usize, usize, Vec<f64>, Molecule, Vec<f64>, BigHash)
+    ) -> (
+        usize,
+        usize,
+        usize,
+        Vec<f64>,
+        Molecule,
+        Vec<f64>,
+        BigHash,
+        f64,
+        PointGroup,
+    )
     where
         W: io::Write,
         Q: Queue<P> + Sync,
@@ -176,6 +186,7 @@ impl Cart {
            deriv,
                &mut fcs,
                &mut target_map,
+           n,
                );
         );
         let dir = "pts";
@@ -203,6 +214,8 @@ impl Cart {
               .drain(dir, jobs, &mut energies)
               .expect("single-point calculations failed");
         );
-        (n, nfc2, nfc3, fcs, mol, energies, target_map)
+        (
+            n, nfc2, nfc3, fcs, mol, energies, target_map, ref_energy, pg,
+        )
     }
 }
