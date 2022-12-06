@@ -6,6 +6,7 @@
 
 use std::{io::Write, marker::Sync};
 
+use nalgebra::DVector;
 use psqs::{
     geom::Geom,
     program::{Job, Program, Template},
@@ -23,7 +24,15 @@ use super::{
 
 #[derive(Default)]
 pub struct Normal {
+    /// the normal coordinates, called the LXM matrix in spectro
     lxm: Option<nalgebra::DMatrix<f64>>,
+
+    /// 1/√m where m is the atomic mass
+    m12: Vec<f64>,
+
+    /// the number of normal coordinates. convenient to have here so I don't
+    /// have to keep thinking about 3n-6/5 stuff
+    ncoords: usize,
 }
 
 impl<W, Q, P> CoordType<W, Q, P> for Normal
@@ -43,14 +52,19 @@ where
         // should be in column-major order so I think this is all right
         let cols = o.lxm.len();
         let rows = o.lxm[0].len();
+
+        // actual initialization of self, must happen before build_points
         self.lxm = Some(nalgebra::DMatrix::from_iterator(
             rows,
             cols,
             o.lxm.iter().flatten().cloned(),
         ));
-
+        self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
         // 3n - 6 + 1 if linear = 3n - 5
-        let n = 3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
+        self.ncoords =
+            3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
+
+        let n = self.ncoords;
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
@@ -87,6 +101,7 @@ where
               .drain(dir, jobs, &mut energies)
               .expect("single-point calculations failed");
         );
+
         dbg!(energies);
         (s, o)
     }
@@ -100,22 +115,40 @@ impl FiniteDifference for Normal {
         step_size: f64,
         steps: Vec<isize>,
     ) -> psqs::geom::Geom {
-        let mut v = vec![0.0; coords.len()];
+        // python version:
+        // N = 3
+        // v = [0.0] * (3 * N)
+        // for k in range(3 * N):
+        //     for n in range(3 * N - 6):
+        //         v[k] += m12[k] * lxm[k, n] * dq[n]
+        // the normal coordinate displacement
+        let mut dq = vec![0.0; self.ncoords];
         for step in steps {
             if step < 1 {
-                v[(-step - 1) as usize] -= step_size;
+                dq[(-step - 1) as usize] -= step_size;
             } else {
-                v[(step - 1) as usize] += step_size;
+                dq[(step - 1) as usize] += step_size;
             }
         }
-        let coords = coords + nalgebra::DVector::from(v);
+
+        let lxm = self.lxm.as_ref().unwrap();
+
+        let nc = coords.len();
+        let mut v = DVector::zeros(nc);
+        // TODO do this as a mat mul, but get it to work first
+        for k in 0..nc {
+            for n in 0..self.ncoords {
+                v[k] += self.m12[k / 3] * lxm[(k, n)] * dq[n];
+            }
+        }
+        let coords = coords + v;
         Geom::Xyz(zip_atoms(names, coords))
     }
 }
 
 impl Normal {
-    /// run the Cartesian harmonic force field and return the spectro output, from
-    /// which we can extract the geometry and normal coordinates (lxm)
+    /// run the Cartesian harmonic force field and return the spectro output,
+    /// from which we can extract the geometry and normal coordinates (lxm)
     fn cart_part<P, Q, W>(
         &self,
         config: &Config,
