@@ -37,6 +37,11 @@ pub enum Derivative {
     Quartic(usize, usize, usize),
 }
 
+pub enum Nderiv {
+    Two,
+    Four,
+}
+
 pub fn freqs(
     dir: &str,
     mol: &Molecule,
@@ -68,7 +73,7 @@ where
 {
     fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
-            Cart.first_part(w, config, queue);
+            Cart.first_part(w, config, queue, Nderiv::Four);
 
         time!(w, "freqs",
           let (fc2, f3, f4) = self.make_fcs(
@@ -118,6 +123,7 @@ impl Cart {
         w: &mut W,
         config: &Config,
         queue: &Q,
+        nderiv: Nderiv,
     ) -> (usize, usize, usize, Vec<f64>, Molecule, Vec<f64>, BigHash)
     where
         W: io::Write,
@@ -151,6 +157,10 @@ impl Cart {
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
+        let deriv = match nderiv {
+            Nderiv::Two => Derivative::Harmonic(nfc2),
+            Nderiv::Four => Derivative::Quartic(nfc2, nfc3, nfc4),
+        };
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
@@ -163,24 +173,23 @@ impl Cart {
                Geom::Xyz(mol.atoms.clone()),
                config.step_size,
                ref_energy,
-               Derivative::Quartic(nfc2, nfc3, nfc4),
+           deriv,
                &mut fcs,
                &mut target_map,
                );
         );
         let dir = "pts";
-        let jobs = {
-            let mut jobs = Vec::new();
-            for (job_num, mol) in geoms.into_iter().enumerate() {
+        let jobs: Vec<_> = geoms
+            .into_iter()
+            .enumerate()
+            .map(|(job_num, mol)| {
                 let filename = format!("{dir}/job.{:08}", job_num);
-                let job = Job::new(
+                Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
-                );
-                jobs.push(job);
-            }
-            jobs
-        };
+                )
+            })
+            .collect();
         writeln!(
             w,
             "{n} Cartesian coordinates requires {} points",

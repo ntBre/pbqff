@@ -13,7 +13,7 @@ use symm::Molecule;
 use crate::config::Config;
 
 use super::{
-    findiff::FiniteDifference, Cart, CoordType, Derivative, SPECTRO_HEADER,
+    findiff::FiniteDifference, Cart, CoordType, Derivative, SPECTRO_HEADER, Nderiv,
 };
 
 pub struct Normal;
@@ -72,7 +72,7 @@ impl Normal {
         W: Write,
     {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map) =
-            Cart.first_part(w, config, queue);
+            Cart.first_part(w, config, queue, Nderiv::Two);
         let (fc2, _, _) = self.make_fcs(
             &mut target_map,
             &energies,
