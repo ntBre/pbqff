@@ -79,7 +79,7 @@ impl<
         writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
 
-        let mut intder = self.intder.clone();
+        let mut intder = self.intder;
         let (geoms, taylor, taylor_disps, atomic_numbers) =
             generate_pts(w, &mol, &pg, &mut intder, config.step_size).unwrap();
 
