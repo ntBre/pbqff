@@ -87,6 +87,7 @@ pub trait FiniteDifference {
     /// directly with derivatives that only rely on the reference energy, and
     /// `map` will describe how where the rest of the energies in the return
     /// value should end up
+    #[allow(clippy::too_many_arguments)]
     fn build_points(
         &self,
         geom: Geom,
