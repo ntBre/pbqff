@@ -1,3 +1,5 @@
+use self::bighash::BigHash;
+
 use super::{CartGeom, Derivative, DEBUG};
 use bighash::Index;
 use intder::ANGBOHR;
@@ -92,7 +94,7 @@ pub trait FiniteDifference {
         ref_energy: f64,
         deriv: Derivative,
         fcs: &mut [f64],
-        map: &mut bighash::BigHash,
+        map: &mut BigHash,
         ncoords: usize,
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
@@ -182,18 +184,14 @@ pub trait FiniteDifference {
         geoms
     }
 
-    /// use `target_map` to symmetrize the force constants and return them in
-    /// the form wanted by spectro
-    fn make_fcs<'a>(
+    /// use `target_map` to map `energies` to their proper locations in `fcs` to
+    /// yield the force constants as one vector
+    fn map_energies(
         &self,
-        target_map: &mut bighash::BigHash,
+        target_map: &BigHash,
         energies: &[f64],
-        fcs: &'a mut [f64],
-        n: usize,
-        deriv: Derivative,
-        dir: &str,
-    ) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
-        // copy energies into all of the places they're needed
+        fcs: &mut [f64],
+    ) {
         for target in target_map.values() {
             if DEBUG == "fcs" {
                 eprintln!("source index: {}", target.source_index);
@@ -209,6 +207,20 @@ pub trait FiniteDifference {
                 fcs[idx.index] += idx.coeff * energy;
             }
         }
+    }
+
+    /// use `target_map` to symmetrize the force constants and return them in
+    /// the form wanted by spectro
+    fn make_fcs<'a>(
+        &self,
+        target_map: &mut BigHash,
+        energies: &[f64],
+        fcs: &'a mut [f64],
+        n: usize,
+        deriv: Derivative,
+        dir: &str,
+    ) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
+        self.map_energies(target_map, energies, fcs);
         // mirror symmetric quadratic fcs
         let mut fc2 = intder::DMat::zeros(n, n);
         for i in 0..n {

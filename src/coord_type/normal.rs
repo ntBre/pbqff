@@ -102,7 +102,12 @@ where
               .expect("single-point calculations failed");
         );
 
-        dbg!(energies);
+        self.map_energies(&map, &energies, &mut fcs);
+
+        println!("harmonic fcs: {:#?}", &fcs[..nfc2]);
+        println!("cubic fcs: {:#?}", &fcs[nfc2..nfc2 + nfc3]);
+        println!("quartic fcs: {:#?}", &fcs[nfc2 + nfc3..]);
+
         (s, o)
     }
 }
