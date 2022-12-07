@@ -23,7 +23,7 @@ use crate::optimize;
 
 #[test]
 #[ignore]
-fn normal() {
+fn h2o_normal() {
     cleanup();
     init();
     let config = Config::load("testfiles/water.toml");
@@ -55,6 +55,52 @@ fn normal() {
         println!("diff={:.8}", got - want);
         panic!("mismatch");
     }
+}
+
+macro_rules! check {
+    ($got:expr, $want:expr, $eps:expr) => {
+        if abs_diff_ne!($got, $want, epsilon = $eps) {
+            println!("got={:.8}", $got);
+            println!("want={:.8}", $want);
+            println!("diff={:.8}", &$got - &$want);
+            println!("max diff={:.2e}", ($got - $want).abs().max());
+            panic!("mismatch at {}", line!());
+        }
+    };
+}
+
+#[test]
+#[ignore]
+fn c3h2_normal() {
+    cleanup();
+    init();
+    let config = Config::load("testfiles/cart.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        Normal::default(),
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+    // harmonics
+    let got = Dvec::from(summ.harms);
+    let want = dvector![
+        2819.297, 2798.273, 1819.846, 1199.526, 1061.197, 964.357, 932.103,
+        930.917, 913.221
+    ];
+    // higher eps because comparing to the pure cart wants
+    check!(got, want, 1e-1);
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![
+        2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
+    ];
+    assert_eq!(got.len(), want.len());
+    // corr
+    check!(got, want, 2.6e-1);
 }
 
 #[test]

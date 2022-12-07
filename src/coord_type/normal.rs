@@ -112,7 +112,7 @@ where
         let mut ijkl = 0;
         let mut f3qcm = Vec::new();
         let mut f4qcm = Vec::new();
-        for i in 0..3 {
+        for i in 0..n {
             let wi = freq[(i)];
             for j in 0..=i {
                 let wj = freq[(j)];
@@ -137,8 +137,15 @@ where
             }
         }
 
-        dbg!(f3qcm);
-        dbg!(f4qcm);
+        let (o, _) = s.finish(
+            DVector::from(o.harms.clone()),
+            spectro::F3qcm::new(f3qcm),
+            spectro::F4qcm::new(f4qcm),
+            o.irreps,
+            self.lxm.unwrap(),
+        );
+
+        (s, o)
 
         // this is f3qcm from the cart run:
         //  519.79254777
@@ -168,8 +175,6 @@ where
         //   87.87581824
         //    0.00000000
         // -237.54261635
-
-        (s, o)
     }
 }
 
