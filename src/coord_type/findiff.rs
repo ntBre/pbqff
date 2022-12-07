@@ -2,6 +2,7 @@ use self::bighash::BigHash;
 
 use super::{CartGeom, Derivative, DEBUG};
 use bighash::Index;
+use intder::ANGBOHR;
 use nalgebra as na;
 use psqs::geom::Geom;
 use std::cmp::min;
@@ -244,7 +245,20 @@ pub trait FiniteDifference {
         (fc2, &fcs[nfc2..nfc2 + nfc3], &fcs[nfc2 + nfc3..])
     }
 
-    fn scale(&self, nderiv: usize, step_size: f64) -> f64;
+    fn scale(&self, nderiv: usize, step_size: f64) -> f64 {
+        match nderiv {
+            2 => ANGBOHR * ANGBOHR / (4.0 * step_size * step_size),
+            3 => {
+                ANGBOHR * ANGBOHR * ANGBOHR
+                    / (8.0 * step_size * step_size * step_size)
+            }
+            4 => {
+                ANGBOHR * ANGBOHR * ANGBOHR * ANGBOHR
+                    / (16.0 * step_size * step_size * step_size * step_size)
+            }
+            _ => panic!("unrecognized derivative level"),
+        }
+    }
 
     fn make2d(
         &self,

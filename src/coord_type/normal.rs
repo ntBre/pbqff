@@ -104,33 +104,41 @@ where
 
         self.map_energies(&map, &energies, &mut fcs);
 
-        // let lx = s.make_lx(&self.m12, &self.lxm.unwrap());
         let cubs = &fcs[nfc2..nfc2 + nfc3];
-        println!("cubic fcs: {:#?}", cubs);
+        let quarts = &fcs[nfc2 + nfc3..];
 
-        let mut f3qcm = vec![];
-        let nvib = 3;
         let freq = &o.harms;
-        let n3n = 9;
         let mut ijk = 0;
-        for i in 0..nvib {
+        let mut ijkl = 0;
+        let mut f3qcm = Vec::new();
+        let mut f4qcm = Vec::new();
+        for i in 0..3 {
             let wi = freq[(i)];
             for j in 0..=i {
                 let wj = freq[(j)];
                 for k in 0..=j {
                     let wk = freq[(k)];
                     let wijk = wi * wj * wk;
-                    let fact = spectro::consts::FACT3;
-                    // for l in 0..n3n {
-                    // 	val += f3x[(i, j, l)] * lx[(l, k)];
-                    // }
-                    f3qcm.push(cubs[ijk] * fact);
+                    let fact =
+                        intder::HART * spectro::consts::FACT3 / wijk.sqrt();
+                    let val = cubs[ijk];
+                    f3qcm.push(val * fact);
                     ijk += 1;
+                    for l in 0..=k {
+                        let wl = freq[l];
+                        let wijkl = wijk * wl;
+                        let fact = intder::HART * spectro::consts::FACT4
+                            / wijkl.sqrt();
+                        let val = quarts[ijkl];
+                        f4qcm.push(val * fact);
+                        ijkl += 1;
+                    }
                 }
             }
         }
 
         dbg!(f3qcm);
+        dbg!(f4qcm);
 
         // this is f3qcm from the cart run:
         //  519.79254777
@@ -143,8 +151,6 @@ where
         // -544.13505623
         //    0.00000000
         //  710.18634048
-
-        println!("quartic fcs: {:#?}", &fcs[nfc2 + nfc3..]);
 
         // and these are f4qcm from the cart run
         //  279.69429451
@@ -168,6 +174,14 @@ where
 }
 
 impl FiniteDifference for Normal {
+    fn scale(&self, nderiv: usize, step_size: f64) -> f64 {
+        match nderiv {
+            2 => 1.0 / (4.0 * step_size * step_size),
+            3 => 1.0 / (8.0 * step_size * step_size * step_size),
+            4 => 1.0 / (16.0 * step_size * step_size * step_size * step_size),
+            _ => panic!("unrecognized derivative level"),
+        }
+    }
     fn new_geom(
         &self,
         names: &[&str],
@@ -203,10 +217,6 @@ impl FiniteDifference for Normal {
         }
         let coords = coords + v;
         Geom::Xyz(zip_atoms(names, coords))
-    }
-
-    fn scale(&self, _nderiv: usize, _step_size: f64) -> f64 {
-        1.0
     }
 }
 
