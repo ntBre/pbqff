@@ -149,6 +149,10 @@ impl FiniteDifference for Normal {
         let coords = coords + v;
         Geom::Xyz(zip_atoms(names, coords))
     }
+
+    fn scale(&self, _nderiv: usize, _step_size: f64) -> f64 {
+        1.0
+    }
 }
 
 impl Normal {

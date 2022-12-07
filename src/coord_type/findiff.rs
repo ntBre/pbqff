@@ -2,7 +2,6 @@ use self::bighash::BigHash;
 
 use super::{CartGeom, Derivative, DEBUG};
 use bighash::Index;
-use intder::ANGBOHR;
 use nalgebra as na;
 use psqs::geom::Geom;
 use std::cmp::min;
@@ -245,6 +244,8 @@ pub trait FiniteDifference {
         (fc2, &fcs[nfc2..nfc2 + nfc3], &fcs[nfc2 + nfc3..])
     }
 
+    fn scale(&self, nderiv: usize, step_size: f64) -> f64;
+
     fn make2d(
         &self,
         names: &[&str],
@@ -253,7 +254,7 @@ pub trait FiniteDifference {
         i: usize,
         j: usize,
     ) -> Vec<Proto> {
-        let scale = ANGBOHR * ANGBOHR / (4.0 * step_size * step_size);
+        let scale = self.scale(2, step_size);
         let i = i as isize;
         let j = j as isize;
         if i == j {
@@ -281,8 +282,7 @@ pub trait FiniteDifference {
         j: usize,
         k: usize,
     ) -> Vec<Proto> {
-        let scale = ANGBOHR * ANGBOHR * ANGBOHR
-            / (8.0 * step_size * step_size * step_size);
+        let scale = self.scale(3, step_size);
         let i = i as isize;
         let j = j as isize;
         let k = k as isize;
@@ -333,7 +333,7 @@ pub trait FiniteDifference {
         step: f64,
         idx: Idx,
     ) -> Vec<Proto> {
-        let scale = ANGBOHR.powi(4) / (16.0 * step.powi(4));
+        let scale = self.scale(4, step);
         let (i, j, k, l) = idx;
         let i = i as isize;
         let j = j as isize;

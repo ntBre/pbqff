@@ -1,5 +1,6 @@
 use std::{io, marker::Sync};
 
+use intder::ANGBOHR;
 use psqs::{
     geom::Geom,
     program::{Job, Program, Template},
@@ -112,6 +113,21 @@ impl FiniteDifference for Cart {
         }
         let coords = coords + nalgebra::DVector::from(v);
         Geom::Xyz(zip_atoms(names, coords))
+    }
+
+    fn scale(&self, nderiv: usize, step_size: f64) -> f64 {
+        match nderiv {
+            2 => ANGBOHR * ANGBOHR / (4.0 * step_size * step_size),
+            3 => {
+                ANGBOHR * ANGBOHR * ANGBOHR
+                    / (8.0 * step_size * step_size * step_size)
+            }
+            4 => {
+                ANGBOHR * ANGBOHR * ANGBOHR * ANGBOHR
+                    / (16.0 * step_size * step_size * step_size * step_size)
+            }
+            _ => panic!("unrecognized derivative level"),
+        }
     }
 }
 
