@@ -124,7 +124,7 @@ where
                     let val = cubs[ijk];
                     f3qcm.push(val * fact);
                     ijk += 1;
-                    for l in 0..=k {
+                    (0..=k).for_each(|l| {
                         let wl = freq[l];
                         let wijkl = wijk * wl;
                         let fact = intder::HART * spectro::consts::FACT4
@@ -132,7 +132,7 @@ where
                         let val = quarts[ijkl];
                         f4qcm.push(val * fact);
                         ijkl += 1;
-                    }
+                    });
                 }
             }
         }
