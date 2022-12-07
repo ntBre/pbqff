@@ -7,7 +7,7 @@ use psqs::{
 use rust_pbqff::{
     cleanup,
     config::{self, Config},
-    coord_type::{Cart, CoordType, SIC},
+    coord_type::{normal::Normal, Cart, CoordType, SIC},
     Intder,
 };
 
@@ -75,6 +75,16 @@ fn main() -> Result<(), std::io::Error> {
     let config = Config::load(&args.infile);
     let m = (config.coord_type, config.program, config.queue);
     let (spectro, output) = match m {
+        (
+            config::CoordType::Normal,
+            config::Program::Molpro,
+            config::Queue::Pbs,
+        ) => <Normal as CoordType<_, _, Molpro>>::run(
+            Normal::default(),
+            &mut std::io::stdout(),
+            &queue!(Pbs, config),
+            &config,
+        ),
         (
             config::CoordType::Cart,
             config::Program::Mopac,
