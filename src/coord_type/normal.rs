@@ -15,7 +15,7 @@ use psqs::{
 use spectro::{Output, Spectro};
 use symm::{Molecule, PointGroup};
 
-use crate::config::Config;
+use crate::{cleanup, config::Config};
 
 use super::{
     findiff::{bighash::BigHash, zip_atoms, FiniteDifference},
@@ -48,6 +48,8 @@ where
         config: &Config,
     ) -> (Spectro, Output) {
         let (s, o, ref_energy, pg) = self.cart_part(config, queue, w);
+        cleanup();
+        let _ = std::fs::create_dir("pts");
         // pretty sure I assert lxm is square somewhere in spectro though. lxm
         // should be in column-major order so I think this is all right
         let cols = o.lxm.len();
@@ -146,35 +148,6 @@ where
         );
 
         (s, o)
-
-        // this is f3qcm from the cart run:
-        //  519.79254777
-        //    0.00000000
-        //   42.91584633
-        //    0.00000000
-        //  323.20772069
-        //   -0.00000000
-        //  102.27900299
-        // -544.13505623
-        //    0.00000000
-        //  710.18634048
-
-        // and these are f4qcm from the cart run
-        //  279.69429451
-        //   -0.00000000
-        //  -97.10265238
-        //   -0.00000000
-        // -147.94627196
-        //   86.48307573
-        //    0.00000000
-        //   59.85703101
-        //    0.00000000
-        // -166.94324978
-        //    0.00000000
-        // -194.08270483
-        //   87.87581824
-        //    0.00000000
-        // -237.54261635
     }
 }
 
