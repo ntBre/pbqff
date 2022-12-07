@@ -104,9 +104,64 @@ where
 
         self.map_energies(&map, &energies, &mut fcs);
 
-        println!("harmonic fcs: {:#?}", &fcs[..nfc2]);
-        println!("cubic fcs: {:#?}", &fcs[nfc2..nfc2 + nfc3]);
+        // let lx = s.make_lx(&self.m12, &self.lxm.unwrap());
+        let cubs = &fcs[nfc2..nfc2 + nfc3];
+        println!("cubic fcs: {:#?}", cubs);
+
+        let mut f3qcm = vec![];
+        let nvib = 3;
+        let freq = &o.harms;
+        let n3n = 9;
+        let mut ijk = 0;
+        for i in 0..nvib {
+            let wi = freq[(i)];
+            for j in 0..=i {
+                let wj = freq[(j)];
+                for k in 0..=j {
+                    let wk = freq[(k)];
+                    let wijk = wi * wj * wk;
+                    let fact = spectro::consts::FACT3;
+                    // for l in 0..n3n {
+                    // 	val += f3x[(i, j, l)] * lx[(l, k)];
+                    // }
+                    f3qcm.push(cubs[ijk] * fact);
+                    ijk += 1;
+                }
+            }
+        }
+
+        dbg!(f3qcm);
+
+        // this is f3qcm from the cart run:
+        //  519.79254777
+        //    0.00000000
+        //   42.91584633
+        //    0.00000000
+        //  323.20772069
+        //   -0.00000000
+        //  102.27900299
+        // -544.13505623
+        //    0.00000000
+        //  710.18634048
+
         println!("quartic fcs: {:#?}", &fcs[nfc2 + nfc3..]);
+
+        // and these are f4qcm from the cart run
+        //  279.69429451
+        //   -0.00000000
+        //  -97.10265238
+        //   -0.00000000
+        // -147.94627196
+        //   86.48307573
+        //    0.00000000
+        //   59.85703101
+        //    0.00000000
+        // -166.94324978
+        //    0.00000000
+        // -194.08270483
+        //   87.87581824
+        //    0.00000000
+        // -237.54261635
 
         (s, o)
     }
