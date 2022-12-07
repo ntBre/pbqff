@@ -19,13 +19,26 @@ clippy:
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
 
+TARGET =
+ifeq (${DEBUG}, 1)
+	TARGET += target/x86_64-unknown-linux-gnu/debug/rust-pbqff
+else
+	TARGET += target/x86_64-unknown-linux-gnu/release/rust-pbqff
+endif
+
 build:
+ifeq (${DEBUG}, 1)
+    # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
+	RUSTFLAGS='-C target-feature=+crt-static' \
+	cargo build --bin rust-pbqff --target x86_64-unknown-linux-gnu
+else
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
 	cargo build --bin rust-pbqff --release --target x86_64-unknown-linux-gnu
+endif
+
 
 BASE = /home/brent/Projects/rust-pbqff
-TARGET = target/x86_64-unknown-linux-gnu/release/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
 WOODS_DEST = 'woods:bin/rpbqff'
 
