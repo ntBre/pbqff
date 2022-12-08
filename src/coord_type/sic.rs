@@ -91,9 +91,10 @@ impl<
             .unwrap();
 
         let mut energies = vec![0.0; jobs.len()];
-        queue
+        let time = queue
             .drain(dir, jobs, &mut energies)
             .expect("single-point energies failed");
+	eprintln!("total job time: {time} sec");
 
         let _ = std::fs::create_dir("freqs");
         freqs(

@@ -210,10 +210,12 @@ impl Cart {
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
-              queue
+              let time = queue
               .drain(dir, jobs, &mut energies)
               .expect("single-point calculations failed");
         );
+
+	eprintln!("total job time: {time} sec");
         (
             n, nfc2, nfc3, fcs, mol, energies, target_map, ref_energy, pg,
         )
