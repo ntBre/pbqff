@@ -94,7 +94,7 @@ impl<
         let time = queue
             .drain(dir, jobs, &mut energies)
             .expect("single-point energies failed");
-	eprintln!("total job time: {time} sec");
+        eprintln!("total job time: {time} sec");
 
         let _ = std::fs::create_dir("freqs");
         freqs(

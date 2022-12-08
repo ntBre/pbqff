@@ -103,7 +103,7 @@ where
               .drain(dir, jobs, &mut energies)
               .expect("single-point calculations failed");
         );
-	eprintln!("total job time: {time} sec");
+        eprintln!("total job time: {time} sec");
 
         self.map_energies(&map, &energies, &mut fcs);
 
