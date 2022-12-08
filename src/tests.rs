@@ -13,11 +13,133 @@ use symm::Molecule;
 
 use crate::cleanup;
 use crate::config::Config;
-use crate::coord_type::BigHash;
+use crate::coord_type::findiff::bighash::BigHash;
+use crate::coord_type::findiff::FiniteDifference;
+use crate::coord_type::normal::Normal;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::SIC;
 use crate::optimize;
+
+#[test]
+#[ignore]
+fn h2o_normal() {
+    cleanup();
+    init();
+    let config = Config::load("testfiles/water.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        Normal::default(),
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+
+    // harmonics
+    assert_abs_diff_eq!(
+        Dvec::from(summ.harms),
+        dvector![2602.732027773963, 2523.471527899651, 1315.4979243007172],
+        epsilon = 2e-3
+    );
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![2584.12640107, 2467.79949790, 1118.91300446];
+    assert_eq!(got.len(), want.len());
+    // corr
+    if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
+        println!("got={:.8}", got);
+        println!("want={:.8}", want);
+        println!("diff={:.8}", got - want);
+        panic!("mismatch");
+    }
+}
+
+macro_rules! check {
+    ($got:expr, $want:expr, $eps:expr) => {
+        if abs_diff_ne!($got, $want, epsilon = $eps) {
+            println!("got={:.8}", $got);
+            println!("want={:.8}", $want);
+            println!("diff={:.8}", &$got - &$want);
+            println!("max diff={:.2e}", ($got - $want).abs().max());
+            panic!("mismatch at {}", line!());
+        }
+    };
+}
+
+#[test]
+#[ignore]
+fn c3h2_normal() {
+    cleanup();
+    init();
+    let config = Config::load("testfiles/cart.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        Normal::default(),
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+    // harmonics
+    let got = Dvec::from(summ.harms);
+    let want = dvector![
+        2819.297, 2798.273, 1819.846, 1199.526, 1061.197, 964.357, 932.103,
+        930.917, 913.221
+    ];
+    // higher eps because comparing to the pure cart wants
+    check!(got, want, 1e-1);
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![
+        2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
+    ];
+    assert_eq!(got.len(), want.len());
+    // corr
+    check!(got, want, 2.6e-1);
+}
+
+#[test]
+#[ignore]
+fn h2o_cart() {
+    cleanup();
+    init();
+    let config = Config::load("testfiles/water.toml");
+    let queue = LocalQueue {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        ..Default::default()
+    };
+    let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+        Cart,
+        &mut std::io::stdout(),
+        &queue,
+        &config,
+    );
+
+    // these match the Go version from
+    // ~/chem/c3h2/reparam_cart/16/qffs/000/freqs/spectro2.out on eland
+
+    // harmonics
+    assert_abs_diff_eq!(
+        Dvec::from(summ.harms),
+        dvector![2602.732027773963, 2523.471527899651, 1315.4979243007172],
+        epsilon = 2e-3
+    );
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![2584.12640107, 2467.79949790, 1118.91300446];
+    // corr
+    if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
+        println!("got={:.8}", got);
+        println!("want={:.8}", want);
+        println!("diff={:.8}", got - want);
+        panic!("mismatch");
+    }
+}
 
 #[test]
 #[ignore]
@@ -31,7 +153,7 @@ fn h2o_sic() {
         ..Default::default()
     };
     let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &coord,
+        coord,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -69,7 +191,7 @@ fn sic() {
         ..Default::default()
     };
     let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &coord,
+        coord,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -97,14 +219,17 @@ fn sic() {
     assert_abs_diff_eq!(got, want, epsilon = 2.6e-1);
 }
 
+fn init() {
+    let _ = std::fs::create_dir("opt");
+    let _ = std::fs::create_dir("pts");
+    let _ = std::fs::create_dir("freqs");
+}
+
 #[test]
 #[ignore]
 fn cart() {
     cleanup();
-    let _ = std::fs::create_dir("opt");
-    let _ = std::fs::create_dir("pts");
-    let _ = std::fs::create_dir("freqs");
-
+    init();
     let config = Config::load("testfiles/cart.toml");
     let queue = LocalQueue {
         dir: "pts".to_string(),
@@ -112,7 +237,7 @@ fn cart() {
         ..Default::default()
     };
     let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &Cart,
+        Cart,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -176,10 +301,10 @@ fn build_pts() {
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
-        nfc2,
-        nfc3,
+        crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
         &mut fcs,
         &mut target_map,
+        n,
     );
     assert_eq!(geoms.len(), 11952);
 }

@@ -34,7 +34,8 @@ pub fn optimize<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
     let opt =
         Job::new(P::new("opt/opt".to_string(), template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
-    queue.energize("opt", &mut [opt], &mut res)?;
+    let time = queue.energize("opt", vec![opt], &mut res)?;
+    eprintln!("total optimize time: {time} sec");
     Ok(res.pop().unwrap())
 }
 
@@ -48,9 +49,10 @@ pub fn ref_energy<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
     let opt =
         Job::new(P::new("opt/ref".to_string(), template, charge, geom), 0);
     let mut res = vec![0.0; 1];
-    queue
-        .drain("opt", &mut [opt], &mut res)
+    let time = queue
+        .drain("opt", vec![opt], &mut res)
         .expect("reference energy failed");
+    eprintln!("total ref time: {time} sec");
     res.pop().unwrap()
 }
 

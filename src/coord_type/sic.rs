@@ -38,7 +38,7 @@ impl<
         P: Program + Clone + Send + Sync,
     > CoordType<W, Q, P> for SIC
 {
-    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let template = Template::from(&config.template);
         writeln!(w, "{}", config).unwrap();
         // optimize the geometry
@@ -79,21 +79,22 @@ impl<
         writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
         writeln!(w, "Point Group = {}", pg).unwrap();
 
-        let mut intder = self.intder.clone();
+        let mut intder = self.intder;
         let (geoms, taylor, taylor_disps, atomic_numbers) =
             generate_pts(w, &mol, &pg, &mut intder, config.step_size).unwrap();
 
         let dir = "pts/inp";
-        let mut jobs =
+        let jobs =
             P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
 
         let mut energies = vec![0.0; jobs.len()];
-        queue
-            .drain(dir, &mut jobs, &mut energies)
+        let time = queue
+            .drain(dir, jobs, &mut energies)
             .expect("single-point energies failed");
+        eprintln!("total job time: {time} sec");
 
         let _ = std::fs::create_dir("freqs");
         freqs(
@@ -323,7 +324,7 @@ pub fn freqs<W: std::io::Write>(
     }
     spectro.write(&input).unwrap();
 
-    let (output, _) = spectro.run(f2, fc3, fc4);
+    let (output, _) = spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));
 
     Ok((spectro, output))
 }

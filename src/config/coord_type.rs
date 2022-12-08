@@ -7,6 +7,8 @@ pub enum CoordType {
     Cart,
     #[serde(alias = "sic")]
     Sic,
+    #[serde(alias = "normal")]
+    Normal,
 }
 
 impl CoordType {
@@ -25,6 +27,14 @@ impl CoordType {
     pub fn is_sic(&self) -> bool {
         matches!(self, Self::Sic)
     }
+
+    /// Returns `true` if the coord type is [`Normal`].
+    ///
+    /// [`Normal`]: CoordType::Normal
+    #[must_use]
+    pub fn is_normal(&self) -> bool {
+        matches!(self, Self::Normal)
+    }
 }
 
 impl Display for CoordType {
@@ -35,6 +45,7 @@ impl Display for CoordType {
             match self {
                 CoordType::Cart => "cart",
                 CoordType::Sic => "sic",
+                CoordType::Normal => "normal",
             }
         )
     }

@@ -5,7 +5,10 @@ use psqs::{
 };
 use rust_pbqff::{
     config::Config,
-    coord_type::{BigHash, Cart},
+    coord_type::{
+        findiff::{bighash::BigHash, FiniteDifference},
+        Cart, Derivative,
+    },
     optimize,
 };
 use symm::Molecule;
@@ -17,7 +20,7 @@ fn main() {
     let queue = LocalQueue {
         chunk_size: 128,
         dir: "pts".to_string(),
-	..Default::default()
+        ..Default::default()
     };
     let (geom, ref_energy) = if config.optimize {
         let res = optimize::<LocalQueue, Mopac>(
@@ -49,9 +52,9 @@ fn main() {
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
-        nfc2,
-        nfc3,
+        Derivative::Quartic(nfc2, nfc3, nfc4),
         &mut fcs,
         &mut target_map,
+        n,
     );
 }

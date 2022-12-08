@@ -17,12 +17,12 @@ fn main() -> Result<(), std::io::Error> {
     let queue = LocalQueue {
         chunk_size: 128,
         dir: "pts".to_string(),
-	..Default::default()
+        ..Default::default()
     };
 
     let now = Instant::now();
     let (spectro, output) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        &Cart,
+        Cart,
         &mut std::io::stdout(),
         &queue,
         &config,

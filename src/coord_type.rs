@@ -5,9 +5,26 @@ use spectro::{Output, Spectro};
 
 use crate::config::Config;
 
+#[macro_export]
+macro_rules! time {
+    ($w:expr, $label:expr, $($s:stmt;)*) => {
+        let now = ::std::time::Instant::now();
+	$($s)*
+        writeln!(
+            $w,
+            "finished {} after {:.1} sec",
+            $label,
+            now.elapsed().as_millis() as f64 / 1000.0
+        )
+        .unwrap();
+    };
+}
+
 pub use cart::*;
 pub use sic::*;
 pub mod cart;
+pub mod findiff;
+pub mod normal;
 pub mod sic;
 
 /// default spectro header to write to the input files for use by the fortran
@@ -23,5 +40,5 @@ pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send + Sync> {
     /// the simple internal and symmetry internal coordinates are read from the
     /// intder template. The input options, weights, and curvils are copied from
     /// the spectro template, but the geometry will be updated
-    fn run(&self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
+    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
 }
