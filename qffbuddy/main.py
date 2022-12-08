@@ -68,4 +68,19 @@ ttk.Label(parent, text="Queuing System").grid(column=3)
 queue = StringVar(parent)
 make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], queue, parent)
 
+
+def generate():
+    print("writing to %s:" % infile.get())
+    print("chunk_size = %d" % chunk_size.get())
+    print('coord_type = "%s"' % coord_type.get())
+    print('queue = "%s"' % queue.get())
+
+
+ttk.Label(parent, text="Generated filename").grid(column=3)
+infile = StringVar(value="pbqff.toml")
+ttk.Entry(parent, textvariable=infile).grid(column=3)
+
+button = ttk.Button(parent, text="Generate", command=generate)
+button.grid(column=3)
+
 root.mainloop()
