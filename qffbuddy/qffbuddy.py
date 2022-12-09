@@ -1,10 +1,38 @@
 import tkinter as tk
 from tkinter import ttk
 
+MOLPRO_TEMPLATE = """***,default f12-tz molpro template
+memory,1,g
+gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+gthresh,optgrad=1.d-8,optstep=1.d-8;
+nocompress;
 
-def make_radio_buttons(pairs, var, parent):
+geometry={
+{{.geom}}
+basis={
+default,cc-pVTZ-f12
+}
+set,charge={{.charge}}
+set,spin=0
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10}
+{optg,grms=1.d-8,srms=1.d-8}
+
+pbqff=energy(2)
+show[1,f20.12],pbqff
+"""
+
+MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14) PM6 SINGLET THREADS=1"
+
+
+TEMPLATES = [MOLPRO_TEMPLATE]
+
+
+def make_radio_buttons(pairs, var, parent, **kwargs):
     for (text, value) in pairs:
-        ttk.Radiobutton(parent, text=text, variable=var, value=value).grid(column=3)
+        ttk.Radiobutton(parent, text=text, variable=var, value=value, **kwargs).grid(
+            column=3
+        )
 
 
 class Application(ttk.Frame):
@@ -57,16 +85,18 @@ class Application(ttk.Frame):
         ttk.Label(self, text="Chemistry program").grid(column=3)
         self.program = tk.StringVar(value="molpro")
         make_radio_buttons(
-            [("Molpro", "molpro"), ("Mopac", "mopac")], self.program, self
+            [("Molpro", "molpro"), ("Mopac", "mopac")],
+            self.program,
+            self,
+            command=self.default_template,
         )
 
-        # TODO callback on program that updates the default template
         ttk.Label(self, text="enter your template input file").grid(
             column=3, sticky=tk.W
         )
-        self.template = tk.Text(self, width=40, height=10)
+        self.template = tk.Text(self, width=80, height=10)
+        self.default_template()
         self.template.grid(column=3)
-        self.template.insert("1.0", "example template")
 
         ttk.Label(self, text="Queuing System").grid(column=3)
         self.queue = tk.StringVar(value="pbs")
@@ -81,6 +111,15 @@ class Application(ttk.Frame):
 
         button = ttk.Button(self, text="exit", command=parent.destroy)
         button.grid(column=3)
+
+    def default_template(self):
+        self.template.delete("1.0", "end")
+        if self.program.get() == "molpro":
+            self.template.insert("1.0", MOLPRO_TEMPLATE)
+        elif self.program.get() == "mopac":
+            self.template.insert("1.0", MOPAC_TEMPLATE)
+        else:
+            self.template.insert("1.0", "default template")
 
     def generate(self):
         with open(self.infile.get(), "w") as out:
