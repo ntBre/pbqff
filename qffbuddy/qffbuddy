@@ -1,0 +1,4 @@
+#!/bin/bash
+
+module load python37
+python3.7 /ddn/home1/r2518/bin/qffbuddy.py

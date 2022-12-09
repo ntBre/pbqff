@@ -48,6 +48,9 @@ eland: build
 woods: build
 	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
 
+scripts:
+	scp -C qffbuddy/qffbuddy* 'woods:bin/'
+
 profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
 	valgrind --tool=callgrind --callgrind-out-file=callgrind.out	\
 		--collect-jumps=yes --simulate-cache=yes		\
