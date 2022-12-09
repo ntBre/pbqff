@@ -51,11 +51,11 @@ class Application(ttk.Frame):
 
         ttk.Label(self, text="Coordinate type").grid(column=3)
         choices = [("sic", "sic"), ("cart", "cart"), ("normal", "normal")]
-        self.coord_type = tk.StringVar()
+        self.coord_type = tk.StringVar(value="sic")
         make_radio_buttons(choices, self.coord_type, self)
 
         ttk.Label(self, text="Chemistry program").grid(column=3)
-        self.program = tk.StringVar(self)
+        self.program = tk.StringVar(value="molpro")
         make_radio_buttons(
             [("Molpro", "molpro"), ("Mopac", "mopac")], self.program, self
         )
@@ -69,7 +69,7 @@ class Application(ttk.Frame):
         self.template.insert("1.0", "example template")
 
         ttk.Label(self, text="Queuing System").grid(column=3)
-        self.queue = tk.StringVar(self)
+        self.queue = tk.StringVar(value="pbs")
         make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], self.queue, self)
 
         ttk.Label(self, text="Generated filename").grid(column=3)
@@ -79,23 +79,33 @@ class Application(ttk.Frame):
         button = ttk.Button(self, text="Generate", command=self.generate)
         button.grid(column=3)
 
+        button = ttk.Button(self, text="exit", command=parent.destroy)
+        button.grid(column=3)
+
     def generate(self):
-        print("writing to %s:" % self.infile.get())
-        print('geometry = """%s"""' % self.geom.get("1.0", "end"))
-        if self.optimize:
-            opt = "true"
-        else:
-            opt = "false"
-        print("optimize = %s" % opt)
-        print("charge = %d" % self.charge.get())
-        print("step_size = %f" % self.step_size.get())
-        print("sleep_int = %d" % self.sleep_int.get())
-        print("job_limit = %d" % self.job_limit.get())
-        print("chunk_size = %d" % self.chunk_size.get())
-        print('coord_type = "%s"' % self.coord_type.get())
-        print('template = """%s"""' % self.template.get("1.0", "end"))
-        print('program = "%s"' % self.program.get())
-        print('queue = "%s"' % self.queue.get())
+        with open(self.infile.get(), "w") as out:
+            if self.optimize.get():
+                opt = "true"
+            else:
+                opt = "false"
+            out.write(
+                f"""geometry = \"\"\"
+{self.geom.get('1.0', 'end').strip()}
+\"\"\"
+optimize = {opt}
+charge = {self.charge.get()}
+step_size = {self.step_size.get()}
+sleep_int = {self.sleep_int.get()}
+job_limit = {self.job_limit.get()}
+chunk_size = {self.chunk_size.get()}
+coord_type = {self.coord_type.get()}
+template = \"\"\"
+{self.template.get("1.0", "end").strip()}
+\"\"\"
+program = {self.program.get()}
+queue = {self.queue.get()}
+"""
+            )
 
 
 if __name__ == "__main__":
