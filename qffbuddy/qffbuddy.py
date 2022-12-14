@@ -170,7 +170,11 @@ class MenuBar(tk.Menu):
     # TODO need to come up with a Config class that I can serialize and
     # deserialize from file. I mean I already have one, but I need it in python
     def open_file(self):
-        infile = fd.askopenfile(parent=self.parent).name
+        infile = fd.askopenfile(parent=self.parent)
+        if infile is None:
+            return
+        else:
+            infile = infile.name
         s = subprocess.run([args.pbqff, "-j", infile], capture_output=True)
         if s.returncode != 0:
             sys.exit(f"pbqff failed to parse {infile}: {s.stderr}")
