@@ -1,4 +1,5 @@
 #!/bin/bash
 
+brent=/ddn/home1/r2518
 module load python37
-python3.7 /ddn/home1/r2518/bin/qffbuddy.py
+python3.7 $brent/bin/qffbuddy.py --pbqff $brent/bin/rpbqff

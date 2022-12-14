@@ -1,5 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
+import argparse
+import tkinter.filedialog as fd
+import subprocess
+
+parser = argparse.ArgumentParser(
+    prog="qffbuddy",
+    description="helper for generating pbqff input files",
+)
+parser.add_argument("-p", "--pbqff", help="path to pbqff executable")
+args = parser.parse_args()
 
 MOLPRO_TEMPLATE = """***,default f12-tz molpro template
 memory,1,g
@@ -147,8 +157,6 @@ queue = \"{self.queue.get()}\"
             )
 
 
-import tkinter.filedialog as fd
-
 class MenuBar(tk.Menu):
     def __init__(self, parent, *args, **kwargs):
         self.parent = parent
@@ -161,8 +169,10 @@ class MenuBar(tk.Menu):
     # TODO need to come up with a Config class that I can serialize and
     # deserialize from file. I mean I already have one, but I need it in python
     def open_file(self):
-        fd.askopenfile(parent=self.parent)
-        print("you tried to open a file!")
+        infile = fd.askopenfile(parent=self.parent).name
+        s = subprocess.run([args.pbqff, "-j", infile], capture_output=True)
+        print(f"you tried to open '{infile}' with output:")
+        print(s.stdout)
 
 
 if __name__ == "__main__":
