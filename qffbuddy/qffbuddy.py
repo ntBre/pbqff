@@ -3,6 +3,7 @@ from tkinter import ttk
 import argparse
 import tkinter.filedialog as fd
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -171,6 +172,8 @@ class MenuBar(tk.Menu):
     def open_file(self):
         infile = fd.askopenfile(parent=self.parent).name
         s = subprocess.run([args.pbqff, "-j", infile], capture_output=True)
+        if s.returncode != 0:
+            sys.exit(f"pbqff failed to parse {infile}: {s.stderr}")
         print(f"you tried to open '{infile}' with output:")
         print(s.stdout)
 
