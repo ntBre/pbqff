@@ -147,7 +147,27 @@ queue = {self.queue.get()}
             )
 
 
+import tkinter.filedialog as fd
+
+class MenuBar(tk.Menu):
+    def __init__(self, parent, *args, **kwargs):
+        self.parent = parent
+        tk.Menu.__init__(self, parent, *args, **kwargs)
+        self.menu_file = tk.Menu(self)
+        self.add_cascade(menu=self.menu_file, label="File")
+        parent["menu"] = self
+        self.menu_file.add_command(label="Open...", command=self.open_file)
+
+    # TODO need to come up with a Config class that I can serialize and
+    # deserialize from file. I mean I already have one, but I need it in python
+    def open_file(self):
+        fd.askopenfile(parent=self.parent)
+        print("you tried to open a file!")
+
+
 if __name__ == "__main__":
     root = tk.Tk()
+    root.option_add("*tearOff", tk.FALSE)
     Application(root, padding="3 3 12 12")
+    MenuBar(root)
     root.mainloop()
