@@ -137,12 +137,12 @@ step_size = {self.step_size.get()}
 sleep_int = {self.sleep_int.get()}
 job_limit = {self.job_limit.get()}
 chunk_size = {self.chunk_size.get()}
-coord_type = {self.coord_type.get()}
+coord_type = \"{self.coord_type.get()}\"
 template = \"\"\"
 {self.template.get("1.0", "end").strip()}
 \"\"\"
-program = {self.program.get()}
-queue = {self.queue.get()}
+program = \"{self.program.get()}\"
+queue = \"{self.queue.get()}\"
 """
             )
 
