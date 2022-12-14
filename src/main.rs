@@ -45,6 +45,10 @@ struct Args {
     /// the maximum number of threads to use by rayon
     #[arg(short, long, default_value_t = 0)]
     threads: usize,
+
+    /// serialize the input file to JSON and exit. For use by qffbuddy
+    #[arg(short, default_value_t = false, hide = true)]
+    json: bool,
 }
 
 fn main() -> Result<(), std::io::Error> {
@@ -52,6 +56,11 @@ fn main() -> Result<(), std::io::Error> {
     if args.version {
         println!("version: {}", version());
         return Ok(());
+    }
+    let config = Config::load(&args.infile);
+    if args.json {
+        println!("{}", serde_json::to_string(&config).unwrap());
+        std::process::exit(0);
     }
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
@@ -72,7 +81,6 @@ fn main() -> Result<(), std::io::Error> {
     psqs::max_threads(args.threads);
     cleanup();
     let _ = std::fs::create_dir("pts");
-    let config = Config::load(&args.infile);
     let m = (config.coord_type, config.program, config.queue);
     let (spectro, output) = match m {
         (

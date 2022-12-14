@@ -1,4 +1,4 @@
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 mod coord_type;
 pub use coord_type::*;
@@ -49,7 +49,7 @@ impl RawConfig {
     }
 }
 
-#[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Program {
     #[serde(alias = "mopac")]
     Mopac,
@@ -57,7 +57,7 @@ pub enum Program {
     Molpro,
 }
 
-#[derive(Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Queue {
     #[serde(alias = "pbs")]
     Pbs,
@@ -67,6 +67,7 @@ pub enum Queue {
     Local,
 }
 
+#[derive(Serialize)]
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,
