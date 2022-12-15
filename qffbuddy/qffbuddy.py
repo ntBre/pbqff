@@ -73,7 +73,27 @@ show[1,f20.12],pbqff
 
 MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14) PM6 SINGLET THREADS=1"
 
-ATOMS = ["X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"]
+ATOMS = [
+    "X",
+    "H",
+    "He",
+    "Li",
+    "Be",
+    "B",
+    "C",
+    "N",
+    "O",
+    "F",
+    "Ne",
+    "Na",
+    "Mg",
+    "Al",
+    "Si",
+    "P",
+    "S",
+    "Cl",
+    "Ar",
+]
 
 
 TEMPLATES = [MOLPRO_F12TZ]
