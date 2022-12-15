@@ -15,7 +15,9 @@ parser = argparse.ArgumentParser(
     description="helper for generating pbqff input files",
 )
 parser.add_argument("-p", "--pbqff", help="path to pbqff executable")
-parser.add_argument("infile", help="start the configuration based on infile")
+parser.add_argument(
+    "infile", help="start the configuration based on infile", default=None, nargs="?"
+)
 args = parser.parse_args()
 
 RE_MOLPRO = re.compile("molpro", re.IGNORECASE)
@@ -336,7 +338,6 @@ class MenuBar(tk.Menu):
         app.job_limit.set(d["job_limit"])
         app.chunk_size.set(d["chunk_size"])
         app.fill_template(d["template"])
-        app.infile.set(infile)
 
 
 if __name__ == "__main__":
