@@ -4,12 +4,14 @@ import argparse
 import tkinter.filedialog as fd
 import subprocess
 import sys
+import json
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
     description="helper for generating pbqff input files",
 )
 parser.add_argument("-p", "--pbqff", help="path to pbqff executable")
+parser.add_argument("infile", help="start the configuration based on infile")
 args = parser.parse_args()
 
 MOLPRO_TEMPLATE = """***,default f12-tz molpro template
@@ -56,16 +58,14 @@ class Application(ttk.Frame):
         ttk.Label(self, text="enter your geometry in Å:").grid(
             column=3, row=1, sticky=tk.W
         )
-        self.geom = tk.Text(self, width=40, height=10)
-        self.geom.grid(column=3, row=2)
+        self.geometry = tk.Text(self, width=40, height=10)
+        self.geometry.grid(column=3, row=2)
 
         self.optimize = tk.BooleanVar()
         check = ttk.Checkbutton(
             self,
             text="does it need to be optimized?",
             variable=self.optimize,
-            onvalue="metric",
-            offvalue="imperial",
         ).grid(column=3, row=4)
 
         ttk.Label(self, text="Charge").grid(column=3, row=5)
@@ -120,7 +120,7 @@ class Application(ttk.Frame):
         button = ttk.Button(self, text="Generate", command=self.generate)
         button.grid(column=3)
 
-        button = ttk.Button(self, text="exit", command=parent.destroy)
+        button = ttk.Button(self, text="Exit", command=parent.destroy)
         button.grid(column=3)
 
     def default_template(self):
@@ -132,6 +132,16 @@ class Application(ttk.Frame):
         else:
             self.template.insert("1.0", "default template")
 
+    def fill_geometry(self, new_value):
+        "clear the geometry input box and fill with `new_value`"
+        self.geometry.delete("1.0", "end")
+        self.geometry.insert("1.0", new_value)
+
+    def fill_template(self, new_value):
+        "clear the template input box and fill with `new_value`"
+        self.template.delete("1.0", "end")
+        self.template.insert("1.0", new_value)
+
     def generate(self):
         with open(self.infile.get(), "w") as out:
             if self.optimize.get():
@@ -140,7 +150,7 @@ class Application(ttk.Frame):
                 opt = "false"
             out.write(
                 f"""geometry = \"\"\"
-{self.geom.get('1.0', 'end').strip()}
+{self.geometry.get('1.0', 'end').strip()}
 \"\"\"
 optimize = {opt}
 charge = {self.charge.get()}
@@ -167,24 +177,40 @@ class MenuBar(tk.Menu):
         parent["menu"] = self
         self.menu_file.add_command(label="Open...", command=self.open_file)
 
-    # TODO need to come up with a Config class that I can serialize and
-    # deserialize from file. I mean I already have one, but I need it in python
     def open_file(self):
         infile = fd.askopenfile(parent=self.parent)
         if infile is None:
             return
         else:
             infile = infile.name
+        self.parse_infile(infile)
+
+    def parse_infile(self, infile):
         s = subprocess.run([args.pbqff, "-j", infile], capture_output=True)
         if s.returncode != 0:
             sys.exit(f"pbqff failed to parse {infile}: {s.stderr}")
-        print(f"you tried to open '{infile}' with output:")
-        print(s.stdout)
+        d = json.loads(s.stdout)
+
+        geom = list(d["geometry"].values())[0]
+        app.fill_geometry(geom)
+        app.optimize.set(d["optimize"])
+        app.charge.set(d["charge"])
+        app.step_size.set(d["step_size"])
+        app.coord_type.set(d["coord_type"].lower())
+        app.program.set(d["program"].lower())
+        app.queue.set(d["queue"].lower())
+        app.sleep_int.set(d["sleep_int"])
+        app.job_limit.set(d["job_limit"])
+        app.chunk_size.set(d["chunk_size"])
+        app.fill_template(d["template"])
+        app.infile.set(infile)
 
 
 if __name__ == "__main__":
     root = tk.Tk()
     root.option_add("*tearOff", tk.FALSE)
-    Application(root, padding="3 3 12 12")
-    MenuBar(root)
+    app = Application(root, padding="3 3 12 12")
+    menu = MenuBar(root)
+    if args.infile is not None:
+        menu.parse_infile(args.infile)
     root.mainloop()
