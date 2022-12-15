@@ -6,6 +6,7 @@ import subprocess
 import sys
 import json
 import io
+import re
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -14,6 +15,8 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-p", "--pbqff", help="path to pbqff executable")
 parser.add_argument("infile", help="start the configuration based on infile")
 args = parser.parse_args()
+
+RE_MOLPRO = re.compile("molpro", re.IGNORECASE)
 
 MOLPRO_TEMPLATE = """***,default f12-tz molpro template
 memory,1,g
@@ -173,12 +176,41 @@ queue = \"{self.queue.get()}\"
 
 class MenuBar(tk.Menu):
     def __init__(self, parent, *args, **kwargs):
-        self.parent = parent
         tk.Menu.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+        self.parent["menu"] = self
         self.menu_file = tk.Menu(self)
         self.add_cascade(menu=self.menu_file, label="File")
-        parent["menu"] = self
-        self.menu_file.add_command(label="Open...", command=self.open_file)
+        self.menu_file.add_command(label="Open Input File", command=self.open_file)
+        self.menu_file.add_command(label="Import Geometry", command=self.import_geom)
+
+    def import_geom(self):
+        infile = fd.askopenfile(parent=self.parent)
+        if infile is None:
+            return
+        else:
+            infile = infile.name
+        with open(infile, "r") as inp:
+            s = inp.read()
+            if RE_MOLPRO.search(s):
+                geom = self.parse_molpro_geom(s)
+                if geom is not None:
+                    app.fill_geometry(geom)
+
+    def parse_molpro_geom(self, s):
+        skip = 0
+        in_geom = False
+        geom = io.StringIO()
+        for line in s.split("\n"):
+            if "Current geometry" in line:
+                skip = 1
+                in_geom = True
+            elif skip > 0:
+                skip -= 1
+            elif in_geom and len(line) == 0:
+                return geom.getvalue()
+            elif in_geom:
+                geom.write(line + "\n")
 
     def open_file(self):
         infile = fd.askopenfile(parent=self.parent)
