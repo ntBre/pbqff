@@ -7,6 +7,7 @@ import sys
 import json
 import io
 import re
+import os
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -91,6 +92,8 @@ class Application(ttk.Frame):
         parent.title("qffbuddy")
         parent.columnconfigure(0, weight=1)
         parent.rowconfigure(0, weight=1)
+        self.parent = parent
+
         self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         ttk.Label(self, text="enter your geometry in Å:").grid(
             column=3, row=1, sticky=tk.W
@@ -157,8 +160,33 @@ class Application(ttk.Frame):
         button = ttk.Button(self, text="Generate", command=self.generate)
         button.grid(column=3)
 
+        button = ttk.Button(self, text="Run", command=self.run)
+        button.grid(column=3)
+
         button = ttk.Button(self, text="Exit", command=parent.destroy)
         button.grid(column=3)
+
+    def run(self):
+        "run pbqff with the current input file"
+        res = tk.messagebox.askyesno(
+            "Run pbqff and exit", "are you sure?", icon="warning"
+        )
+        if res:
+            self.generate()
+            cmd = f"{args.pbqff} -j {self.infile.get()}"
+            print(f"running `{cmd}` & disown -h")
+            # this is a bit hacky, but I think it works. lumping the & disown
+            # -h into a single call to os.system means we only get the return
+            # value of disown -h, which always seems to be 0, so we have to
+            # spawn the pbqff process and grab its pid, check that exit code,
+            # and only then call disown on that pid before exiting
+            pid = os.spawnl(os.P_NOWAIT, args.pbqff, args.pbqff, self.infile.get())
+            running = os.system(f"pgrep {pid}")
+            if running != 0:
+                tk.messagebox.showerror(message="Error running pbqff")
+            else:
+                os.system(f"disown -h {pid}")
+                self.parent.destroy()
 
     def default_template(self):
         self.template.delete("1.0", "end")
