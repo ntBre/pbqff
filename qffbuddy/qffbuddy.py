@@ -196,20 +196,8 @@ class Application(ttk.Frame):
         )
         if res:
             self.generate()
-            # this is a bit hacky, but I think it works. lumping the & disown
-            # -h into a single call to os.system means we only get the return
-            # value of disown -h, which always seems to be 0, so we have to
-            # spawn the pbqff process and grab its pid, check that exit code,
-            # and only then call disown on that pid before exiting
-            pid = os.spawnl(
-                os.P_NOWAIT, args.pbqff, args.pbqff, "-t", 8, "-o", self.infile.get()
-            )
-            running = os.system(f"ps -p {pid}")
-            if running != 0:
-                msg.showerror(message="Error running pbqff")
-            else:
-                os.system(f"disown -h {pid}")
-                self.parent.destroy()
+            os.system(f"{args.pbqff} -t 8 -o {self.infile.get()} & disown -h")
+            self.parent.destroy()
 
     def default_template(self):
         self.template.delete("1.0", "end")
