@@ -8,6 +8,7 @@ import json
 import io
 import re
 import os
+import tkinter.messagebox as msg
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -188,22 +189,24 @@ class Application(ttk.Frame):
 
     def run(self):
         "run pbqff with the current input file"
-        res = tk.messagebox.askyesno(
-            "Run pbqff and exit", "are you sure?", icon="warning"
+        res = msg.askyesno(
+            "Run pbqff and exit",
+            "are you sure? this will overwrite any existing output",
+            icon="warning",
         )
         if res:
             self.generate()
-            cmd = f"{args.pbqff} -j {self.infile.get()}"
-            print(f"running `{cmd}` & disown -h")
             # this is a bit hacky, but I think it works. lumping the & disown
             # -h into a single call to os.system means we only get the return
             # value of disown -h, which always seems to be 0, so we have to
             # spawn the pbqff process and grab its pid, check that exit code,
             # and only then call disown on that pid before exiting
-            pid = os.spawnl(os.P_NOWAIT, args.pbqff, args.pbqff, self.infile.get())
-            running = os.system(f"pgrep {pid}")
+            pid = os.spawnl(
+                os.P_NOWAIT, args.pbqff, args.pbqff, "-t", 8, "-o", self.infile.get()
+            )
+            running = os.system(f"ps -p {pid}")
             if running != 0:
-                tk.messagebox.showerror(message="Error running pbqff")
+                msg.showerror(message="Error running pbqff")
             else:
                 os.system(f"disown -h {pid}")
                 self.parent.destroy()
