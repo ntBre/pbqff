@@ -5,6 +5,7 @@ import tkinter.filedialog as fd
 import subprocess
 import sys
 import json
+import io
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -37,6 +38,8 @@ show[1,f20.12],pbqff
 
 MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14) PM6 SINGLET THREADS=1"
 
+ATOMS = ["X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"]
+
 
 TEMPLATES = [MOLPRO_TEMPLATE]
 
@@ -58,7 +61,7 @@ class Application(ttk.Frame):
         ttk.Label(self, text="enter your geometry in Å:").grid(
             column=3, row=1, sticky=tk.W
         )
-        self.geometry = tk.Text(self, width=40, height=10)
+        self.geometry = tk.Text(self, width=80, height=10, undo=True)
         self.geometry.grid(column=3, row=2)
 
         self.optimize = tk.BooleanVar()
@@ -105,7 +108,7 @@ class Application(ttk.Frame):
         ttk.Label(self, text="enter your template input file").grid(
             column=3, sticky=tk.W
         )
-        self.template = tk.Text(self, width=80, height=10)
+        self.template = tk.Text(self, width=80, height=10, undo=True)
         self.default_template()
         self.template.grid(column=3)
 
@@ -191,8 +194,18 @@ class MenuBar(tk.Menu):
             sys.exit(f"pbqff failed to parse {infile}: {s.stderr}")
         d = json.loads(s.stdout)
 
-        geom = list(d["geometry"].values())[0]
-        app.fill_geometry(geom)
+        geom = d["geometry"]
+        if "Zmat" in geom:
+            app.fill_geometry(geom["Zmat"])
+        elif "Xyz" in geom:
+            s = io.StringIO()
+            for atom in geom["Xyz"]:
+                s.write(
+                    "%2s%14.10f%14.10f%14.10f\n"
+                    % (ATOMS[atom["atomic_number"]], atom["x"], atom["y"], atom["z"])
+                )
+            app.fill_geometry(s.getvalue())
+
         app.optimize.set(d["optimize"])
         app.charge.set(d["charge"])
         app.step_size.set(d["step_size"])
