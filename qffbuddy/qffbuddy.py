@@ -18,8 +18,7 @@ args = parser.parse_args()
 
 RE_MOLPRO = re.compile("molpro", re.IGNORECASE)
 
-MOLPRO_TEMPLATE = """***,default f12-tz molpro template
-memory,1,g
+MOLPRO_F12TZ = """memory,1,g
 gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
 gthresh,optgrad=1.d-8,optstep=1.d-8;
 nocompress;
@@ -39,12 +38,44 @@ pbqff=energy(2)
 show[1,f20.12],pbqff
 """
 
+MOLPRO_F12TZCCR = """memory,1,g
+gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+gthresh,optgrad=1.d-8,optstep=1.d-8;
+nocompress;
+
+geometry={
+{{.geom}}
+basis={
+default,cc-pVTZ-f12
+}
+set,charge={{.charge}}
+set,spin=0
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10,nocheck;core}
+{optg,grms=1.d-8,srms=1.d-8}
+etz=energy
+
+basis=cc-pvtz-dk
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edk=energy
+
+basis=cc-pvtz-dk
+dkroll=1
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edkr=energy
+
+pbqff=etz(2)+edkr-edk
+show[1,f20.12],pbqff
+"""
+
 MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14) PM6 SINGLET THREADS=1"
 
 ATOMS = ["X", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"]
 
 
-TEMPLATES = [MOLPRO_TEMPLATE]
+TEMPLATES = [MOLPRO_F12TZ]
 
 
 def make_radio_buttons(pairs, var, parent, **kwargs):
@@ -132,7 +163,7 @@ class Application(ttk.Frame):
     def default_template(self):
         self.template.delete("1.0", "end")
         if self.program.get() == "molpro":
-            self.template.insert("1.0", MOLPRO_TEMPLATE)
+            self.template.insert("1.0", MOLPRO_F12TZ)
         elif self.program.get() == "mopac":
             self.template.insert("1.0", MOPAC_TEMPLATE)
         else:
@@ -179,10 +210,28 @@ class MenuBar(tk.Menu):
         tk.Menu.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.parent["menu"] = self
+
         self.menu_file = tk.Menu(self)
         self.add_cascade(menu=self.menu_file, label="File")
         self.menu_file.add_command(label="Open Input File", command=self.open_file)
         self.menu_file.add_command(label="Import Geometry", command=self.import_geom)
+
+        self.menu_templates = tk.Menu(self)
+        self.add_cascade(menu=self.menu_templates, label="Templates")
+        self.menu_templates.add_command(
+            label="F12-DZ",
+            command=lambda: app.fill_template(MOLPRO_F12TZ.replace("TZ", "DZ")),
+        )
+        self.menu_templates.add_command(
+            label="F12-TZ", command=lambda: app.fill_template(MOLPRO_F12TZ)
+        )
+        self.menu_templates.add_command(
+            label="F12-DZ-cCR",
+            command=lambda: app.fill_template(MOLPRO_F12TZCCR.replace("TZ", "DZ")),
+        )
+        self.menu_templates.add_command(
+            label="F12-TZ-cCR", command=lambda: app.fill_template(MOLPRO_F12TZCCR)
+        )
 
     def import_geom(self):
         infile = fd.askopenfile(parent=self.parent)
