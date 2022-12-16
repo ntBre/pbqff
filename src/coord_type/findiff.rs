@@ -1,6 +1,6 @@
 use self::bighash::BigHash;
 
-use super::{CartGeom, Derivative, DEBUG};
+use super::{cart::DEBUG, CartGeom, Derivative};
 use bighash::Index;
 use intder::ANGBOHR;
 use nalgebra as na;
@@ -51,7 +51,7 @@ macro_rules! proto {
     }
 }
 
-fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
+pub(crate) fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
     let mut names = Vec::new();
     let mut coords = Vec::new();
     for atom in atoms {

@@ -215,7 +215,7 @@ impl Cart {
               .expect("single-point calculations failed");
         );
 
-        eprintln!("total job time: {time} sec");
+        eprintln!("total job time: {time:.1} sec");
 
         (
             n, nfc2, nfc3, fcs, mol, energies, target_map, ref_energy, pg,

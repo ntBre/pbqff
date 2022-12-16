@@ -6,19 +6,23 @@
 
 use std::{io::Write, marker::Sync};
 
+use intder::{fc3_index, fc4_index};
 use nalgebra::DVector;
 use psqs::{
     geom::Geom,
     program::{Job, Program, Template},
     queue::Queue,
 };
+use rust_anpass::{fc::Fc, Bias};
 use spectro::{Output, Spectro};
-use symm::{Molecule, PointGroup};
+use symm::{Irrep, Molecule, PointGroup};
+use taylor::{Disps, Taylor};
 
-use crate::{cleanup, config::Config};
+use crate::{cleanup, config::Config, coord_type::write_file};
 
 use super::{
-    findiff::{bighash::BigHash, zip_atoms, FiniteDifference},
+    findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
+    fitting::{AtomicNumbers, Fitted},
     Cart, CoordType, Derivative, Nderiv, SPECTRO_HEADER,
 };
 
@@ -33,6 +37,12 @@ pub struct Normal {
     /// the number of normal coordinates. convenient to have here so I don't
     /// have to keep thinking about 3n-6/5 stuff
     ncoords: usize,
+
+    /// whether to use finite differences or least-squares fitting for computing
+    /// the derivatives. defaults to false => use the fitting
+    findiff: bool,
+
+    irreps: Option<Vec<Irrep>>,
 }
 
 impl<W, Q, P> CoordType<W, Q, P> for Normal
@@ -65,81 +75,124 @@ where
         // 3n - 6 + 1 if linear = 3n - 5
         self.ncoords =
             3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
-
-        let n = self.ncoords;
-        let nfc2 = n * n;
-        let nfc3 = n * (n + 1) * (n + 2) / 6;
-        let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
-        let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
-        let mut map = BigHash::new(o.geom.clone(), pg);
-        let geoms = self.build_points(
-            Geom::Xyz(o.geom.atoms.clone()),
-            config.step_size,
-            ref_energy,
-            Derivative::Quartic(nfc2, nfc3, nfc4),
-            &mut fcs,
-            &mut map,
-            n,
-        );
-        let dir = "pts";
         let template = Template::from(&config.template);
-        let jobs: Vec<_> = geoms
-            .into_iter()
-            .enumerate()
-            .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{:08}", job_num);
-                Job::new(
-                    P::new(filename, template.clone(), config.charge, mol.geom),
-                    mol.index,
-                )
-            })
-            .collect();
-        writeln!(w, "{n} normal coordinates requires {} points", jobs.len())
+
+        let (f3qcm, f4qcm) = if self.findiff {
+            let n = self.ncoords;
+            let nfc2 = n * n;
+            let nfc3 = n * (n + 1) * (n + 2) / 6;
+            let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
+            let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+            let mut map = BigHash::new(o.geom.clone(), pg);
+            let geoms = self.build_points(
+                Geom::Xyz(o.geom.atoms.clone()),
+                config.step_size,
+                ref_energy,
+                Derivative::Quartic(nfc2, nfc3, nfc4),
+                &mut fcs,
+                &mut map,
+                n,
+            );
+            let dir = "pts";
+            let jobs: Vec<_> = geoms
+                .into_iter()
+                .enumerate()
+                .map(|(job_num, mol)| {
+                    let filename = format!("{dir}/job.{:08}", job_num);
+                    Job::new(
+                        P::new(
+                            filename,
+                            template.clone(),
+                            config.charge,
+                            mol.geom,
+                        ),
+                        mol.index,
+                    )
+                })
+                .collect();
+            writeln!(
+                w,
+                "{n} normal coordinates requires {} points",
+                jobs.len()
+            )
             .unwrap();
-        time!(w, "draining points",
-              // drain into energies
-              let mut energies = vec![0.0; jobs.len()];
-              let time = queue
-              .drain(dir, jobs, &mut energies)
-              .expect("single-point calculations failed");
-        );
-        eprintln!("total job time: {time} sec");
+            time!(w, "draining points",
+                  // drain into energies
+                  let mut energies = vec![0.0; jobs.len()];
+                  let time = queue
+                  .drain(dir, jobs, &mut energies)
+                  .expect("single-point calculations failed");
+            );
+            eprintln!("total job time: {time:.1} sec");
 
-        self.map_energies(&map, &energies, &mut fcs);
+            self.map_energies(&map, &energies, &mut fcs);
 
-        let cubs = &fcs[nfc2..nfc2 + nfc3];
-        let quarts = &fcs[nfc2 + nfc3..];
+            let cubs = &fcs[nfc2..nfc2 + nfc3];
+            let quarts = &fcs[nfc2 + nfc3..];
 
-        let freq = &o.harms;
-        let mut ijk = 0;
-        let mut ijkl = 0;
-        let mut f3qcm = Vec::new();
-        let mut f4qcm = Vec::new();
-        for i in 0..n {
-            let wi = freq[(i)];
-            for j in 0..=i {
-                let wj = freq[(j)];
-                for k in 0..=j {
-                    let wk = freq[(k)];
-                    let wijk = wi * wj * wk;
-                    let fact =
-                        intder::HART * spectro::consts::FACT3 / wijk.sqrt();
-                    let val = cubs[ijk];
-                    f3qcm.push(val * fact);
-                    ijk += 1;
-                    (0..=k).for_each(|l| {
-                        let wl = freq[l];
-                        let wijkl = wijk * wl;
-                        let fact = intder::HART * spectro::consts::FACT4
-                            / wijkl.sqrt();
-                        let val = quarts[ijkl];
-                        f4qcm.push(val * fact);
-                        ijkl += 1;
-                    });
+            to_qcm(&o.harms, n, cubs, quarts, intder::HART)
+        } else {
+            self.irreps = Some(o.irreps.clone());
+            let (geoms, taylor, taylor_disps, _atomic_numbers) = self
+                .generate_pts(w, &o.geom, &pg, config.step_size)
+                .unwrap();
+            let dir = "pts";
+            let jobs =
+                P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
+
+            writeln!(
+                w,
+                "\n{} atoms require {} jobs",
+                o.geom.atoms.len(),
+                jobs.len()
+            )
+            .unwrap();
+
+            let mut energies = vec![0.0; jobs.len()];
+            let time = queue
+                .drain(dir, jobs, &mut energies)
+                .expect("single-point energies failed");
+            eprintln!("total job time: {time:.1} sec");
+
+            let _ = std::fs::create_dir("freqs");
+            let (fcs, _) = self
+                .anpass(
+                    "freqs",
+                    &mut energies,
+                    &taylor,
+                    &taylor_disps,
+                    config.step_size,
+                    w,
+                )
+                .unwrap();
+
+            let mut f3qcm = Vec::new();
+            let mut f4qcm = Vec::new();
+            for Fc(i, j, k, l, val) in fcs {
+                // adapted from Intder::add_fc
+                match (k, l) {
+                    (0, 0) => {
+                        // harmonic, skip it
+                    }
+                    (_, 0) => {
+                        let idx = fc3_index(i, j, k);
+                        if f3qcm.len() <= idx {
+                            f3qcm.resize(idx + 1, 0.0);
+                        }
+                        f3qcm[idx] = val;
+                    }
+                    (_, _) => {
+                        let idx = fc4_index(i, j, k, l);
+                        if f4qcm.len() <= idx {
+                            f4qcm.resize(idx + 1, 0.0);
+                        }
+                        f4qcm[idx] = val;
+                    }
                 }
             }
-        }
 
+            to_qcm(&o.harms, self.ncoords, &f3qcm, &f4qcm, 1.0)
+        };
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
             spectro::F3qcm::new(f3qcm),
@@ -152,6 +205,126 @@ where
     }
 }
 
+/// convert the force constants in `cubs` and `quarts` to wavenumbers, as
+/// expected by spectro. `fac` should be [intder::HART] for finite difference
+/// fcs and 1.0 for fitted ones
+fn to_qcm(
+    harms: &[f64],
+    n: usize,
+    cubs: &[f64],
+    quarts: &[f64],
+    fac: f64,
+) -> (Vec<f64>, Vec<f64>) {
+    let mut ijk = 0;
+    let mut ijkl = 0;
+    let mut f3qcm = Vec::new();
+    let mut f4qcm = Vec::new();
+    for i in 0..n {
+        let wi = harms[i];
+        for j in 0..=i {
+            let wj = harms[j];
+            for k in 0..=j {
+                let wk = harms[k];
+                let wijk = wi * wj * wk;
+                let fact = fac * spectro::consts::FACT3 / wijk.sqrt();
+                let val = cubs[ijk];
+                f3qcm.push(val * fact);
+                ijk += 1;
+                (0..=k).for_each(|l| {
+                    let wl = harms[l];
+                    let wijkl = wijk * wl;
+                    let fact = fac * spectro::consts::FACT4 / wijkl.sqrt();
+                    let val = quarts[ijkl];
+                    f4qcm.push(val * fact);
+                    ijkl += 1;
+                });
+            }
+        }
+    }
+    (f3qcm, f4qcm)
+}
+
+impl Fitted for Normal {
+    type Prep = ();
+
+    type Error = ();
+
+    fn prepare_points<W: Write>(
+        &mut self,
+        _mol: &Molecule,
+        _step_size: f64,
+        _pg: &PointGroup,
+        _w: &mut W,
+    ) -> Result<Self::Prep, Self::Error> {
+        Ok(())
+    }
+
+    fn generate_pts<W: Write>(
+        &mut self,
+        _w: &mut W,
+        mol: &Molecule,
+        pg: &PointGroup,
+        step_size: f64,
+    ) -> Result<(Vec<Geom>, Taylor, Disps, AtomicNumbers), Self::Error> {
+        let mut irreps: Vec<_> = self
+            .irreps
+            .as_ref()
+            .unwrap()
+            .iter()
+            .cloned()
+            .enumerate()
+            .collect();
+        irreps.sort_by_key(|(_, irrep)| *irrep);
+        let checks = Taylor::make_checks(irreps, &pg);
+        let taylor = Taylor::new(5, self.ncoords, checks.0, checks.1);
+        let taylor_disps = taylor.disps();
+        let disps = taylor_disps.to_intder(step_size);
+        let (names, coords) = atom_parts(&mol.atoms);
+        let lxm = self.lxm.as_ref().unwrap();
+        let mut geoms = Vec::new();
+        for dq in disps {
+            let mut coords = coords.clone();
+            let nc = coords.len();
+            for k in 0..nc {
+                for n in 0..self.ncoords {
+                    coords[k] += self.m12[k / 3] * lxm[(k, n)] * dq[n];
+                }
+            }
+            geoms.push(Geom::Xyz(zip_atoms(&names, coords.into())))
+        }
+        Ok((geoms, taylor, taylor_disps, mol.atomic_numbers()))
+    }
+
+    fn anpass<W: Write>(
+        &self,
+        dir: &str,
+        energies: &mut [f64],
+        taylor: &Taylor,
+        taylor_disps: &taylor::Disps,
+        step_size: f64,
+        w: &mut W,
+    ) -> Result<
+        (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
+        Result<(Spectro, Output), super::FreqError>,
+    > {
+        let min = energies.iter().cloned().reduce(f64::min).unwrap();
+        for energy in energies.iter_mut() {
+            *energy -= min;
+        }
+        let anpass =
+            Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
+        write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
+        let (fcs, f) = anpass.fit();
+        writeln!(
+            w,
+            "anpass sum of squared residuals: {:17.8e}",
+            anpass.residuals(&fcs, &f)
+        )
+        .unwrap();
+        Ok((anpass.make9903(&fcs), Bias::default()))
+    }
+}
+
 impl FiniteDifference for Normal {
     fn scale(&self, nderiv: usize, step_size: f64) -> f64 {
         match nderiv {
@@ -161,6 +334,7 @@ impl FiniteDifference for Normal {
             _ => panic!("unrecognized derivative level"),
         }
     }
+
     fn new_geom(
         &self,
         names: &[&str],

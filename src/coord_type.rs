@@ -24,6 +24,7 @@ pub use cart::*;
 pub use sic::*;
 pub mod cart;
 pub mod findiff;
+pub mod fitting;
 pub mod normal;
 pub mod sic;
 
