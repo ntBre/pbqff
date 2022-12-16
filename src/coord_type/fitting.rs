@@ -10,6 +10,9 @@ use super::FreqError;
 
 pub(crate) type AtomicNumbers = Vec<usize>;
 
+type AnpassRes = (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias);
+type AnpassError = Box<Result<(Spectro, Output), FreqError>>;
+
 pub trait Fitted {
     type Prep;
     type Error;
@@ -38,8 +41,5 @@ pub trait Fitted {
         taylor_disps: &taylor::Disps,
         step_size: f64,
         w: &mut W,
-    ) -> Result<
-        (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
-        Result<(Spectro, Output), FreqError>,
-    >;
+    ) -> Result<AnpassRes, AnpassError>;
 }

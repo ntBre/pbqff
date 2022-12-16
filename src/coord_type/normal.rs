@@ -275,7 +275,7 @@ impl Fitted for Normal {
             .enumerate()
             .collect();
         irreps.sort_by_key(|(_, irrep)| *irrep);
-        let checks = Taylor::make_checks(irreps, &pg);
+        let checks = Taylor::make_checks(irreps, pg);
         let taylor = Taylor::new(5, self.ncoords, checks.0, checks.1);
         let taylor_disps = taylor.disps();
         let disps = taylor_disps.to_intder(step_size);
@@ -295,6 +295,9 @@ impl Fitted for Normal {
         Ok((geoms, taylor, taylor_disps, mol.atomic_numbers()))
     }
 
+    /// perform the initial anpass fitting, but we can't refit on the geometry
+    /// because it would change the geometry, which would change the normal
+    /// coordinates themselves and invalidate all of the force constants
     fn anpass<W: Write>(
         &self,
         dir: &str,
@@ -305,7 +308,7 @@ impl Fitted for Normal {
         w: &mut W,
     ) -> Result<
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
-        Result<(Spectro, Output), super::FreqError>,
+        Box<Result<(Spectro, Output), super::FreqError>>,
     > {
         let min = energies.iter().cloned().reduce(f64::min).unwrap();
         for energy in energies.iter_mut() {

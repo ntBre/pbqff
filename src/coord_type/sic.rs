@@ -267,7 +267,7 @@ impl Fitted for SIC {
         w: &mut W,
     ) -> Result<
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
-        Result<(Spectro, Output), FreqError>,
+        Box<Result<(Spectro, Output), FreqError>>,
     > {
         let min = energies.iter().cloned().reduce(f64::min).unwrap();
         for energy in energies.iter_mut() {
@@ -280,14 +280,14 @@ impl Fitted for SIC {
             writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
             let (fcs, long_line, res) = match anpass.run_debug(w) {
                 Ok(v) => v,
-                Err(e) => return Err(Err(FreqError(e.0))),
+                Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
             };
             writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
             (fcs, long_line, res)
         } else {
             match anpass.run() {
                 Ok(v) => v,
-                Err(e) => return Err(Err(FreqError(e.0))),
+                Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
             }
         };
         writeln!(w, "anpass sum of squared residuals: {:17.8e}", res).unwrap();
@@ -330,7 +330,7 @@ impl SIC {
             w,
         ) {
             Ok(value) => value,
-            Err(value) => return value,
+            Err(value) => return *value,
         };
 
         // intder_geom
