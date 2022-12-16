@@ -81,7 +81,7 @@ fn c3h2_normal() {
         ..Default::default()
     };
     let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
-        Normal::default(),
+        Normal::findiff(true),
         &mut std::io::stdout(),
         &queue,
         &config,

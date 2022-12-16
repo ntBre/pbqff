@@ -45,6 +45,15 @@ pub struct Normal {
     irreps: Option<Vec<Irrep>>,
 }
 
+impl Normal {
+    pub fn findiff(findiff: bool) -> Self {
+        Self {
+            findiff,
+            ..Default::default()
+        }
+    }
+}
+
 impl<W, Q, P> CoordType<W, Q, P> for Normal
 where
     W: Write,
