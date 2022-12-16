@@ -39,6 +39,11 @@ struct RawConfig {
     /// the type of queuing system to use. options supported currently are pbs
     /// and slurm
     queue: Queue,
+
+    /// whether to use finite differences or a least-squares fitting to obtain
+    /// the force constants. currently this only affects normal coordinates.
+    /// defaults to false
+    findiff: Option<bool>,
 }
 
 impl RawConfig {
@@ -80,6 +85,7 @@ pub struct Config {
     pub sleep_int: usize,
     pub job_limit: usize,
     pub chunk_size: usize,
+    pub findiff: bool,
 }
 
 impl Config {
@@ -97,6 +103,7 @@ impl Config {
             job_limit: rc.job_limit,
             chunk_size: rc.chunk_size,
             queue: rc.queue,
+            findiff: rc.findiff.unwrap_or(false),
         }
     }
 }
@@ -158,6 +165,7 @@ HCC =               147.81488230
             job_limit: 2048,
             chunk_size: 1,
             queue: Queue::Slurm,
+	    findiff: None,
         };
         assert_eq!(got, want);
     }
