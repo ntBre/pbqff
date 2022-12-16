@@ -13,7 +13,7 @@ use psqs::{
     program::{Job, Program, Template},
     queue::Queue,
 };
-use rust_anpass::{fc::Fc, Bias};
+use rust_anpass::fc::Fc;
 use spectro::{Output, Spectro};
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Disps, Taylor};
@@ -23,7 +23,8 @@ use crate::{cleanup, config::Config, coord_type::write_file};
 use super::{
     findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
     fitting::{AtomicNumbers, Fitted},
-    Cart, CoordType, Derivative, Nderiv, SPECTRO_HEADER,
+    sic::DEBUG,
+    Cart, CoordType, Derivative, FreqError, Nderiv, SPECTRO_HEADER,
 };
 
 #[derive(Default)]
@@ -66,7 +67,7 @@ where
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
-        let (s, o, ref_energy, pg) = self.cart_part(config, queue, w);
+        let (mut s, o, ref_energy, pg) = self.cart_part(config, queue, w);
         cleanup();
         let _ = std::fs::create_dir("pts");
         // pretty sure I assert lxm is square somewhere in spectro though. lxm
@@ -164,7 +165,7 @@ where
             eprintln!("total job time: {time:.1} sec");
 
             let _ = std::fs::create_dir("freqs");
-            let (fcs, _) = self
+            let (fcs, long_line) = self
                 .anpass(
                     "freqs",
                     &mut energies,
@@ -174,6 +175,19 @@ where
                     w,
                 )
                 .unwrap();
+
+            println!("before refit: s.geom={:.8}", s.geom);
+            let ll = long_line.disp;
+            let lxm = self.lxm.as_ref().unwrap();
+            let n3n = o.geom.atoms.len() * 3;
+            let (names, mut coords) = atom_parts(&o.geom.atoms);
+            for k in 0..n3n {
+                for n in 0..self.ncoords {
+                    coords[k] += self.m12[k / 3] * lxm[(k, n)] * ll[n];
+                }
+            }
+            s.geom = Molecule::new(zip_atoms(&names, coords.into()));
+            println!("after refit: s.geom={:.8}", s.geom);
 
             let mut f3qcm = Vec::new();
             let mut f4qcm = Vec::new();
@@ -326,14 +340,22 @@ impl Fitted for Normal {
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
         write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
-        let (fcs, f) = anpass.fit();
-        writeln!(
-            w,
-            "anpass sum of squared residuals: {:17.8e}",
-            anpass.residuals(&fcs, &f)
-        )
-        .unwrap();
-        Ok((anpass.make9903(&fcs), Bias::default()))
+        let (fcs, long_line, res) = if DEBUG {
+            writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
+            let (fcs, long_line, res) = match anpass.run_debug(w) {
+                Ok(v) => v,
+                Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
+            };
+            writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
+            (fcs, long_line, res)
+        } else {
+            match anpass.run() {
+                Ok(v) => v,
+                Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
+            }
+        };
+        writeln!(w, "anpass sum of squared residuals: {:17.8e}", res).unwrap();
+        Ok((fcs, long_line))
     }
 }
 
