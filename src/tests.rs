@@ -165,11 +165,11 @@ fn h2o_sic() {
     // harmonics
     assert_abs_diff_eq!(
         Dvec::from(summ.harms),
-        dvector![2603.972868873955, 2523.265599529732, 1315.3583799359571],
+        dvector![2613.383565566701, 2526.510364189273, 1334.5036927050803],
         epsilon = 2e-3
     );
     let got = Dvec::from(summ.corrs);
-    let want = dvector![2636.08089954, 2437.94844727, 1283.99909982];
+    let want = dvector![2601.05343567, 2473.32961982, 1157.98123703];
     // corr
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
         println!("got={:.8}", got);
