@@ -50,7 +50,7 @@ nocompress;
 geometry={
 {{.geom}}
 basis={
-default,cc-pVTZ-f12
+default,cc-pCVTZ-f12
 }
 set,charge={{.charge}}
 set,spin=0
