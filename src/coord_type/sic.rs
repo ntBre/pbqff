@@ -26,7 +26,7 @@ pub(crate) static DEBUG: bool = false;
 const SYMM_EPS: f64 = 1e-6;
 
 pub struct SIC {
-    intder: Intder,
+    pub intder: Intder,
 }
 
 impl SIC {
