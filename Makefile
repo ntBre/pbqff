@@ -48,6 +48,9 @@ eland: build
 woods: build
 	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
 
+woods.alpha: build
+	scp -C ${BASE}/${TARGET} ${WOODS_DEST}.alpha
+
 scripts: qffbuddy/qffbuddy*
 	scp -C $? 'woods:bin/'
 	date > scripts
