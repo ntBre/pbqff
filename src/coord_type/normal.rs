@@ -119,12 +119,8 @@ where
                     )
                 })
                 .collect();
-            writeln!(
-                w,
-                "{n} normal coordinates requires {} points",
-                jobs.len()
-            )
-            .unwrap();
+            writeln!(w, "{n} normal coordinates require {} points", jobs.len())
+                .unwrap();
             time!(w, "draining points",
                   // drain into energies
                   let mut energies = vec![0.0; jobs.len()];
@@ -151,8 +147,8 @@ where
 
             writeln!(
                 w,
-                "\n{} atoms require {} jobs",
-                o.geom.atoms.len(),
+                "{} normal coordinates require {} points",
+                self.ncoords,
                 jobs.len()
             )
             .unwrap();
