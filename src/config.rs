@@ -4,6 +4,7 @@ mod coord_type;
 pub use coord_type::*;
 
 #[derive(Deserialize, Debug, PartialEq)]
+#[serde(deny_unknown_fields)]
 struct RawConfig {
     /// the geometry to start with
     geometry: String,
