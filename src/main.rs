@@ -88,7 +88,7 @@ fn main() -> Result<(), std::io::Error> {
             config::Program::Molpro,
             config::Queue::Pbs,
         ) => <Normal as CoordType<_, _, Molpro>>::run(
-            Normal::default(),
+            Normal::findiff(config.findiff),
             &mut std::io::stdout(),
             &queue!(Pbs, config),
             &config,
