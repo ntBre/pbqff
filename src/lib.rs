@@ -11,7 +11,7 @@ use psqs::{
     program::{Job, Program, ProgramError, ProgramResult, Template},
     queue::Queue,
 };
-pub use spectro::Spectro;
+pub use spectro::{Output, Spectro};
 
 /// clean up from a previous run, emitting warnings on failures
 pub fn cleanup() {
