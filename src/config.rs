@@ -73,7 +73,7 @@ pub enum Queue {
     Local,
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,

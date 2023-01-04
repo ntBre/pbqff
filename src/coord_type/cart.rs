@@ -73,7 +73,12 @@ where
 {
     fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map, _, _) =
-            Cart.first_part(w, config, queue, Nderiv::Four);
+            Cart.first_part(
+                w,
+                &FirstPart::from(config.clone()),
+                queue,
+                Nderiv::Four,
+            );
 
         time!(w, "freqs",
           let (fc2, f3, f4) = self.make_fcs(
@@ -115,13 +120,34 @@ impl FiniteDifference for Cart {
     }
 }
 
+/// contains just the fields of Config needed for running [first_part]
+pub struct FirstPart {
+    pub template: String,
+    pub optimize: bool,
+    pub geometry: Geom,
+    pub charge: isize,
+    pub step_size: f64,
+}
+
+impl From<Config> for FirstPart {
+    fn from(config: Config) -> Self {
+        Self {
+            template: config.template,
+            optimize: config.optimize,
+            geometry: config.geometry,
+            charge: config.charge,
+            step_size: config.step_size,
+        }
+    }
+}
+
 impl Cart {
     /// run the "first part" of the Cartesian QFF, including the optimization if
     /// requested and the generation and running of the single-point energies
     pub(crate) fn first_part<W, Q, P>(
         &self,
         w: &mut W,
-        config: &Config,
+        config: &FirstPart,
         queue: &Q,
         nderiv: Nderiv,
     ) -> (

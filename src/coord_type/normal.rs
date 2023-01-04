@@ -23,7 +23,7 @@ use crate::{cleanup, config::Config, coord_type::write_file};
 use super::{
     findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
     fitting::{AtomicNumbers, Fitted},
-    Cart, CoordType, Derivative, Nderiv, SPECTRO_HEADER,
+    Cart, CoordType, Derivative, FirstPart, Nderiv, SPECTRO_HEADER,
 };
 
 #[derive(Default)]
@@ -52,6 +52,161 @@ impl Normal {
             ..Default::default()
         }
     }
+
+    /// actual initialization of self with the results of the initial harmonic
+    /// FF, must happen before build_points. TODO use phantomdata/generic trick
+    /// to enforce that
+    fn prep_qff(
+        &mut self,
+        o: &Output,
+        s: &Spectro,
+        config: &Config,
+    ) -> Template {
+        // pretty sure I assert lxm is square somewhere in spectro though. lxm
+        // should be in column-major order so I think this is all right
+        let cols = o.lxm.len();
+        let rows = o.lxm[0].len();
+        self.lxm = Some(nalgebra::DMatrix::from_iterator(
+            rows,
+            cols,
+            o.lxm.iter().flatten().cloned(),
+        ));
+        self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
+        // 3n - 6 + 1 if linear = 3n - 5
+        self.ncoords =
+            3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
+        Template::from(&config.template)
+    }
+
+    /// run the QFF using a least-squares fitting
+    fn run_fitted<P, W, Q>(
+        &mut self,
+        o: &Output,
+        w: &mut W,
+        pg: PointGroup,
+        config: &Config,
+        template: Template,
+        queue: &Q,
+    ) -> (Vec<f64>, Vec<f64>)
+    where
+        W: Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + Sync,
+    {
+        self.irreps = Some(o.irreps.clone());
+        let (geoms, taylor, taylor_disps, _atomic_numbers) = self
+            .generate_pts(w, &o.geom, &pg, config.step_size)
+            .unwrap();
+        let dir = "pts";
+        let jobs =
+            P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
+        writeln!(
+            w,
+            "{} normal coordinates require {} points",
+            self.ncoords,
+            jobs.len()
+        )
+        .unwrap();
+        let mut energies = vec![0.0; jobs.len()];
+        let time = queue
+            .drain(dir, jobs, &mut energies)
+            .expect("single-point energies failed");
+        eprintln!("total job time: {time:.1} sec");
+        let _ = std::fs::create_dir("freqs");
+        let (fcs, _) = self
+            .anpass(
+                "freqs",
+                &mut energies,
+                &taylor,
+                &taylor_disps,
+                config.step_size,
+                w,
+            )
+            .unwrap();
+        // needed in case taylor eliminated some of the higher derivatives
+        // by symmetry. this should give the maximum, full sizes without
+        // resizing
+        let n = self.ncoords;
+        let mut f3qcm = vec![0.0; fc3_index(n, n, n) + 1];
+        let mut f4qcm = vec![0.0; fc4_index(n, n, n, n) + 1];
+        for Fc(i, j, k, l, val) in fcs {
+            // adapted from Intder::add_fc
+            match (k, l) {
+                (0, 0) => {
+                    // harmonic, skip it
+                }
+                (_, 0) => {
+                    let idx = fc3_index(i, j, k);
+                    f3qcm[idx] = val;
+                }
+                (_, _) => {
+                    let idx = fc4_index(i, j, k, l);
+                    f4qcm[idx] = val;
+                }
+            }
+        }
+        to_qcm(&o.harms, self.ncoords, &f3qcm, &f4qcm, 1.0)
+    }
+
+    /// run the QFF using finite differences
+    #[allow(clippy::too_many_arguments)]
+    fn run_findiff<P, W, Q>(
+        &self,
+        o: &Output,
+        pg: PointGroup,
+        config: &Config,
+        ref_energy: f64,
+        template: &Template,
+        w: &mut W,
+        queue: &Q,
+    ) -> (Vec<f64>, Vec<f64>)
+    where
+        W: Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + Sync,
+    {
+        let n = self.ncoords;
+        let nfc2 = n * n;
+        let nfc3 = n * (n + 1) * (n + 2) / 6;
+        let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
+        let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+        let mut map = BigHash::new(o.geom.clone(), pg);
+        let geoms = self.build_points(
+            Geom::Xyz(o.geom.atoms.clone()),
+            config.step_size,
+            ref_energy,
+            Derivative::Quartic(nfc2, nfc3, nfc4),
+            &mut fcs,
+            &mut map,
+            n,
+        );
+        let dir = "pts";
+        let jobs: Vec<_> = geoms
+            .into_iter()
+            .enumerate()
+            .map(|(job_num, mol)| {
+                let filename = format!("{dir}/job.{:08}", job_num);
+                Job::new(
+                    P::new(filename, template.clone(), config.charge, mol.geom),
+                    mol.index,
+                )
+            })
+            .collect();
+        writeln!(w, "{n} normal coordinates require {} points", jobs.len())
+            .unwrap();
+        time!(w, "draining points",
+              // drain into energies
+              let mut energies = vec![0.0; jobs.len()];
+              let time = queue
+              .drain(dir, jobs, &mut energies)
+              .expect("single-point calculations failed");
+        );
+        eprintln!("total job time: {time:.1} sec");
+        self.map_energies(&map, &energies, &mut fcs);
+        let cubs = &fcs[nfc2..nfc2 + nfc3];
+        let quarts = &fcs[nfc2 + nfc3..];
+        to_qcm(&o.harms, n, cubs, quarts, intder::HART)
+    }
 }
 
 impl<W, Q, P> CoordType<W, Q, P> for Normal
@@ -66,137 +221,16 @@ where
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
-        let (s, o, ref_energy, pg) = self.cart_part(config, queue, w);
+        let (s, o, ref_energy, pg) =
+            self.cart_part(&FirstPart::from(config.clone()), queue, w);
         cleanup();
         let _ = std::fs::create_dir("pts");
-        // pretty sure I assert lxm is square somewhere in spectro though. lxm
-        // should be in column-major order so I think this is all right
-        let cols = o.lxm.len();
-        let rows = o.lxm[0].len();
-
-        // actual initialization of self, must happen before build_points
-        self.lxm = Some(nalgebra::DMatrix::from_iterator(
-            rows,
-            cols,
-            o.lxm.iter().flatten().cloned(),
-        ));
-        self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
-        // 3n - 6 + 1 if linear = 3n - 5
-        self.ncoords =
-            3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
-        let template = Template::from(&config.template);
+        let template = self.prep_qff(&o, &s, config);
 
         let (f3qcm, f4qcm) = if self.findiff {
-            let n = self.ncoords;
-            let nfc2 = n * n;
-            let nfc3 = n * (n + 1) * (n + 2) / 6;
-            let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
-            let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
-            let mut map = BigHash::new(o.geom.clone(), pg);
-            let geoms = self.build_points(
-                Geom::Xyz(o.geom.atoms.clone()),
-                config.step_size,
-                ref_energy,
-                Derivative::Quartic(nfc2, nfc3, nfc4),
-                &mut fcs,
-                &mut map,
-                n,
-            );
-            let dir = "pts";
-            let jobs: Vec<_> = geoms
-                .into_iter()
-                .enumerate()
-                .map(|(job_num, mol)| {
-                    let filename = format!("{dir}/job.{:08}", job_num);
-                    Job::new(
-                        P::new(
-                            filename,
-                            template.clone(),
-                            config.charge,
-                            mol.geom,
-                        ),
-                        mol.index,
-                    )
-                })
-                .collect();
-            writeln!(w, "{n} normal coordinates require {} points", jobs.len())
-                .unwrap();
-            time!(w, "draining points",
-                  // drain into energies
-                  let mut energies = vec![0.0; jobs.len()];
-                  let time = queue
-                  .drain(dir, jobs, &mut energies)
-                  .expect("single-point calculations failed");
-            );
-            eprintln!("total job time: {time:.1} sec");
-
-            self.map_energies(&map, &energies, &mut fcs);
-
-            let cubs = &fcs[nfc2..nfc2 + nfc3];
-            let quarts = &fcs[nfc2 + nfc3..];
-
-            to_qcm(&o.harms, n, cubs, quarts, intder::HART)
+            self.run_findiff(&o, pg, config, ref_energy, &template, w, queue)
         } else {
-            self.irreps = Some(o.irreps.clone());
-            let (geoms, taylor, taylor_disps, _atomic_numbers) = self
-                .generate_pts(w, &o.geom, &pg, config.step_size)
-                .unwrap();
-            let dir = "pts";
-            let jobs =
-                P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
-
-            writeln!(
-                w,
-                "{} normal coordinates require {} points",
-                self.ncoords,
-                jobs.len()
-            )
-            .unwrap();
-
-            let mut energies = vec![0.0; jobs.len()];
-            let time = queue
-                .drain(dir, jobs, &mut energies)
-                .expect("single-point energies failed");
-            eprintln!("total job time: {time:.1} sec");
-
-            let _ = std::fs::create_dir("freqs");
-            let (fcs, _) = self
-                .anpass(
-                    "freqs",
-                    &mut energies,
-                    &taylor,
-                    &taylor_disps,
-                    config.step_size,
-                    w,
-                )
-                .unwrap();
-
-            let mut f3qcm = Vec::new();
-            let mut f4qcm = Vec::new();
-            for Fc(i, j, k, l, val) in fcs {
-                // adapted from Intder::add_fc
-                match (k, l) {
-                    (0, 0) => {
-                        // harmonic, skip it
-                    }
-                    (_, 0) => {
-                        let idx = fc3_index(i, j, k);
-                        if f3qcm.len() <= idx {
-                            f3qcm.resize(idx + 1, 0.0);
-                        }
-                        f3qcm[idx] = val;
-                    }
-                    (_, _) => {
-                        let idx = fc4_index(i, j, k, l);
-                        if f4qcm.len() <= idx {
-                            f4qcm.resize(idx + 1, 0.0);
-                        }
-                        f4qcm[idx] = val;
-                    }
-                }
-            }
-
-            to_qcm(&o.harms, self.ncoords, &f3qcm, &f4qcm, 1.0)
+            self.run_fitted(&o, w, pg, config, template, queue)
         };
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
@@ -384,9 +418,9 @@ impl FiniteDifference for Normal {
 impl Normal {
     /// run the Cartesian harmonic force field and return the spectro output,
     /// from which we can extract the geometry and normal coordinates (lxm)
-    fn cart_part<P, Q, W>(
+    pub fn cart_part<P, Q, W>(
         &self,
-        config: &Config,
+        config: &FirstPart,
         queue: &Q,
         w: &mut W,
     ) -> (Spectro, Output, f64, PointGroup)
