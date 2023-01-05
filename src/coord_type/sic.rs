@@ -26,11 +26,11 @@ pub(crate) static DEBUG: bool = false;
 /// the precision to call things symmetric
 const SYMM_EPS: f64 = 1e-6;
 
-pub struct SIC {
+pub struct Sic {
     pub intder: Intder,
 }
 
-impl SIC {
+impl Sic {
     pub fn new(intder: Intder) -> Self {
         Self { intder }
     }
@@ -40,7 +40,7 @@ impl<
         W: Write,
         Q: Queue<P> + Sync,
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
-    > CoordType<W, Q, P> for SIC
+    > CoordType<W, Q, P> for Sic
 {
     fn run(
         mut self,
@@ -215,7 +215,7 @@ pub struct Prep {
     irreps: Vec<(usize, Irrep)>,
 }
 
-impl Fitted for SIC {
+impl Fitted for Sic {
     type Prep = Prep;
     type Error = IntderError;
 
@@ -394,7 +394,7 @@ pub(crate) fn write_file(
 #[derive(Debug)]
 pub struct FreqError(pub String);
 
-impl SIC {
+impl Sic {
     /// run the frequency portion of a QFF in `dir`. The caller is responsible
     /// for ensuring this directory exists.
     #[allow(clippy::too_many_arguments)]

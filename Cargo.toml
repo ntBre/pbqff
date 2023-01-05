@@ -3,6 +3,11 @@ name = "rust-pbqff"
 version = "0.1.0"
 edition = "2021"
 
+[workspace]
+members = [
+	"dispatch",
+]
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -19,6 +24,7 @@ taylor = { path = "/home/brent/Projects/taylor" }
 toml = "0.5.8"
 rustc-hash = "1.1.0"
 clap = { version = "4.0.18", features = ["derive"] }
+dispatch = { path = "dispatch" }
 
 [dev-dependencies]
 approx = "0.5.1"

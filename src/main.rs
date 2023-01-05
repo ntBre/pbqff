@@ -1,5 +1,6 @@
 use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
+use dispatch::dispatch;
 use psqs::{
     program::{molpro::Molpro, mopac::Mopac},
     queue::{pbs::Pbs, slurm::Slurm},
@@ -7,7 +8,7 @@ use psqs::{
 use rust_pbqff::{
     cleanup,
     config::{self, Config},
-    coord_type::{normal::Normal, Cart, CoordType, SIC},
+    coord_type::{normal::Normal, Cart, CoordType, Sic},
     Intder,
 };
 
@@ -36,7 +37,7 @@ struct Args {
 
     /// resume from the checkpoint files in the current directory (chk.json and
     /// res.chk)
-    #[arg(value_parser, default_value_t = false)]
+    #[arg(short, long, default_value_t = false)]
     checkpoint: bool,
 
     /// whether or not to overwrite existing output
@@ -55,6 +56,9 @@ struct Args {
     #[arg(short, default_value_t = false, hide = true)]
     json: bool,
 }
+
+use spectro::{Output, Spectro};
+dispatch!();
 
 fn main() -> Result<(), std::io::Error> {
     let args = Args::parse();
@@ -86,112 +90,8 @@ fn main() -> Result<(), std::io::Error> {
     psqs::max_threads(args.threads);
     cleanup();
     let _ = std::fs::create_dir("pts");
-    let m = (config.coord_type, config.program, config.queue);
-    let (spectro, output) = match m {
-        (
-            config::CoordType::Normal,
-            config::Program::Molpro,
-            config::Queue::Pbs,
-        ) => <Normal as CoordType<_, _, Molpro>>::run(
-            Normal::findiff(config.findiff),
-            &mut std::io::stdout(),
-            &queue!(Pbs, config),
-            &config,
-        ),
-        (
-            config::CoordType::Cart,
-            config::Program::Mopac,
-            config::Queue::Pbs,
-        ) => <Cart as CoordType<_, _, Mopac>>::run(
-            Cart,
-            &mut std::io::stdout(),
-            &queue!(Pbs, config),
-            &config,
-        ),
-        (
-            config::CoordType::Cart,
-            config::Program::Mopac,
-            config::Queue::Slurm,
-        ) => <Cart as CoordType<_, _, Mopac>>::run(
-            Cart,
-            &mut std::io::stdout(),
-            &queue!(Slurm, config),
-            &config,
-        ),
-        (
-            config::CoordType::Cart,
-            config::Program::Molpro,
-            config::Queue::Pbs,
-        ) => <Cart as CoordType<_, _, Molpro>>::run(
-            Cart,
-            &mut std::io::stdout(),
-            &queue!(Pbs, config),
-            &config,
-        ),
-        (
-            config::CoordType::Cart,
-            config::Program::Molpro,
-            config::Queue::Slurm,
-        ) => <Cart as CoordType<_, _, Molpro>>::run(
-            Cart,
-            &mut std::io::stdout(),
-            &queue!(Slurm, config),
-            &config,
-        ),
-        (
-            config::CoordType::Sic,
-            config::Program::Mopac,
-            config::Queue::Pbs,
-        ) => {
-            let sic = SIC::new(Intder::load_file("intder.in"));
-            <SIC as CoordType<_, _, Mopac>>::run(
-                sic,
-                &mut std::io::stdout(),
-                &queue!(Pbs, config),
-                &config,
-            )
-        }
-        (
-            config::CoordType::Sic,
-            config::Program::Mopac,
-            config::Queue::Slurm,
-        ) => {
-            let sic = SIC::new(Intder::load_file("intder.in"));
-            <SIC as CoordType<_, _, Mopac>>::run(
-                sic,
-                &mut std::io::stdout(),
-                &queue!(Slurm, config),
-                &config,
-            )
-        }
-        (
-            config::CoordType::Sic,
-            config::Program::Molpro,
-            config::Queue::Pbs,
-        ) => {
-            let sic = SIC::new(Intder::load_file("intder.in"));
-            <SIC as CoordType<_, _, Molpro>>::run(
-                sic,
-                &mut std::io::stdout(),
-                &queue!(Pbs, config),
-                &config,
-            )
-        }
-        (
-            config::CoordType::Sic,
-            config::Program::Molpro,
-            config::Queue::Slurm,
-        ) => {
-            let sic = SIC::new(Intder::load_file("intder.in"));
-            <SIC as CoordType<_, _, Molpro>>::run(
-                sic,
-                &mut std::io::stdout(),
-                &queue!(Slurm, config),
-                &config,
-            )
-        }
-        _ => panic!("unsupported combination {m:#?}"),
-    };
+
+    let (spectro, output) = dispatch(&config, args.checkpoint);
 
     spectro.write_output(&mut std::io::stdout(), &output)?;
 

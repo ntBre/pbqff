@@ -1,0 +1,53 @@
+extern crate proc_macro;
+use proc_macro::TokenStream;
+use std::fmt::Write;
+
+#[proc_macro]
+pub fn dispatch(_item: TokenStream) -> TokenStream {
+    let coord_types = ["Normal", "Cart", "Sic"];
+    let coord_builders = [
+        "Normal::findiff(config.findiff)",
+        "Cart",
+        "Sic::new(Intder::load_file(\"intder.in\"))",
+    ];
+    let programs = ["Mopac", "Molpro"];
+    let queues = ["Pbs", "Slurm"];
+    let mut s = String::from(
+        "fn dispatch(config: &Config, checkpoint: bool) -> (Spectro, Output) {
+    let m = (config.coord_type, config.program, config.queue, checkpoint);
+match m {
+",
+    );
+    for (i, coord) in coord_types.iter().enumerate() {
+        for program in programs {
+            for queue in queues {
+                for (val, fun) in [("true", "resume"), ("false", "run")] {
+                    write!(
+                        s,
+                        "(
+config::CoordType::{},
+config::Program::{},
+config::Queue::{},
+{val},
+) => <{} as CoordType<_, _, {}>>::{fun}(
+{},
+&mut std::io::stdout(),
+&queue!({}, config),
+&config,
+),",
+                        coord,
+                        program,
+                        queue,
+                        coord,
+                        program,
+                        coord_builders[i],
+                        queue
+                    )
+                    .unwrap();
+                }
+            }
+        }
+    }
+    write!(s, "_ => panic!(\"unsupported combination\"),}}}}").unwrap();
+    s.parse().unwrap()
+}

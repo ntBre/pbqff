@@ -7,7 +7,7 @@ use nalgebra::dvector;
 use psqs::geom::Geom;
 use psqs::program::mopac::Mopac;
 use psqs::program::Template;
-use psqs::queue::local::LocalQueue;
+use psqs::queue::local::Local;
 use rust_anpass::Dvec;
 use symm::Molecule;
 
@@ -18,7 +18,7 @@ use crate::coord_type::findiff::FiniteDifference;
 use crate::coord_type::normal::Normal;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
-use crate::coord_type::SIC;
+use crate::coord_type::Sic;
 use crate::optimize;
 
 #[test]
@@ -27,12 +27,12 @@ fn h2o_normal() {
     cleanup();
     init();
     let config = Config::load("testfiles/water.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::default(),
         &mut std::io::stdout(),
         &queue,
@@ -75,12 +75,12 @@ fn c3h2_normal() {
     cleanup();
     init();
     let config = Config::load("testfiles/cart.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <Normal as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::findiff(false),
         &mut std::io::stdout(),
         &queue,
@@ -109,12 +109,12 @@ fn h2o_cart() {
     cleanup();
     init();
     let config = Config::load("testfiles/water.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
         &mut std::io::stdout(),
         &queue,
@@ -146,13 +146,13 @@ fn h2o_cart() {
 fn h2o_sic() {
     cleanup();
     let config = Config::load("testfiles/water.toml");
-    let coord = SIC::new(Intder::load_file("testfiles/h2o.intder"));
-    let queue = LocalQueue {
+    let coord = Sic::new(Intder::load_file("testfiles/h2o.intder"));
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
         &mut std::io::stdout(),
         &queue,
@@ -184,13 +184,13 @@ fn h2o_sic() {
 fn sic() {
     cleanup();
     let config = Config::load("testfiles/test.toml");
-    let coord = SIC::new(Intder::load_file("testfiles/intder.in"));
-    let queue = LocalQueue {
+    let coord = Sic::new(Intder::load_file("testfiles/intder.in"));
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <SIC as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
         &mut std::io::stdout(),
         &queue,
@@ -231,12 +231,12 @@ fn cart() {
     cleanup();
     init();
     let config = Config::load("testfiles/cart.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
-    let (_, summ) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
         &mut std::io::stdout(),
         &queue,
@@ -267,13 +267,13 @@ fn cart() {
 #[test]
 fn build_pts() {
     let config = Config::load("testfiles/cart.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
         ..Default::default()
     };
     let (geom, ref_energy) = {
-        let res = optimize::<LocalQueue, Mopac>(
+        let res = optimize::<Local, Mopac>(
             &queue,
             config.geometry.clone(),
             Template::from(&config.template),

@@ -1,6 +1,6 @@
 use std::{io::Stdout, time::Instant};
 
-use psqs::{program::mopac::Mopac, queue::local::LocalQueue};
+use psqs::{program::mopac::Mopac, queue::local::Local};
 use rust_pbqff::{
     config::Config,
     coord_type::{Cart, CoordType},
@@ -14,14 +14,14 @@ fn main() -> Result<(), std::io::Error> {
     // end inline
     let _ = std::fs::create_dir("pts");
     let config = Config::load("testfiles/cart.toml");
-    let queue = LocalQueue {
+    let queue = Local {
         chunk_size: 128,
         dir: "pts".to_string(),
         ..Default::default()
     };
 
     let now = Instant::now();
-    let (spectro, output) = <Cart as CoordType<Stdout, LocalQueue, Mopac>>::run(
+    let (spectro, output) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
         &mut std::io::stdout(),
         &queue,

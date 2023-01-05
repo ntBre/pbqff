@@ -1,7 +1,7 @@
 use psqs::{
     geom::Geom,
     program::{mopac::Mopac, Template},
-    queue::local::LocalQueue,
+    queue::local::Local,
 };
 use rust_pbqff::{
     config::Config,
@@ -17,13 +17,13 @@ fn main() {
     let config = Config::load("testfiles/cart.toml");
     let template = Template::from(&config.template);
 
-    let queue = LocalQueue {
+    let queue = Local {
         chunk_size: 128,
         dir: "pts".to_string(),
         ..Default::default()
     };
     let (geom, ref_energy) = if config.optimize {
-        let res = optimize::<LocalQueue, Mopac>(
+        let res = optimize::<Local, Mopac>(
             &queue,
             config.geometry.clone(),
             template,
