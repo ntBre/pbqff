@@ -98,6 +98,15 @@ impl<
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
 
+        let resume = Resume::new(
+            taylor,
+            taylor_disps,
+            atomic_numbers,
+            config.step_size,
+            jobs.len(),
+        );
+        resume.dump("res.chk");
+
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
             .drain(dir, jobs, &mut energies, 0)
@@ -109,9 +118,9 @@ impl<
             w,
             "freqs",
             &mut energies,
-            &taylor,
-            &taylor_disps,
-            &atomic_numbers,
+            &resume.taylor,
+            &resume.taylor_disps,
+            &resume.atomic_numbers,
             config.step_size,
         )
         .unwrap()
