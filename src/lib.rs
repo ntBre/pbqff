@@ -11,6 +11,7 @@ use psqs::{
     program::{Job, Program, ProgramError, ProgramResult, Template},
     queue::Queue,
 };
+use serde::{Deserialize, Serialize};
 pub use spectro::{Output, Spectro};
 
 /// clean up from a previous run, emitting warnings on failures
@@ -24,7 +25,10 @@ pub fn cleanup() {
 }
 
 /// Some if the optimization succeeds, None otherwise
-pub fn optimize<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
+pub fn optimize<
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+>(
     queue: &Q,
     geom: Geom,
     template: Template,
@@ -39,7 +43,10 @@ pub fn optimize<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
     Ok(res.pop().unwrap())
 }
 
-pub fn ref_energy<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
+pub fn ref_energy<
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+>(
     queue: &Q,
     geom: Geom,
     template: Template,
@@ -50,7 +57,7 @@ pub fn ref_energy<Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>(
         Job::new(P::new("opt/ref".to_string(), template, charge, geom), 0);
     let mut res = vec![0.0; 1];
     let time = queue
-        .drain("opt", vec![opt], &mut res)
+        .drain("opt", vec![opt], &mut res, 0)
         .expect("reference energy failed");
     eprintln!("total ref time: {time:.1} sec");
     res.pop().unwrap()

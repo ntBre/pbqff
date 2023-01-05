@@ -5,6 +5,7 @@ use psqs::{
     program::{Job, Program, Template},
     queue::Queue,
 };
+use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 use symm::{Molecule, PointGroup};
 
@@ -69,7 +70,7 @@ impl<W, Q, P> CoordType<W, Q, P> for Cart
 where
     W: io::Write,
     Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 {
     fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
         let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map, _, _) =
@@ -96,6 +97,17 @@ where
           let r = freqs("freqs", &mol, fc2, f3, f4);
         );
         r
+    }
+
+    type Resume = ();
+
+    fn resume(
+        self,
+        _w: &mut W,
+        _queue: &Q,
+        _resume: Self::Resume,
+    ) -> (Spectro, Output) {
+        todo!()
     }
 }
 
@@ -164,7 +176,7 @@ impl Cart {
     where
         W: io::Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         time!(w, "opt",
             let template = Template::from(&config.template);
@@ -237,7 +249,7 @@ impl Cart {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies)
+              .drain(dir, jobs, &mut energies, 0)
               .expect("single-point calculations failed");
         );
 

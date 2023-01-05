@@ -1,6 +1,7 @@
 use std::io::Write;
 
 use psqs::{program::Program, queue::Queue};
+use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 
 use crate::config::Config;
@@ -35,11 +36,27 @@ const SPECTRO_HEADER: [usize; 30] = [
     0, 0, 0, 0, 0,
 ];
 
-pub trait CoordType<W: Write, Q: Queue<P>, P: Program + Clone + Send + Sync> {
+pub trait CoordType<
+    W: Write,
+    Q: Queue<P>,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+>
+{
     /// run a full qff, taking the configuration from `config`, the intder
     /// template from `intder`, and the spectro template from `spectro`. Only
     /// the simple internal and symmetry internal coordinates are read from the
     /// intder template. The input options, weights, and curvils are copied from
     /// the spectro template, but the geometry will be updated
     fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
+
+    /// contains all of the data necessary to resume from a checkpoint
+    type Resume;
+
+    /// resume from a checkpoint and finish the run
+    fn resume(
+        self,
+        w: &mut W,
+        queue: &Q,
+        resume: Self::Resume,
+    ) -> (Spectro, Output);
 }

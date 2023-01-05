@@ -14,6 +14,7 @@ use psqs::{
     queue::Queue,
 };
 pub use rust_anpass::{fc::Fc, Bias};
+use serde::{Deserialize, Serialize};
 pub use spectro::{F3qcm, F4qcm, Output, Spectro};
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Disps, Taylor};
@@ -91,7 +92,7 @@ impl Normal {
     where
         W: Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         self.irreps = Some(o.irreps.clone());
         let (geoms, taylor, taylor_disps, _atomic_numbers) = self
@@ -109,7 +110,7 @@ impl Normal {
         .unwrap();
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies)
+            .drain(dir, jobs, &mut energies, 0)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let _ = std::fs::create_dir("freqs");
@@ -163,7 +164,7 @@ impl Normal {
     where
         W: Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         let n = self.ncoords;
         let nfc2 = n * n;
@@ -198,7 +199,7 @@ impl Normal {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies)
+              .drain(dir, jobs, &mut energies, 0)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -213,7 +214,7 @@ impl<W, Q, P> CoordType<W, Q, P> for Normal
 where
     W: Write,
     Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 {
     fn run(
         mut self,
@@ -241,6 +242,17 @@ where
         );
 
         (s, o)
+    }
+
+    type Resume = ();
+
+    fn resume(
+        self,
+        _w: &mut W,
+        _queue: &Q,
+        _resume: Self::Resume,
+    ) -> (Spectro, Output) {
+        todo!()
     }
 }
 
@@ -425,7 +437,7 @@ impl Normal {
         w: &mut W,
     ) -> (Spectro, Output, f64, PointGroup)
     where
-        P: Program + Clone + Send + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Q: Queue<P> + Sync,
         W: Write,
     {

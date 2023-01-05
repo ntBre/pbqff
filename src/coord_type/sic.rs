@@ -9,9 +9,10 @@ use psqs::{
     program::{Program, Template},
     queue::Queue,
 };
+use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 use symm::{Irrep, Molecule, Pg, PointGroup};
-use taylor::Taylor;
+use taylor::{Disps, Taylor};
 
 use super::{
     fitting::{AtomicNumbers, Fitted},
@@ -35,8 +36,11 @@ impl SIC {
     }
 }
 
-impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
-    CoordType<W, Q, P> for SIC
+impl<
+        W: Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    > CoordType<W, Q, P> for SIC
 {
     fn run(
         mut self,
@@ -96,7 +100,7 @@ impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies)
+            .drain(dir, jobs, &mut energies, 0)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -111,6 +115,79 @@ impl<W: Write, Q: Queue<P> + Sync, P: Program + Clone + Send + Sync>
             config.step_size,
         )
         .unwrap()
+    }
+
+    type Resume = Resume;
+
+    fn resume(
+        mut self,
+        w: &mut W,
+        queue: &Q,
+        Resume {
+            taylor,
+            taylor_disps,
+            atomic_numbers,
+            step_size,
+            njobs,
+        }: Resume,
+    ) -> (Spectro, Output) {
+        let mut energies = vec![0.0; njobs];
+        let dir = "pts/inp";
+        let time = queue
+            .resume(dir, "chk.json", &mut energies, 0)
+            .expect("single-point energies failed");
+        eprintln!("total job time: {time:.1} sec");
+
+        let _ = std::fs::create_dir("freqs");
+        self.freqs(
+            w,
+            "freqs",
+            &mut energies,
+            &taylor,
+            &taylor_disps,
+            &atomic_numbers,
+            step_size,
+        )
+        .unwrap()
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Resume {
+    taylor: Taylor,
+    taylor_disps: Disps,
+    atomic_numbers: Vec<usize>,
+    step_size: f64,
+
+    /// size of the vector to pass to drain
+    njobs: usize,
+}
+
+impl Resume {
+    pub fn new(
+        taylor: Taylor,
+        taylor_disps: Disps,
+        atomic_numbers: Vec<usize>,
+        step_size: f64,
+        njobs: usize,
+    ) -> Self {
+        Self {
+            taylor,
+            taylor_disps,
+            atomic_numbers,
+            step_size,
+            njobs,
+        }
+    }
+
+    pub fn load(p: impl AsRef<Path>) -> Self {
+        let f = std::fs::File::open(p).unwrap();
+        serde_json::from_reader(f).unwrap()
+    }
+
+    pub fn dump(&self, p: impl AsRef<Path>) {
+        let f = std::fs::File::create(p).unwrap();
+        serde_json::to_writer(f, self).unwrap()
     }
 }
 
