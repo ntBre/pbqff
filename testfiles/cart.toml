@@ -20,3 +20,4 @@ sleep_int = 2
 job_limit = 2048
 chunk_size = 1
 template = "scfcrt=1.D-21 aux(precision=14) PM6 THREADS=1 external=testfiles/params.dat"
+check_int = 100

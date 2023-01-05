@@ -45,13 +45,18 @@ struct RawConfig {
     /// the force constants. currently this only affects normal coordinates.
     /// defaults to false
     findiff: Option<bool>,
+
+    /// interval for dumping checkpoint files. 0 means no checkpoints
+    check_int: usize,
 }
 
 impl RawConfig {
     fn load(filename: &str) -> Self {
         let contents = std::fs::read_to_string(filename)
             .expect("failed to load config file");
-        toml::from_str(&contents).expect("failed to deserialize config file")
+        toml::from_str(&contents).unwrap_or_else(|e| {
+            panic!("failed to deserialize config file '{filename}' with {e}")
+        })
     }
 }
 
@@ -87,6 +92,7 @@ pub struct Config {
     pub job_limit: usize,
     pub chunk_size: usize,
     pub findiff: bool,
+    pub check_int: usize,
 }
 
 impl Config {
@@ -105,6 +111,7 @@ impl Config {
             chunk_size: rc.chunk_size,
             queue: rc.queue,
             findiff: rc.findiff.unwrap_or(false),
+            check_int: rc.check_int,
         }
     }
 }
@@ -167,6 +174,7 @@ HCC =               147.81488230
             chunk_size: 1,
             queue: Queue::Slurm,
 	    findiff: None,
+            check_int: 100,
         };
         assert_eq!(got, want);
     }

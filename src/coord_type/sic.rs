@@ -109,7 +109,7 @@ impl<
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, 0)
+            .drain(dir, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -121,7 +121,7 @@ impl<
             &resume.taylor,
             &resume.taylor_disps,
             &resume.atomic_numbers,
-            config.step_size,
+            resume.step_size,
         )
         .unwrap()
     }
