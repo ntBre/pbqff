@@ -6,15 +6,15 @@
 
 use std::{io::Write, marker::Sync};
 
-use intder::{fc3_index, fc4_index};
+pub use intder::{fc3_index, fc4_index};
 use nalgebra::DVector;
 use psqs::{
     geom::Geom,
     program::{Job, Program, Template},
     queue::Queue,
 };
-use rust_anpass::{fc::Fc, Bias};
-use spectro::{Output, Spectro};
+pub use rust_anpass::{fc::Fc, Bias};
+pub use spectro::{F3qcm, F4qcm, Output, Spectro};
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Disps, Taylor};
 
@@ -26,23 +26,23 @@ use super::{
     Cart, CoordType, Derivative, FirstPart, Nderiv, SPECTRO_HEADER,
 };
 
-#[derive(Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Normal {
     /// the normal coordinates, called the LXM matrix in spectro
-    lxm: Option<nalgebra::DMatrix<f64>>,
+    pub lxm: Option<nalgebra::DMatrix<f64>>,
 
     /// 1/√m where m is the atomic mass
-    m12: Vec<f64>,
+    pub m12: Vec<f64>,
 
     /// the number of normal coordinates. convenient to have here so I don't
     /// have to keep thinking about 3n-6/5 stuff
-    ncoords: usize,
+    pub ncoords: usize,
 
     /// whether to use finite differences or least-squares fitting for computing
     /// the derivatives. defaults to false => use the fitting
-    findiff: bool,
+    pub findiff: bool,
 
-    irreps: Option<Vec<Irrep>>,
+    pub irreps: Option<Vec<Irrep>>,
 }
 
 impl Normal {
@@ -234,8 +234,8 @@ where
         };
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
-            spectro::F3qcm::new(f3qcm),
-            spectro::F4qcm::new(f4qcm),
+            F3qcm::new(f3qcm),
+            F4qcm::new(f4qcm),
             o.irreps,
             self.lxm.unwrap(),
         );
@@ -247,7 +247,7 @@ where
 /// convert the force constants in `cubs` and `quarts` to wavenumbers, as
 /// expected by spectro. `fac` should be [intder::HART] for finite difference
 /// fcs and 1.0 for fitted ones
-fn to_qcm(
+pub fn to_qcm(
     harms: &[f64],
     n: usize,
     cubs: &[f64],
@@ -448,12 +448,12 @@ impl Normal {
             Derivative::Quartic(nfc2, nfc3, 0),
             "freqs",
         );
-        let (a, b) = self.harm_freqs("freqs", &mol, fc2);
-        (a, b, ref_energy, pg)
+        let (spectro, output) = self.harm_freqs("freqs", &mol, fc2);
+        (spectro, output, ref_energy, pg)
     }
 
     /// run the harmonic frequencies through spectro
-    fn harm_freqs(
+    pub fn harm_freqs(
         &self,
         dir: &str,
         mol: &Molecule,

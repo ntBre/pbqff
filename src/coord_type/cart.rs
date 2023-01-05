@@ -208,8 +208,8 @@ impl Cart {
                let geoms = self.build_points(
                Geom::Xyz(mol.atoms.clone()),
                config.step_size,
-               ref_energy,
-           deriv,
+           ref_energy,
+               deriv,
                &mut fcs,
                &mut target_map,
            n,
