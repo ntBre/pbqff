@@ -13,7 +13,6 @@ clean:
 	cargo clean
 
 clippy:
-	cargo clippy
 	cargo clippy --tests
 
 cover:
