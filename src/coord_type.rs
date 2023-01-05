@@ -53,10 +53,6 @@ pub trait CoordType<
     type Resume;
 
     /// resume from a checkpoint and finish the run
-    fn resume(
-        self,
-        w: &mut W,
-        queue: &Q,
-        resume: Self::Resume,
-    ) -> (Spectro, Output);
+    fn resume(self, w: &mut W, queue: &Q, config: &Config)
+        -> (Spectro, Output);
 }

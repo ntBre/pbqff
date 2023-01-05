@@ -105,7 +105,7 @@ where
         self,
         _w: &mut W,
         _queue: &Q,
-        _resume: Self::Resume,
+        _config: &Config,
     ) -> (Spectro, Output) {
         todo!()
     }

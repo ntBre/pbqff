@@ -34,6 +34,11 @@ struct Args {
     #[arg(value_parser, default_value_t = String::from("pbqff.toml"))]
     infile: String,
 
+    /// resume from the checkpoint files in the current directory (chk.json and
+    /// res.chk)
+    #[arg(value_parser, default_value_t = false)]
+    checkpoint: bool,
+
     /// whether or not to overwrite existing output
     #[arg(short, long, default_value_t = false)]
     overwrite: bool,

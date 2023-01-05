@@ -132,14 +132,15 @@ impl<
         mut self,
         w: &mut W,
         queue: &Q,
-        Resume {
+        _config: &Config,
+    ) -> (Spectro, Output) {
+        let Resume {
             taylor,
             taylor_disps,
             atomic_numbers,
             step_size,
             njobs,
-        }: Resume,
-    ) -> (Spectro, Output) {
+        } = Resume::load("res.chk");
         let mut energies = vec![0.0; njobs];
         let dir = "pts/inp";
         let time = queue
