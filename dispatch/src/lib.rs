@@ -1,3 +1,6 @@
+//! build the big match on config parameters that changes how `run` or `resume`
+//! get called.
+
 extern crate proc_macro;
 use proc_macro::TokenStream;
 use std::fmt::Write;
