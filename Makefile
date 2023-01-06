@@ -44,11 +44,21 @@ WOODS_DEST = 'woods:bin/rpbqff'
 eland: build
 	scp -C ${BASE}/${TARGET} ${ELAND_DEST}
 
-woods: build
+woods: build docs
 	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
 
 woods.alpha: build
 	scp -C ${BASE}/${TARGET} ${WOODS_DEST}.alpha
+
+docs: man/rpbqff.1
+	scp -C $? 'woods:man/man1/.'
+	date > docs
+
+%.pdf: %.1
+	groff -Tpdf $? -mman > $@
+
+man/rpbqff.1: man/rpbqff.head testfiles/test.toml man/rpbqff.tail
+	cat $^ > $@
 
 scripts: qffbuddy/qffbuddy*
 	scp -C $? 'woods:bin/'

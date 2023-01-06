@@ -1,0 +1,132 @@
+.TH rpbqff 1 2023-01-06
+
+.SH NAME
+rpbqff - push-button quartic force fields
+
+.SH SYNOPSIS
+.B rpbqff
+[OPTIONS]
+[INFILE]
+
+.SH DESCRIPTION
+.B rpbqff
+runs quartic force fields at the push of a button. It currently handles three
+types of coordinates: symmetry-internal coordinates (SICs), specified in the
+format expected by
+.BR intder (1);
+Cartesian coordinates, and normal coordinates. The latter two are determined
+automatically from the input Cartesian geometry. The normal coordinates are
+determined by first running a harmonic force field in Cartesian coordinates, and
+then the full QFF is evaluated at displacements along the resulting normal
+coordinates.
+
+.SH OPTIONS
+This section lists the command line options supported by
+.BR rpbqff .
+In addition to these options,
+.B rpbqff
+expects an input file. If omitted, the name of this input file is taken to be
+.IR pbqff.toml .
+See the INPUT section for details about its contents.
+.TP
+.BR \-c ", " \-\-checkpoint
+Resume from the checkpoint files in the current directory (\fIchk.json\fR and
+\fIres.chk\fR).
+.TP
+.BR \-o ", " \-\-overwrite
+Overwrite a previous run.
+.TP
+.BR \-v ", " \-\-version
+Print the git version information and exit.
+.TP
+.BR \-t ", " \-\-threads " " \fITHREADS\fR
+Set the maximum number of threads to use. Defaults to 0, which means to use as
+many threads as there are CPUs.
+.TP
+.BR \-h ", " \-\-help
+Print help information and exit.
+
+.SH INPUT
+This section describes the contents of the input file. Unless otherwise noted,
+every option is required and has no default value. See the EXAMPLES section for
+some example inputs with sensible values for these options. The input format is
+TOML, Tom's Obvious Minimal Language. For help constructing your input file, see
+.BR qffbuddy (1)
+which should have been included with
+.BR rpbqff .
+.TP
+.B geometry \fIstring\fR
+The initial geometry to use for the computation. Both XYZ and Z-matrix
+geometries are accepted.
+.TP
+.B optimize \fIboolean\fR
+Whether or not to perform a geometry optimization on the input
+.BR geometry .
+.TP
+.B charge \fIinteger\fR
+The molecular charge. This value can be spliced into the
+.B template
+using the {{.charge}} directive.
+.TP
+.B step_size \fIfloat\fR
+The size of the step to take in the QFF coordinates.
+.TP
+.B coord_type \fIstring\fR
+The type of coordinate to use in the QFF. Currently-supported values are "sic",
+"cart", and "normal". Note that SIC QFFs require an additional input file called
+.I intder.in
+to define the internal coordinates.
+.TP
+.B program \fIstring\fR
+The quantum chemistry program to use in running the QFF. Currently-supported
+values are "molpro" and "mopac".
+.TP
+.B queue \fIstring\fR
+The queuing system to use in running the QFF. Currently-supported values are
+"pbs" and "slurm".
+.TP
+.B sleep_int \fIint\fR
+The interval in seconds to wait between loops checking if any jobs have
+finished.
+.TP
+.B job_limit \fIint\fR
+The maximum number of jobs to submit at once, as determined by the number of
+individual input files. This distinction is important when
+.B chunk_size
+is greater than 1 because the maximum number of jobs submitted to the queue will
+be
+.BR job_limit / chunk_size .
+.TP
+.B chunk_size \fIint\fR
+The number of individual calculations to bundle into a single queue submission.
+.TP
+.B template \fIstring\fR
+The template input file for the quantum chemistry
+.BR program .
+Supported formatting directives depend on the
+.B program
+in question. Molpro supports {{.geom}} for the geometry and {{.charge}} for the
+molecular charge, while Mopac expects a static template.
+.TP
+.B check_int \fIint\fR
+The interval at which to write checkpoint files. Every coordinate type will
+write an initial checkpoint
+.RI ( res.chk ),
+but this interval determines whether or not checkpoints are written while the
+single-point energies are being run. A value of 0 will disable checkpoints
+entirely.
+.TP
+.B findiff [\fIbool\fR]
+Whether to use finite differences or least-squares fitting for the potential
+energy surface. Currently normal coordinates are the only
+.B coord_type
+to use this option, so it has a default value of false, meaning use the fitted
+version of normal coordinates. Setting this option to true forces the use of
+finite differences for the normal coordinate QFF.
+
+.SH EXAMPLE
+The following is an example input file for c-C3H2 in SICs in Mopac on the Slurm
+queuing system:
+.nf
+.rs
+
