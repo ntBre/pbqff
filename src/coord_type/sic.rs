@@ -356,9 +356,13 @@ impl Fitted for Sic {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), FreqError>>,
     > {
+        let mut efile = std::fs::File::create("energy.dat").unwrap();
+        let mut rel = std::fs::File::create("rel.dat").unwrap();
         let min = energies.iter().cloned().reduce(f64::min).unwrap();
         for energy in energies.iter_mut() {
+            writeln!(efile, "{:20.12}", energy).unwrap();
             *energy -= min;
+            writeln!(rel, "{:20.12}", energy).unwrap();
         }
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
