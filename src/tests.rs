@@ -220,6 +220,7 @@ fn sic() {
 }
 
 fn init() {
+    psqs::max_threads(8);
     let _ = std::fs::create_dir("opt");
     let _ = std::fs::create_dir("pts");
     let _ = std::fs::create_dir("freqs");
