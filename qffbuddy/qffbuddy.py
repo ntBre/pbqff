@@ -151,6 +151,10 @@ class Application(ttk.Frame):
         self.chunk_size = tk.IntVar(value=1)
         name = ttk.Entry(self, textvariable=self.chunk_size).grid(column=3, row=14)
 
+        ttk.Label(self, text="Checkpoint interval (0 to disable)").grid(column=3)
+        self.check_int = tk.IntVar(value=100)
+        ttk.Entry(self, textvariable=self.check_int).grid(column=3)
+
         ttk.Label(self, text="Coordinate type").grid(column=3)
         choices = [("sic", "sic"), ("cart", "cart"), ("normal", "normal")]
         self.coord_type = tk.StringVar(value="sic")
@@ -242,6 +246,7 @@ template = \"\"\"
 \"\"\"
 program = \"{self.program.get()}\"
 queue = \"{self.queue.get()}\"
+check_int = {self.check_int.get()}
 """
             )
 
@@ -332,6 +337,7 @@ class MenuBar(tk.Menu):
         app.charge.set(d["charge"])
         app.step_size.set(d["step_size"])
         app.coord_type.set(d["coord_type"].lower())
+        app.check_int.set(d["check_int"])
         app.program.set(d["program"].lower())
         app.queue.set(d["queue"].lower())
         app.sleep_int.set(d["sleep_int"])
