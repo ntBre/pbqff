@@ -99,6 +99,7 @@ where
             .unwrap();
 
         let resume = Resume::new(
+            self.intder.clone(),
             taylor,
             taylor_disps,
             atomic_numbers,
@@ -133,6 +134,7 @@ where
         w: &mut W,
         queue: &Q,
         Resume {
+            intder,
             taylor,
             taylor_disps,
             atomic_numbers,
@@ -142,12 +144,14 @@ where
     ) -> (Spectro, Output) {
         let mut energies = vec![0.0; njobs];
         let dir = "pts/inp";
+        let _ = std::fs::create_dir_all(dir);
         let time = queue
             .resume(dir, "chk.json", &mut energies, 0)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
         let _ = std::fs::create_dir("freqs");
+        self.intder = intder;
         self.freqs(
             w,
             "freqs",
@@ -163,6 +167,7 @@ where
 
 #[derive(Serialize, Deserialize)]
 pub struct Resume {
+    intder: Intder,
     taylor: Taylor,
     taylor_disps: Disps,
     atomic_numbers: Vec<usize>,
@@ -174,6 +179,7 @@ pub struct Resume {
 
 impl Resume {
     pub fn new(
+        intder: Intder,
         taylor: Taylor,
         taylor_disps: Disps,
         atomic_numbers: Vec<usize>,
@@ -181,6 +187,7 @@ impl Resume {
         njobs: usize,
     ) -> Self {
         Self {
+            intder,
             taylor,
             taylor_disps,
             atomic_numbers,
