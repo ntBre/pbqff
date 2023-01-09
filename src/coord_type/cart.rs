@@ -14,7 +14,7 @@ use crate::{config::Config, optimize, ref_energy};
 use super::{
     findiff::bighash::BigHash,
     findiff::{zip_atoms, FiniteDifference},
-    CoordType, SPECTRO_HEADER,
+    CoordType, Load, SPECTRO_HEADER,
 };
 
 #[cfg(test)]
@@ -56,7 +56,7 @@ pub fn freqs(
     spectro.header = SPECTRO_HEADER.to_vec();
 
     // write input
-    let input = format!("{}/spectro.in", dir);
+    let input = format!("{dir}/spectro.in");
     spectro.write(&input).unwrap();
 
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
@@ -99,17 +99,22 @@ where
         r
     }
 
-    type Resume = ();
+    type Resume = Resume;
 
     fn resume(
         self,
         _w: &mut W,
         _queue: &Q,
-        _config: &Config,
+        _resume: Resume,
     ) -> (Spectro, Output) {
         todo!()
     }
 }
+
+#[derive(Serialize, Deserialize)]
+pub struct Resume;
+
+impl Load for Resume {}
 
 impl FiniteDifference for Cart {
     fn new_geom(
@@ -213,8 +218,8 @@ impl Cart {
         let mut mol = Molecule::new(geom.to_vec());
         mol.normalize();
         let pg = mol.point_group();
-        writeln!(w, "normalized geometry:\n{}", mol).unwrap();
-        writeln!(w, "point group:{}", pg).unwrap();
+        writeln!(w, "normalized geometry:\n{mol}").unwrap();
+        writeln!(w, "point group:{pg}").unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
         time! (w, "building points",
                let geoms = self.build_points(
@@ -232,7 +237,7 @@ impl Cart {
             .into_iter()
             .enumerate()
             .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{:08}", job_num);
+                let filename = format!("{dir}/job.{job_num:08}");
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,

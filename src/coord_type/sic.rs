@@ -16,7 +16,7 @@ use taylor::{Disps, Taylor};
 
 use super::{
     fitting::{AtomicNumbers, Fitted},
-    CoordType, SPECTRO_HEADER,
+    CoordType, Load, SPECTRO_HEADER,
 };
 use crate::{config::Config, optimize};
 
@@ -36,11 +36,11 @@ impl Sic {
     }
 }
 
-impl<
-        W: Write,
-        Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
-    > CoordType<W, Q, P> for Sic
+impl<W, Q, P> CoordType<W, Q, P> for Sic
+where
+    W: Write,
+    Q: Queue<P> + Sync,
+    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 {
     fn run(
         mut self,
@@ -49,7 +49,7 @@ impl<
         config: &Config,
     ) -> (Spectro, Output) {
         let template = Template::from(&config.template);
-        writeln!(w, "{}", config).unwrap();
+        writeln!(w, "{config}").unwrap();
         // optimize the geometry
         let geom = if config.optimize {
             let res = optimize(
@@ -59,12 +59,12 @@ impl<
                 config.charge,
             );
             let geom = if let Err(e) = res {
-                panic!("optimize failed with {:?}", e);
+                panic!("optimize failed with {e:?}");
             } else {
                 res.unwrap()
             };
             let geom = Geom::Xyz(geom.cart_geom.unwrap());
-            writeln!(w, "Optimized Geometry:\n{}", geom).unwrap();
+            writeln!(w, "Optimized Geometry:\n{geom}").unwrap();
             geom
         } else {
             // expecting cartesian geometry in angstroms
@@ -85,8 +85,8 @@ impl<
             pg = pg.subgroup(Pg::C2v).unwrap();
         };
 
-        writeln!(w, "Normalized Geometry:\n{:20.12}", mol).unwrap();
-        writeln!(w, "Point Group = {}", pg).unwrap();
+        writeln!(w, "Normalized Geometry:\n{mol:20.12}").unwrap();
+        writeln!(w, "Point Group = {pg}").unwrap();
 
         let (geoms, taylor, taylor_disps, atomic_numbers) =
             self.generate_pts(w, &mol, &pg, config.step_size).unwrap();
@@ -132,15 +132,14 @@ impl<
         mut self,
         w: &mut W,
         queue: &Q,
-        _config: &Config,
-    ) -> (Spectro, Output) {
-        let Resume {
+        Resume {
             taylor,
             taylor_disps,
             atomic_numbers,
             step_size,
             njobs,
-        } = Resume::load("res.chk");
+        }: Resume,
+    ) -> (Spectro, Output) {
         let mut energies = vec![0.0; njobs];
         let dir = "pts/inp";
         let time = queue
@@ -189,17 +188,9 @@ impl Resume {
             njobs,
         }
     }
-
-    pub fn load(p: impl AsRef<Path>) -> Self {
-        let f = std::fs::File::open(p).unwrap();
-        serde_json::from_reader(f).unwrap()
-    }
-
-    pub fn dump(&self, p: impl AsRef<Path>) {
-        let f = std::fs::File::create(p).unwrap();
-        serde_json::to_writer(f, self).unwrap()
-    }
 }
+
+impl Load for Resume {}
 
 /// returned by [prepare_points]. see its documentation for details
 pub struct Prep {
@@ -360,20 +351,20 @@ impl Fitted for Sic {
         let mut rel = std::fs::File::create("rel.dat").unwrap();
         let min = energies.iter().cloned().reduce(f64::min).unwrap();
         for energy in energies.iter_mut() {
-            writeln!(efile, "{:20.12}", energy).unwrap();
+            writeln!(efile, "{energy:20.12}").unwrap();
             *energy -= min;
-            writeln!(rel, "{:20.12}", energy).unwrap();
+            writeln!(rel, "{energy:20.12}").unwrap();
         }
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
         write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
         let (fcs, long_line, res) = if DEBUG {
-            writeln!(w, "Anpass Input:\n{}", anpass).unwrap();
+            writeln!(w, "Anpass Input:\n{anpass}").unwrap();
             let (fcs, long_line, res) = match anpass.run_debug(w) {
                 Ok(v) => v,
                 Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
             };
-            writeln!(w, "\nStationary Point:\n{}", long_line).unwrap();
+            writeln!(w, "\nStationary Point:\n{long_line}").unwrap();
             (fcs, long_line, res)
         } else {
             match anpass.run() {
@@ -381,7 +372,7 @@ impl Fitted for Sic {
                 Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
             }
         };
-        writeln!(w, "anpass sum of squared residuals: {:17.8e}", res).unwrap();
+        writeln!(w, "anpass sum of squared residuals: {res:17.8e}").unwrap();
         Ok((fcs, long_line))
     }
 }
@@ -391,7 +382,7 @@ pub(crate) fn write_file(
     d: impl Display,
 ) -> std::io::Result<()> {
     let mut f = std::fs::File::create(f)?;
-    writeln!(f, "{}", d)
+    writeln!(f, "{d}")
 }
 
 /// an Error type containing information about a failure to run `freqs`
@@ -434,7 +425,7 @@ impl Sic {
         let mol =
             Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
 
-        writeln!(w, "\nRefit Geometry\n{:20.12}", mol).unwrap();
+        writeln!(w, "\nRefit Geometry\n{mol:20.12}").unwrap();
 
         self.intder.geom = intder::geom::Geom::from(mol.clone());
         for dummy in dummies.chunks(3) {
@@ -473,9 +464,9 @@ impl Sic {
         let fc3 = spectro::new_fc3(spectro.n3n, &f3);
         let fc4 = spectro::new_fc4(spectro.n3n, &f4);
 
-        let input = format!("{}/spectro.in", dir);
+        let input = format!("{dir}/spectro.in");
         if DEBUG {
-            writeln!(w, "Spectro Input:\n{}", spectro).unwrap();
+            writeln!(w, "Spectro Input:\n{spectro}").unwrap();
         }
         spectro.write(&input).unwrap();
 

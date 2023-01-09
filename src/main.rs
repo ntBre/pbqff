@@ -8,7 +8,7 @@ use psqs::{
 use rust_pbqff::{
     cleanup,
     config::{self, Config},
-    coord_type::{normal::Normal, Cart, CoordType, Sic},
+    coord_type::{normal::Normal, Cart, CoordType, Load, Sic},
     Intder,
 };
 

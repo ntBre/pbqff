@@ -24,27 +24,29 @@ match m {
     for (i, coord) in coord_types.iter().enumerate() {
         for program in programs {
             for queue in queues {
-                for (val, fun) in [("true", "resume"), ("false", "run")] {
+                for (val, fun) in [(true, "resume"), (false, "run")] {
+                    let resume = if val {
+                        format!(
+                            "<{coord} as CoordType<::std::io::Stdout, \
+			     {queue}, {program}>>::Resume::load(\"res.chk\")"
+                        )
+                    } else {
+                        "config".to_owned()
+                    };
                     write!(
                         s,
                         "(
-config::CoordType::{},
-config::Program::{},
-config::Queue::{},
+config::CoordType::{coord},
+config::Program::{program},
+config::Queue::{queue},
 {val},
-) => <{} as CoordType<_, _, {}>>::{fun}(
+) => <{coord} as CoordType<_, _, {program}>>::{fun}(
 {},
 &mut std::io::stdout(),
-&queue!({}, config),
-&config,
+&queue!({queue}, config),
+{resume}
 ),",
-                        coord,
-                        program,
-                        queue,
-                        coord,
-                        program,
                         coord_builders[i],
-                        queue
                     )
                     .unwrap();
                 }

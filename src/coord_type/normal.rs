@@ -28,7 +28,7 @@ use crate::{
 use super::{
     findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
     fitting::{AtomicNumbers, Fitted},
-    Cart, CoordType, Derivative, FirstPart, Nderiv, SPECTRO_HEADER,
+    Cart, CoordType, Derivative, FirstPart, Load, Nderiv, SPECTRO_HEADER,
 };
 
 #[derive(Clone, Default, Debug)]
@@ -211,7 +211,7 @@ impl Normal {
             .into_iter()
             .enumerate()
             .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{:08}", job_num);
+                let filename = format!("{dir}/job.{job_num:08}");
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
@@ -342,9 +342,9 @@ where
                         w,
                     )
                     .unwrap();
-                // needed in case taylor eliminated some of the higher derivatives
-                // by symmetry. this should give the maximum, full sizes without
-                // resizing
+                // needed in case taylor eliminated some of the higher
+                // derivatives by symmetry. this should give the maximum, full
+                // sizes without resizing
                 let n = self.ncoords;
                 let mut f3qcm = vec![0.0; fc3_index(n, n, n) + 1];
                 let mut f4qcm = vec![0.0; fc4_index(n, n, n, n) + 1];
@@ -403,6 +403,8 @@ pub struct Resume {
     spectro: Spectro,
     deriv: DerivType,
 }
+
+impl Load for Resume {}
 
 /// convert the force constants in `cubs` and `quarts` to wavenumbers, as
 /// expected by spectro. `fac` should be [intder::HART] for finite difference
@@ -625,7 +627,7 @@ impl Normal {
         spectro.header = SPECTRO_HEADER.to_vec();
 
         // write input
-        let input = format!("{}/spectro.in", dir);
+        let input = format!("{dir}/spectro.in");
         spectro.write(&input).unwrap();
 
         let (output, _) = spectro.run(spectro::Derivative::Harmonic(fc2));

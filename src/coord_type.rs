@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{io::Write, path::Path};
 
 use psqs::{program::Program, queue::Queue};
 use serde::{Deserialize, Serialize};
@@ -53,9 +53,25 @@ pub trait CoordType<
     fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
 
     /// contains all of the data necessary to resume from a checkpoint
-    type Resume;
+    type Resume: Load;
 
     /// resume from a checkpoint and finish the run
-    fn resume(self, w: &mut W, queue: &Q, config: &Config)
-        -> (Spectro, Output);
+    fn resume(
+        self,
+        w: &mut W,
+        queue: &Q,
+        resume: Self::Resume,
+    ) -> (Spectro, Output);
+}
+
+pub trait Load: Sized + Serialize + for<'a> Deserialize<'a> {
+    fn load(p: impl AsRef<Path>) -> Self {
+        let f = std::fs::File::open(p).unwrap();
+        serde_json::from_reader(f).unwrap()
+    }
+
+    fn dump(&self, p: impl AsRef<Path>) {
+        let f = std::fs::File::create(p).unwrap();
+        serde_json::to_writer(f, self).unwrap()
+    }
 }

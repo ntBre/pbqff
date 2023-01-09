@@ -50,8 +50,8 @@ fn h2o_normal() {
     assert_eq!(got.len(), want.len());
     // corr
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
-        println!("got={:.8}", got);
-        println!("want={:.8}", want);
+        println!("got={got:.8}");
+        println!("want={want:.8}");
         println!("diff={:.8}", got - want);
         panic!("mismatch");
     }
@@ -134,8 +134,8 @@ fn h2o_cart() {
     let want = dvector![2584.12640107, 2467.79949790, 1118.91300446];
     // corr
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
-        println!("got={:.8}", got);
-        println!("want={:.8}", want);
+        println!("got={got:.8}");
+        println!("want={want:.8}");
         println!("diff={:.8}", got - want);
         panic!("mismatch");
     }
@@ -172,8 +172,8 @@ fn h2o_sic() {
     let want = dvector![2601.05343567, 2473.32961982, 1157.98123703];
     // corr
     if abs_diff_ne!(got, want, epsilon = 2.6e-1) {
-        println!("got={:.8}", got);
-        println!("want={:.8}", want);
+        println!("got={got:.8}");
+        println!("want={want:.8}");
         println!("diff={:.8}", got - want);
         panic!("mismatch");
     }
@@ -295,7 +295,7 @@ fn build_pts() {
     let mut mol = Molecule::new(geom.to_vec());
     mol.normalize();
     let pg = mol.point_group();
-    println!("normalized geometry:\n{}", mol);
+    println!("normalized geometry:\n{mol}");
     let mut target_map = BigHash::new(mol.clone(), pg);
 
     let geoms = Cart.build_points(
