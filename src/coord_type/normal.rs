@@ -28,7 +28,8 @@ use crate::{
 use super::{
     findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
     fitting::{AtomicNumbers, Fitted},
-    Cart, CoordType, Derivative, FirstPart, Load, Nderiv, SPECTRO_HEADER,
+    make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv,
+    SPECTRO_HEADER,
 };
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq)]
@@ -116,9 +117,9 @@ impl Normal {
         .unwrap();
 
         let resume = Resume {
+            normal: self.clone(),
             njobs: jobs.len(),
             deriv: DerivType::Fitted {
-                normal: self.clone(),
                 taylor,
                 taylor_disps,
                 step_size: config.step_size,
@@ -223,6 +224,7 @@ impl Normal {
             .unwrap();
 
         let resume = Resume {
+            normal: self.clone(),
             njobs: jobs.len(),
             deriv: DerivType::Findiff {
                 map,
@@ -295,16 +297,18 @@ where
     type Resume = Resume;
 
     fn resume(
-        mut self,
+        #[allow(unused_assignments)] mut self,
         w: &mut W,
         queue: &Q,
         Resume {
+            normal,
             njobs,
             deriv,
             output,
             spectro,
         }: Resume,
     ) -> (Spectro, Output) {
+        self = normal;
         let dir = "pts";
         time!(w, "draining points",
               // drain into energies
@@ -328,13 +332,11 @@ where
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
             DerivType::Fitted {
-                normal,
                 taylor,
                 taylor_disps,
                 step_size,
             } => {
                 let _ = std::fs::create_dir("freqs");
-                self = normal;
                 let (fcs, _) = self
                     .anpass(
                         "freqs",
@@ -393,7 +395,6 @@ pub enum DerivType {
         nfc3: usize,
     },
     Fitted {
-        normal: Normal,
         taylor: Taylor,
         taylor_disps: Disps,
         step_size: f64,
@@ -402,6 +403,7 @@ pub enum DerivType {
 
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Resume {
+    pub(crate) normal: Normal,
     pub(crate) njobs: usize,
     pub(crate) output: Output,
     pub(crate) spectro: Spectro,
@@ -410,12 +412,14 @@ pub struct Resume {
 
 impl Resume {
     pub fn new(
+        normal: Normal,
         njobs: usize,
         output: Output,
         spectro: Spectro,
         deriv: DerivType,
     ) -> Self {
         Self {
+            normal,
             njobs,
             output,
             spectro,
