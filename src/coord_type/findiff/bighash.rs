@@ -1,18 +1,19 @@
 use std::collections::hash_map::Values;
 
+use serde::{Deserialize, Serialize};
 use symm::PointGroup;
 
 use rustc_hash::FxHashMap;
 
 use symm::Molecule;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub(crate) struct Index {
     pub(crate) index: usize,
     pub(crate) coeff: f64,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Target {
     /// into the energy array drain is called on
     pub source_index: usize,
@@ -24,7 +25,7 @@ pub struct Target {
 /// the fields are options because it's possible for `detect_buddies` to fail
 /// and find that not all atoms are matched. if this happens, we want to skip
 /// over those entirely instead of filling the Hash with junk geometries
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 enum Buddy {
     C1,
     C2 {
@@ -103,7 +104,7 @@ impl Buddy {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct Key {
     pub(crate) atom: usize,
     pub(crate) x: isize,
@@ -111,7 +112,7 @@ pub struct Key {
     pub(crate) z: isize,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BigHash {
     pub(crate) map: FxHashMap<Vec<Key>, Target>,
     pub(crate) pg: PointGroup,

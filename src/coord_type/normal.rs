@@ -19,7 +19,11 @@ pub use spectro::{F3qcm, F4qcm, Output, Spectro};
 use symm::{Irrep, Molecule, PointGroup};
 use taylor::{Disps, Taylor};
 
-use crate::{cleanup, config::Config, coord_type::write_file};
+use crate::{
+    cleanup,
+    config::Config,
+    coord_type::{write_file, CHK_NAME},
+};
 
 use super::{
     findiff::{atom_parts, bighash::BigHash, zip_atoms, FiniteDifference},
@@ -80,9 +84,11 @@ impl Normal {
     }
 
     /// run the QFF using a least-squares fitting
+    #[allow(clippy::too_many_arguments)]
     fn run_fitted<P, W, Q>(
         &mut self,
         o: &Output,
+        s: &Spectro,
         w: &mut W,
         pg: PointGroup,
         config: &Config,
@@ -108,6 +114,24 @@ impl Normal {
             jobs.len()
         )
         .unwrap();
+
+        let resume = Resume {
+            njobs: jobs.len(),
+            deriv: DerivType::Fitted {
+                taylor,
+                taylor_disps,
+                step_size: config.step_size,
+            },
+            output: o.clone(),
+            spectro: s.clone(),
+        };
+        resume.dump(CHK_NAME);
+
+        let DerivType::Fitted { taylor, taylor_disps, step_size } =
+	    resume.deriv else {
+		unreachable!();
+	    };
+
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
             .drain(dir, jobs, &mut energies, 0)
@@ -120,7 +144,7 @@ impl Normal {
                 &mut energies,
                 &taylor,
                 &taylor_disps,
-                config.step_size,
+                step_size,
                 w,
             )
             .unwrap();
@@ -154,6 +178,7 @@ impl Normal {
     fn run_findiff<P, W, Q>(
         &self,
         o: &Output,
+        s: &Spectro,
         pg: PointGroup,
         config: &Config,
         ref_energy: f64,
@@ -195,14 +220,32 @@ impl Normal {
             .collect();
         writeln!(w, "{n} normal coordinates require {} points", jobs.len())
             .unwrap();
+
+        let resume = Resume {
+            njobs: jobs.len(),
+            deriv: DerivType::Findiff {
+                map,
+                fcs,
+                n,
+                nfc2,
+                nfc3,
+            },
+            output: o.clone(),
+            spectro: s.clone(),
+        };
+        resume.dump(CHK_NAME);
+
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies, 0)
+              .drain(dir, jobs, &mut energies, config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
+        let DerivType::Findiff{ map, mut fcs, .. } = resume.deriv  else  {
+	    unreachable!()
+	};
         self.map_energies(&map, &energies, &mut fcs);
         let cubs = &fcs[nfc2..nfc2 + nfc3];
         let quarts = &fcs[nfc2 + nfc3..];
@@ -228,10 +271,14 @@ where
         let _ = std::fs::create_dir("pts");
         let template = self.prep_qff(&o, &s, config);
 
+        // TODO have to split these run_* methods into a prep_* and run_* so I
+        // can save the Resume between them
         let (f3qcm, f4qcm) = if self.findiff {
-            self.run_findiff(&o, pg, config, ref_energy, &template, w, queue)
+            self.run_findiff(
+                &o, &s, pg, config, ref_energy, &template, w, queue,
+            )
         } else {
-            self.run_fitted(&o, w, pg, config, template, queue)
+            self.run_fitted(&o, &s, w, pg, config, template, queue)
         };
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
@@ -244,16 +291,117 @@ where
         (s, o)
     }
 
-    type Resume = ();
+    type Resume = Resume;
 
     fn resume(
         self,
-        _w: &mut W,
-        _queue: &Q,
-        _config: &Config,
+        w: &mut W,
+        queue: &Q,
+        Resume {
+            njobs,
+            deriv,
+            output,
+            spectro,
+        }: Resume,
     ) -> (Spectro, Output) {
-        todo!()
+        let dir = "pts";
+        time!(w, "draining points",
+              // drain into energies
+              let mut energies = vec![0.0; njobs];
+              let time = queue
+              .resume(dir, "chk.json", &mut energies, 0)
+              .expect("single-point calculations failed");
+        );
+        eprintln!("total job time: {time:.1} sec");
+        let (f3qcm, f4qcm) = match deriv {
+            DerivType::Findiff {
+                map,
+                mut fcs,
+                n,
+                nfc2,
+                nfc3,
+            } => {
+                self.map_energies(&map, &energies, &mut fcs);
+                let cubs = &fcs[nfc2..nfc2 + nfc3];
+                let quarts = &fcs[nfc2 + nfc3..];
+                to_qcm(&output.harms, n, cubs, quarts, intder::HART)
+            }
+            DerivType::Fitted {
+                taylor,
+                taylor_disps,
+                step_size,
+            } => {
+                let _ = std::fs::create_dir("freqs");
+                let (fcs, _) = self
+                    .anpass(
+                        "freqs",
+                        &mut energies,
+                        &taylor,
+                        &taylor_disps,
+                        step_size,
+                        w,
+                    )
+                    .unwrap();
+                // needed in case taylor eliminated some of the higher derivatives
+                // by symmetry. this should give the maximum, full sizes without
+                // resizing
+                let n = self.ncoords;
+                let mut f3qcm = vec![0.0; fc3_index(n, n, n) + 1];
+                let mut f4qcm = vec![0.0; fc4_index(n, n, n, n) + 1];
+                for Fc(i, j, k, l, val) in fcs {
+                    // adapted from Intder::add_fc
+                    match (k, l) {
+                        (0, 0) => {
+                            // harmonic, skip it
+                        }
+                        (_, 0) => {
+                            let idx = fc3_index(i, j, k);
+                            f3qcm[idx] = val;
+                        }
+                        (_, _) => {
+                            let idx = fc4_index(i, j, k, l);
+                            f4qcm[idx] = val;
+                        }
+                    }
+                }
+                to_qcm(&output.harms, self.ncoords, &f3qcm, &f4qcm, 1.0)
+            }
+        };
+
+        let (o, _) = spectro.finish(
+            DVector::from(output.harms.clone()),
+            F3qcm::new(f3qcm),
+            F4qcm::new(f4qcm),
+            output.irreps,
+            self.lxm.unwrap(),
+        );
+
+        (spectro, o)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+enum DerivType {
+    Findiff {
+        map: BigHash,
+        fcs: Vec<f64>,
+        n: usize,
+        nfc2: usize,
+        nfc3: usize,
+    },
+    Fitted {
+        taylor: Taylor,
+        taylor_disps: Disps,
+        step_size: f64,
+    },
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Resume {
+    njobs: usize,
+    output: Output,
+    spectro: Spectro,
+    deriv: DerivType,
 }
 
 /// convert the force constants in `cubs` and `quarts` to wavenumbers, as

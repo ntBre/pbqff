@@ -36,6 +36,9 @@ const SPECTRO_HEADER: [usize; 30] = [
     0, 0, 0, 0, 0,
 ];
 
+/// the name for the checkpoint file written here
+const CHK_NAME: &str = "res.chk";
+
 pub trait CoordType<
     W: Write,
     Q: Queue<P>,
