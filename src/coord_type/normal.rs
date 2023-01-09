@@ -531,10 +531,7 @@ impl Fitted for Normal {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), super::FreqError>>,
     > {
-        let min = energies.iter().cloned().reduce(f64::min).unwrap();
-        for energy in energies.iter_mut() {
-            *energy -= min;
-        }
+        make_rel(energies);
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
         write_file(format!("{dir}/anpass.in"), &anpass).unwrap();

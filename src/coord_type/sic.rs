@@ -354,14 +354,7 @@ impl Fitted for Sic {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), FreqError>>,
     > {
-        let mut efile = std::fs::File::create("energy.dat").unwrap();
-        let mut rel = std::fs::File::create("rel.dat").unwrap();
-        let min = energies.iter().cloned().reduce(f64::min).unwrap();
-        for energy in energies.iter_mut() {
-            writeln!(efile, "{energy:20.12}").unwrap();
-            *energy -= min;
-            writeln!(rel, "{energy:20.12}").unwrap();
-        }
+        make_rel(energies);
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
         write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
@@ -381,6 +374,20 @@ impl Fitted for Sic {
         };
         writeln!(w, "anpass sum of squared residuals: {res:17.8e}").unwrap();
         Ok((fcs, long_line))
+    }
+}
+
+/// find the minimum energy in `energies` and make the others relative to it
+/// (subtract it from the others). also create `energy.dat` and `rel.dat` in the
+/// current directory
+pub(crate) fn make_rel(energies: &mut [f64]) {
+    let mut efile = std::fs::File::create("energy.dat").unwrap();
+    let mut rel = std::fs::File::create("rel.dat").unwrap();
+    let min = energies.iter().cloned().reduce(f64::min).unwrap();
+    for energy in energies.iter_mut() {
+        writeln!(efile, "{energy:20.12}").unwrap();
+        *energy -= min;
+        writeln!(rel, "{energy:20.12}").unwrap();
     }
 }
 
