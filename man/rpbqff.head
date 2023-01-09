@@ -114,7 +114,9 @@ write an initial checkpoint
 .RI ( res.chk ),
 but this interval determines whether or not checkpoints are written while the
 single-point energies are being run. A value of 0 will disable checkpoints
-entirely.
+entirely. This interval refers to the number of polling iterations that have
+occurred, not the number of jobs that have completed. The iteration count is
+shown in the log file when the number of jobs remaining is printed.
 .TP
 .B findiff [\fIbool\fR]
 Whether to use finite differences or least-squares fitting for the potential
