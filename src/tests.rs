@@ -18,6 +18,7 @@ use crate::cleanup;
 use crate::config::Config;
 use crate::coord_type::findiff::bighash::BigHash;
 use crate::coord_type::findiff::FiniteDifference;
+use crate::coord_type::normal;
 use crate::coord_type::normal::DerivType;
 use crate::coord_type::normal::Normal;
 use crate::coord_type::normal::Resume;
@@ -91,6 +92,28 @@ fn c3h2_normal() {
         &mut std::io::stdout(),
         &queue,
         &config,
+    );
+    // harmonics
+    let got = Dvec::from(summ.harms);
+    let want = dvector![
+        2819.297, 2798.273, 1819.846, 1199.526, 1061.197, 964.357, 932.103,
+        930.917, 913.221
+    ];
+    // higher eps because comparing to the pure cart wants
+    check!(got, want, 1e-1);
+    let got = Dvec::from(summ.corrs);
+    let want = dvector![
+        2783.1, 2763.3, 1776.4, 1177.8, 1041.3, 960.0, 920.7, 927.3, 906.1
+    ];
+    assert_eq!(got.len(), want.len());
+    // corr
+    check!(got, want, 2.6e-1);
+
+    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::resume(
+        Normal::findiff(false),
+        &mut std::io::stdout(),
+        &queue,
+        normal::Resume::load("res.chk"),
     );
     // harmonics
     let got = Dvec::from(summ.harms);
@@ -317,6 +340,7 @@ fn build_pts() {
     assert_eq!(geoms.len(), 11952);
 
     let resume = Resume::new(
+        Normal::findiff(true),
         geoms.len(),
         Output::default(),
         Spectro::default(),
