@@ -1,4 +1,7 @@
-use std::collections::hash_map::Values;
+use std::{
+    collections::hash_map::Values, fmt::Display, num::ParseIntError,
+    str::FromStr,
+};
 
 use serde::{Deserialize, Serialize};
 use symm::PointGroup;
@@ -22,11 +25,28 @@ pub struct Target {
     pub(crate) indices: Vec<Index>,
 }
 
+#[cfg(test)]
+impl approx::AbsDiffEq for Target {
+    type Epsilon = f64;
+
+    fn default_epsilon() -> Self::Epsilon {
+        f64::default_epsilon()
+    }
+
+    fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
+        self.source_index == other.source_index
+            && self.indices.len() == other.indices.len()
+            && self.indices.iter().zip(other.indices.iter()).all(|(a, b)| {
+                a.index == b.index && a.coeff.abs_diff_eq(&b.coeff, epsilon)
+            })
+    }
+}
+
 /// the fields are options because it's possible for `detect_buddies` to fail
 /// and find that not all atoms are matched. if this happens, we want to skip
 /// over those entirely instead of filling the Hash with junk geometries
-#[derive(Clone, Debug, Serialize, Deserialize)]
-enum Buddy {
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub(crate) enum Buddy {
     C1,
     C2 {
         axis: Option<Vec<usize>>,
@@ -104,7 +124,7 @@ impl Buddy {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Key {
     pub(crate) atom: usize,
     pub(crate) x: isize,
@@ -112,13 +132,66 @@ pub struct Key {
     pub(crate) z: isize,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+impl Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Self { atom, x, y, z } = self;
+        write!(f, "{atom} {x} {y} {z}")
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Hash, Deserialize)]
+#[serde(from = "String")]
+pub struct KeyChain(Vec<Key>);
+
+impl From<String> for KeyChain {
+    fn from(value: String) -> Self {
+        Self::from_str(&value).unwrap()
+    }
+}
+
+impl FromStr for KeyChain {
+    type Err = ParseIntError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut ret = Vec::new();
+        for line in s.lines() {
+            let sp: Vec<_> = line.split_ascii_whitespace().collect();
+            ret.push(Key {
+                atom: sp[0].parse()?,
+                x: sp[1].parse()?,
+                y: sp[2].parse()?,
+                z: sp[3].parse()?,
+            });
+        }
+        Ok(Self(ret))
+    }
+}
+
+impl Serialize for KeyChain {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
+impl Display for KeyChain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for key in &self.0 {
+            writeln!(f, "{key}")?
+        }
+        Ok(())
+    }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct BigHash {
-    pub(crate) map: FxHashMap<Vec<Key>, Target>,
+    pub(crate) map: FxHashMap<KeyChain, Target>,
     pub(crate) pg: PointGroup,
     // buddies are pairs of atoms that are interchanged across symmetry
     // operations
-    buddy: Buddy,
+    pub(crate) buddy: Buddy,
 }
 
 impl BigHash {
@@ -171,13 +244,13 @@ impl BigHash {
             } => todo!(),
         };
         Self {
-            map: FxHashMap::<Vec<Key>, Target>::default(),
+            map: FxHashMap::<KeyChain, Target>::default(),
             pg,
             buddy,
         }
     }
 
-    pub(crate) fn to_keys(mol: &Molecule) -> Vec<Key> {
+    pub(crate) fn to_keys(mol: &Molecule) -> KeyChain {
         let mut ret = Vec::with_capacity(mol.atoms.len());
         for atom in &mol.atoms {
             ret.push(Key {
@@ -187,7 +260,7 @@ impl BigHash {
                 z: (atom.z * 1e8).round() as isize,
             })
         }
-        ret
+        KeyChain(ret)
     }
 
     pub(crate) fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
@@ -316,7 +389,7 @@ impl BigHash {
         self.map.insert(Self::to_keys(&key), value)
     }
 
-    pub fn values(&self) -> Values<Vec<Key>, Target> {
+    pub fn values(&self) -> Values<KeyChain, Target> {
         self.map.values()
     }
 

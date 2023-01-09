@@ -31,7 +31,7 @@ use super::{
     Cart, CoordType, Derivative, FirstPart, Load, Nderiv, SPECTRO_HEADER,
 };
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq)]
 pub struct Normal {
     /// the normal coordinates, called the LXM matrix in spectro
     pub lxm: Option<nalgebra::DMatrix<f64>>,
@@ -118,6 +118,7 @@ impl Normal {
         let resume = Resume {
             njobs: jobs.len(),
             deriv: DerivType::Fitted {
+                normal: self.clone(),
                 taylor,
                 taylor_disps,
                 step_size: config.step_size,
@@ -127,14 +128,14 @@ impl Normal {
         };
         resume.dump(CHK_NAME);
 
-        let DerivType::Fitted { taylor, taylor_disps, step_size } =
+        let DerivType::Fitted { taylor, taylor_disps, step_size, ..} =
 	    resume.deriv else {
 		unreachable!();
 	    };
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, 0)
+            .drain(dir, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let _ = std::fs::create_dir("freqs");
@@ -294,7 +295,7 @@ where
     type Resume = Resume;
 
     fn resume(
-        self,
+        mut self,
         w: &mut W,
         queue: &Q,
         Resume {
@@ -327,11 +328,13 @@ where
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
             DerivType::Fitted {
+                normal,
                 taylor,
                 taylor_disps,
                 step_size,
             } => {
                 let _ = std::fs::create_dir("freqs");
+                self = normal;
                 let (fcs, _) = self
                     .anpass(
                         "freqs",
@@ -380,8 +383,8 @@ where
     }
 }
 
-#[derive(Serialize, Deserialize)]
-enum DerivType {
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
+pub enum DerivType {
     Findiff {
         map: BigHash,
         fcs: Vec<f64>,
@@ -390,18 +393,35 @@ enum DerivType {
         nfc3: usize,
     },
     Fitted {
+        normal: Normal,
         taylor: Taylor,
         taylor_disps: Disps,
         step_size: f64,
     },
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Resume {
-    njobs: usize,
-    output: Output,
-    spectro: Spectro,
-    deriv: DerivType,
+    pub(crate) njobs: usize,
+    pub(crate) output: Output,
+    pub(crate) spectro: Spectro,
+    pub(crate) deriv: DerivType,
+}
+
+impl Resume {
+    pub fn new(
+        njobs: usize,
+        output: Output,
+        spectro: Spectro,
+        deriv: DerivType,
+    ) -> Self {
+        Self {
+            njobs,
+            output,
+            spectro,
+            deriv,
+        }
+    }
 }
 
 impl Load for Resume {}

@@ -1,3 +1,4 @@
+use std::fs;
 use std::io::Stdout;
 
 use approx::abs_diff_ne;
@@ -9,15 +10,20 @@ use psqs::program::mopac::Mopac;
 use psqs::program::Template;
 use psqs::queue::local::Local;
 use rust_anpass::Dvec;
+use spectro::Output;
+use spectro::Spectro;
 use symm::Molecule;
 
 use crate::cleanup;
 use crate::config::Config;
 use crate::coord_type::findiff::bighash::BigHash;
 use crate::coord_type::findiff::FiniteDifference;
+use crate::coord_type::normal::DerivType;
 use crate::coord_type::normal::Normal;
+use crate::coord_type::normal::Resume;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
+use crate::coord_type::Load;
 use crate::coord_type::Sic;
 use crate::optimize;
 
@@ -264,7 +270,8 @@ fn cart() {
 }
 
 /// test approximately to check that I don't break the symmetry stuff without
-/// running the whole QFF.
+/// running the whole QFF. While we're at it, make sure that Resume is
+/// Serializable and Deserializable
 #[test]
 fn build_pts() {
     let config = Config::load("testfiles/cart.toml");
@@ -308,4 +315,50 @@ fn build_pts() {
         n,
     );
     assert_eq!(geoms.len(), 11952);
+
+    let resume = Resume::new(
+        geoms.len(),
+        Output::default(),
+        Spectro::default(),
+        DerivType::Findiff {
+            map: target_map,
+            fcs,
+            n,
+            nfc2,
+            nfc3,
+        },
+    );
+    let chk = "/tmp/build_pts.json";
+    resume.dump(chk);
+    let got = Resume::load(chk);
+    if got != resume {
+        assert_eq!(got.njobs, resume.njobs);
+        assert_eq!(got.output, resume.output);
+        assert_eq!(got.spectro, resume.spectro);
+        got.dump("/tmp/got.json");
+        let DerivType::Findiff {
+	map: gmap, fcs: gfcs, n: gn, nfc2: gnfc2, nfc3: gnfc3
+    } = got.deriv else { unreachable!() };
+        let DerivType::Findiff {
+	map: wmap, fcs: wfcs, n: wn, nfc2: wnfc2, nfc3: wnfc3
+    } = resume.deriv else { unreachable!() };
+        assert_eq!(gn, wn);
+        assert_eq!(gnfc2, wnfc2);
+        assert_eq!(gnfc3, wnfc3);
+        assert_eq!(gfcs, wfcs);
+        assert_eq!(gmap.pg, wmap.pg);
+        assert_eq!(gmap.buddy, wmap.buddy);
+        // asserting these as eq is very ugly when false, so check that the len
+        // is equal, that all of the keys in gmap are contained in wmap and vice
+        // versa, and then check that all of the values are the same to 6e-11
+        // tolerance since there is some deviation, surprisingly. 5e-11 fails,
+        // so this is pretty tight
+        assert_eq!(gmap.map.len(), wmap.map.len());
+        assert!(gmap.map.keys().all(|k| wmap.map.contains_key(k)));
+        assert!(wmap.map.keys().all(|k| gmap.map.contains_key(k)));
+        for (k, v) in gmap.map {
+            assert_abs_diff_eq!(wmap.map.get(&k).unwrap(), &v, epsilon = 6e-11);
+        }
+    }
+    fs::remove_file(chk).unwrap();
 }
