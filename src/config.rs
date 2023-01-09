@@ -50,16 +50,6 @@ struct RawConfig {
     check_int: usize,
 }
 
-impl RawConfig {
-    fn load(filename: &str) -> Self {
-        let contents = std::fs::read_to_string(filename)
-            .expect("failed to load config file");
-        toml::from_str(&contents).unwrap_or_else(|e| {
-            panic!("failed to deserialize config file '{filename}' with {e}")
-        })
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Program {
     #[serde(alias = "mopac")]
@@ -78,7 +68,8 @@ pub enum Queue {
     Local,
 }
 
-#[derive(Clone, Serialize)]
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(from = "RawConfig")]
 pub struct Config {
     pub geometry: psqs::geom::Geom,
     pub optimize: bool,
@@ -95,9 +86,8 @@ pub struct Config {
     pub check_int: usize,
 }
 
-impl Config {
-    pub fn load(filename: &str) -> Self {
-        let rc = RawConfig::load(filename);
+impl From<RawConfig> for Config {
+    fn from(rc: RawConfig) -> Self {
         Self {
             geometry: rc.geometry.parse().unwrap(),
             optimize: rc.optimize,
@@ -113,6 +103,16 @@ impl Config {
             findiff: rc.findiff.unwrap_or(false),
             check_int: rc.check_int,
         }
+    }
+}
+
+impl Config {
+    pub fn load(filename: &str) -> Self {
+        let contents = std::fs::read_to_string(filename)
+            .expect("failed to load config file");
+        toml::from_str(&contents).unwrap_or_else(|e| {
+            panic!("failed to deserialize config file '{filename}' with {e}")
+        })
     }
 }
 
@@ -147,9 +147,9 @@ mod tests {
 
     #[test]
     fn config() {
-        let got = RawConfig::load("testfiles/test.toml");
-        let want = RawConfig {
-            geometry: "C
+        let got = Config::load("testfiles/test.toml");
+        let want = Config {
+            geometry: psqs::geom::Geom::Zmat("C
 C 1 CC
 C 1 CC 2 CCC
 H 2 CH 1 HCC 3 180.0
@@ -160,7 +160,7 @@ CCC =                55.60133141
 CH =                  1.07692776
 HCC =               147.81488230
 "
-            .to_string(),
+            .to_string()),
             optimize: true,
             charge: 0,
             step_size: 0.005,
@@ -173,7 +173,7 @@ HCC =               147.81488230
             job_limit: 2048,
             chunk_size: 1,
             queue: Queue::Slurm,
-	    findiff: None,
+	    findiff: false,
             check_int: 100,
         };
         assert_eq!(got, want);
