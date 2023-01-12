@@ -15,12 +15,13 @@ use rust_pbqff::{
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
 
 macro_rules! queue {
-    ($q: ty, $config: ident) => {
+    ($q:ty, $config:ident, $no_del:expr) => {
         <$q>::new(
             $config.chunk_size,
             $config.job_limit,
             $config.sleep_int,
             "pts",
+            $no_del,
         )
     };
 }
@@ -55,6 +56,10 @@ struct Args {
     /// serialize the input file to JSON and exit. For use by qffbuddy
     #[arg(short, default_value_t = false, hide = true)]
     json: bool,
+
+    /// don't delete any files while running the points
+    #[arg(short, default_value_t = false)]
+    no_del: bool,
 }
 
 use spectro::{Output, Spectro};
@@ -91,7 +96,7 @@ fn main() -> Result<(), std::io::Error> {
     cleanup();
     let _ = std::fs::create_dir("pts");
 
-    let (spectro, output) = dispatch(&config, args.checkpoint);
+    let (spectro, output) = dispatch(&config, args);
 
     spectro.write_output(&mut std::io::stdout(), &output)?;
 

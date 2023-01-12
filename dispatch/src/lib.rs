@@ -16,8 +16,8 @@ pub fn dispatch(_item: TokenStream) -> TokenStream {
     let programs = ["Mopac", "Molpro"];
     let queues = ["Pbs", "Slurm"];
     let mut s = String::from(
-        "fn dispatch(config: &Config, checkpoint: bool) -> (Spectro, Output) {
-    let m = (config.coord_type, config.program, config.queue, checkpoint);
+        "fn dispatch(config: &Config, args: Args) -> (Spectro, Output) {
+    let m = (config.coord_type, config.program, config.queue, args.checkpoint);
 match m {
 ",
     );
@@ -43,7 +43,7 @@ config::Queue::{queue},
 ) => <{coord} as CoordType<_, _, {program}>>::{fun}(
 {},
 &mut std::io::stdout(),
-&queue!({queue}, config),
+&queue!({queue}, config, args.no_del),
 {resume}
 ),",
                         coord_builders[i],
