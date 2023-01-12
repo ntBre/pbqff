@@ -72,11 +72,17 @@ impl Normal {
         // should be in column-major order so I think this is all right
         let cols = o.lxm.len();
         let rows = o.lxm[0].len();
-        self.lxm = Some(nalgebra::DMatrix::from_iterator(
+        let lxm = nalgebra::DMatrix::from_iterator(
             rows,
             cols,
             o.lxm.iter().flatten().cloned(),
-        ));
+        );
+        println!("Normal Coordinates:{lxm:.8}");
+        println!("Harmonic Frequencies:");
+        for (i, (r, h)) in o.irreps.iter().zip(&o.harms).enumerate() {
+            println!("{i:5}{r:>5}{h:8.1}");
+        }
+        self.lxm = Some(lxm);
         self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
         // 3n - 6 + 1 if linear = 3n - 5
         self.ncoords =
