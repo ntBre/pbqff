@@ -275,7 +275,7 @@ where
         config: &Config,
     ) -> (Spectro, Output) {
         let (s, o, ref_energy, pg) =
-            self.cart_part(&FirstPart::from(config.clone()), queue, w);
+            self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
         cleanup();
         let _ = std::fs::create_dir("pts");
         let template = self.prep_qff(&o, &s, config);
@@ -612,6 +612,7 @@ impl Normal {
         config: &FirstPart,
         queue: &Q,
         w: &mut W,
+        dir: &str,
     ) -> (Spectro, Output, f64, PointGroup)
     where
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
@@ -628,7 +629,7 @@ impl Normal {
             mut target_map,
             ref_energy,
             pg,
-        ) = Cart.first_part(w, config, queue, Nderiv::Two);
+        ) = Cart.first_part(w, config, queue, Nderiv::Two, dir);
         let (fc2, _, _) = self.make_fcs(
             &mut target_map,
             &energies,

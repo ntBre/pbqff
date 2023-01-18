@@ -79,6 +79,7 @@ where
                 &FirstPart::from(config.clone()),
                 queue,
                 Nderiv::Four,
+                "pts",
             );
 
         time!(w, "freqs",
@@ -167,6 +168,7 @@ impl Cart {
         config: &FirstPart,
         queue: &Q,
         nderiv: Nderiv,
+        dir: &str,
     ) -> (
         usize,
         usize,
@@ -232,7 +234,6 @@ impl Cart {
            n,
                );
         );
-        let dir = "pts";
         let jobs: Vec<_> = geoms
             .into_iter()
             .enumerate()
