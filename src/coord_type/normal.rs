@@ -62,12 +62,10 @@ impl Normal {
     /// actual initialization of self with the results of the initial harmonic
     /// FF, must happen before build_points. TODO use phantomdata/generic trick
     /// to enforce that
-    fn prep_qff(
-        &mut self,
-        o: &Output,
-        s: &Spectro,
-        config: &Config,
-    ) -> Template {
+    pub fn prep_qff<W>(&mut self, w: &mut W, o: &Output, s: &Spectro)
+    where
+        W: Write,
+    {
         // pretty sure I assert lxm is square somewhere in spectro though. lxm
         // should be in column-major order so I think this is all right
         let cols = o.lxm.len();
@@ -77,17 +75,17 @@ impl Normal {
             cols,
             o.lxm.iter().flatten().cloned(),
         );
-        println!("Normal Coordinates:{lxm:.8}");
-        println!("Harmonic Frequencies:");
+        writeln!(w, "Normal Coordinates:{lxm:.8}").unwrap();
+        writeln!(w, "Harmonic Frequencies:").unwrap();
         for (i, (r, h)) in o.irreps.iter().zip(&o.harms).enumerate() {
-            println!("{i:5}{r:>5}{h:8.1}");
+            writeln!(w, "{i:5}{r:>5}{h:8.1}").unwrap();
         }
         self.lxm = Some(lxm);
         self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
         // 3n - 6 + 1 if linear = 3n - 5
         self.ncoords =
             3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
-        Template::from(&config.template)
+        self.irreps = Some(o.irreps.clone());
     }
 
     /// run the QFF using a least-squares fitting
@@ -107,7 +105,6 @@ impl Normal {
         Q: Queue<P> + Sync,
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
-        self.irreps = Some(o.irreps.clone());
         let (geoms, taylor, taylor_disps, _atomic_numbers) = self
             .generate_pts(w, &o.geom, &pg, config.step_size)
             .unwrap();
@@ -278,16 +275,16 @@ where
             self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
         cleanup();
         let _ = std::fs::create_dir("pts");
-        let template = self.prep_qff(&o, &s, config);
+        self.prep_qff(w, &o, &s);
+
+        let tmpl = config.template.clone().into();
 
         // TODO have to split these run_* methods into a prep_* and run_* so I
         // can save the Resume between them
         let (f3qcm, f4qcm) = if self.findiff {
-            self.run_findiff(
-                &o, &s, pg, config, ref_energy, &template, w, queue,
-            )
+            self.run_findiff(&o, &s, pg, config, ref_energy, &tmpl, w, queue)
         } else {
-            self.run_fitted(&o, &s, w, pg, config, template, queue)
+            self.run_fitted(&o, &s, w, pg, config, tmpl, queue)
         };
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
