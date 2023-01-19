@@ -344,7 +344,7 @@ impl Fitted for Sic {
 
     fn anpass<W: Write>(
         &self,
-        dir: &str,
+        dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
         taylor_disps: &taylor::Disps,
@@ -357,7 +357,9 @@ impl Fitted for Sic {
         make_rel(energies);
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
-        write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
+        if let Some(dir) = dir {
+            write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
+        }
         let (fcs, long_line, res) = if DEBUG {
             writeln!(w, "Anpass Input:\n{anpass}").unwrap();
             let (fcs, long_line, res) = match anpass.run_debug(w) {
@@ -418,7 +420,7 @@ impl Sic {
         step_size: f64,
     ) -> Result<(Spectro, Output), FreqError> {
         let (fcs, long_line) = match self.anpass(
-            dir,
+            Some(dir),
             energies,
             taylor,
             taylor_disps,

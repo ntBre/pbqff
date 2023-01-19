@@ -148,7 +148,7 @@ impl Normal {
         let _ = std::fs::create_dir("freqs");
         let (fcs, _) = self
             .anpass(
-                "freqs",
+                Some("freqs"),
                 &mut energies,
                 &taylor,
                 &taylor_disps,
@@ -345,7 +345,7 @@ where
                 let _ = std::fs::create_dir("freqs");
                 let (fcs, _) = self
                     .anpass(
-                        "freqs",
+                        Some("freqs"),
                         &mut energies,
                         &taylor,
                         &taylor_disps,
@@ -531,7 +531,7 @@ impl Fitted for Normal {
     /// coordinates themselves and invalidate all of the force constants
     fn anpass<W: Write>(
         &self,
-        dir: &str,
+        dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
         taylor_disps: &taylor::Disps,
@@ -544,7 +544,9 @@ impl Fitted for Normal {
         make_rel(energies);
         let anpass =
             Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
-        write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
+        if let Some(dir) = dir {
+            write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
+        }
         let (fcs, f) = anpass.fit();
         writeln!(
             w,

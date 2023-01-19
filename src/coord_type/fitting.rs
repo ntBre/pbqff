@@ -35,7 +35,7 @@ pub trait Fitted {
 
     fn anpass<W: Write>(
         &self,
-        dir: &str,
+        dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
         taylor_disps: &taylor::Disps,
