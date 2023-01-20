@@ -235,13 +235,11 @@ impl BigHash {
                     planes: new_planes,
                 }
             }
-            PointGroup::C3v { axis: _, plane: _ } => todo!(),
-            PointGroup::D3h {
-                c3: _,
-                c2: _,
-                sh: _,
-                sv: _,
-            } => todo!(),
+            PointGroup::C3v { .. } => todo!(),
+            PointGroup::C5v { .. } => todo!(),
+            // could use c2v subgroup here
+            PointGroup::D3h { .. } => todo!(),
+            PointGroup::D5h { .. } => todo!(),
         };
         Self {
             map: FxHashMap::<KeyChain, Target>::default(),
@@ -370,13 +368,10 @@ impl BigHash {
                     }
                 }
             }
-            PointGroup::C3v { axis: _, plane: _ } => todo!(),
-            PointGroup::D3h {
-                c3: _,
-                c2: _,
-                sh: _,
-                sv: _,
-            } => todo!(),
+            PointGroup::C3v { .. } => todo!(),
+            PointGroup::C5v { .. } => todo!(),
+            PointGroup::D3h { .. } => todo!(),
+            PointGroup::D5h { .. } => todo!(),
         }
         None
     }
