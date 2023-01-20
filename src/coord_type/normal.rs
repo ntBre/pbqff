@@ -62,7 +62,7 @@ impl Normal {
     /// actual initialization of self with the results of the initial harmonic
     /// FF, must happen before build_points. TODO use phantomdata/generic trick
     /// to enforce that
-    pub fn prep_qff<W>(&mut self, w: &mut W, o: &Output, s: &Spectro)
+    pub fn prep_qff<W>(&mut self, w: &mut W, o: &Output)
     where
         W: Write,
     {
@@ -82,9 +82,7 @@ impl Normal {
         }
         self.lxm = Some(lxm);
         self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
-        // 3n - 6 + 1 if linear = 3n - 5
-        self.ncoords =
-            3 * o.geom.atoms.len() - 6 + s.rotor.is_linear() as usize;
+        self.ncoords = o.harms.len();
         self.irreps = Some(o.irreps.clone());
     }
 
@@ -275,7 +273,7 @@ where
             self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
         cleanup();
         let _ = std::fs::create_dir("pts");
-        self.prep_qff(w, &o, &s);
+        self.prep_qff(w, &o);
 
         let tmpl = config.template.clone().into();
 
