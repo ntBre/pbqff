@@ -258,16 +258,35 @@ impl BigHash {
             return Some(self.map.get_mut(mol).unwrap());
         }
 
-        // TODO DRY this out
+        /// helper macro for Cₙᵥ point groups
+        macro_rules! cnv {
+            ($self:expr, $orig:expr, $axis:expr, $order:expr, $planes:expr) => {
+                let buddies = $self.buddy.apply($orig);
+                let deg = 360.0 / $order as f64;
+                for buddy in Some($orig).into_iter().chain(buddies.iter()) {
+                    for d in 1..$order {
+                        let mol = &buddy.rotate(deg * d as f64, $axis);
+                        let key = Self::to_keys(mol);
+                        if self.map.contains_key(&key) {
+                            return Some(self.map.get_mut(&key).unwrap());
+                        }
+                    }
+                    #[allow(for_loops_over_fallibles)]
+                    for plane in $planes {
+                        let mol = Self::to_keys(&buddy.reflect(plane));
+                        if self.map.contains_key(&mol) {
+                            return Some(self.map.get_mut(&mol).unwrap());
+                        }
+                    }
+                }
+            };
+        }
+
         match &self.pg {
             C1 => (),
             C2 { axis } => {
-                // check C2 axis
-                let mol = Self::to_keys(&orig.rotate(180.0, axis));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                for buddy in self.buddy.apply(orig) {
+                let buddies = self.buddy.apply(orig);
+                for buddy in Some(orig).into_iter().chain(buddies.iter()) {
                     // check C2 axis
                     let mol = Self::to_keys(&buddy.rotate(180.0, axis));
                     if self.map.contains_key(&mol) {
@@ -276,12 +295,8 @@ impl BigHash {
                 }
             }
             Cs { plane } => {
-                // check first mirror plane
-                let mol = Self::to_keys(&orig.reflect(plane));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                for buddy in self.buddy.apply(orig) {
+                let buddies = self.buddy.apply(orig);
+                for buddy in Some(orig).into_iter().chain(buddies.iter()) {
                     // check first mirror plane
                     let mol = Self::to_keys(&buddy.reflect(plane));
                     if self.map.contains_key(&mol) {
@@ -290,57 +305,17 @@ impl BigHash {
                 }
             }
             C2v { axis, planes } => {
-                // check C2 axis
-                let mol = Self::to_keys(&orig.rotate(180.0, axis));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                // check first mirror plane
-                let mol = Self::to_keys(&orig.reflect(&planes[0]));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                // check second mirror plane
-                let mol = Self::to_keys(&orig.reflect(&planes[1]));
-                if self.map.contains_key(&mol) {
-                    return Some(self.map.get_mut(&mol).unwrap());
-                }
-                for buddy in self.buddy.apply(orig) {
-                    // check C2 axis
-                    let mol = &buddy.rotate(180.0, axis);
-                    let key = Self::to_keys(mol);
-                    if self.map.contains_key(&key) {
-                        return Some(self.map.get_mut(&key).unwrap());
-                    }
-                    // check first mirror plane
-                    let mol = Self::to_keys(&buddy.reflect(&planes[0]));
-                    if self.map.contains_key(&mol) {
-                        return Some(self.map.get_mut(&mol).unwrap());
-                    }
-                    // check second mirror plane
-                    let mol = Self::to_keys(&buddy.reflect(&planes[1]));
-                    if self.map.contains_key(&mol) {
-                        return Some(self.map.get_mut(&mol).unwrap());
-                    }
-                }
+                cnv!(self, orig, axis, 2, planes);
+            }
+            PointGroup::C3v { axis, plane } => {
+                cnv!(self, orig, axis, 3, Some(plane));
+            }
+            PointGroup::C5v { axis, plane } => {
+                cnv!(self, orig, axis, 5, Some(plane));
             }
             PointGroup::D2h { axes, planes } => {
-                // check the C2 axes
-                for axis in axes {
-                    let mol = &orig.rotate(180.0, axis);
-                    let key = Self::to_keys(mol);
-                    if self.map.contains_key(&key) {
-                        return Some(self.map.get_mut(&key).unwrap());
-                    }
-                }
-                // check the mirror planes
-                for plane in planes {
-                    let mol = Self::to_keys(&orig.reflect(plane));
-                    if self.map.contains_key(&mol) {
-                        return Some(self.map.get_mut(&mol).unwrap());
-                    }
-                }
-                for buddy in self.buddy.apply(orig) {
+                let buddies = self.buddy.apply(orig);
+                for buddy in Some(orig).into_iter().chain(buddies.iter()) {
                     for axis in axes {
                         let mol = &buddy.rotate(180.0, axis);
                         let key = Self::to_keys(mol);
@@ -357,8 +332,6 @@ impl BigHash {
                     }
                 }
             }
-            PointGroup::C3v { .. } => todo!(),
-            PointGroup::C5v { .. } => todo!(),
             PointGroup::D3h { .. } => todo!(),
             PointGroup::D5h { .. } => todo!(),
         }
