@@ -132,8 +132,29 @@ impl Display for KeyChain {
     }
 }
 
+// TODO combine this with check_axes?
+
+/// like [check_axes], but instead of checking multiple axes for a single
+/// rotation, check a single axis for multiple rotations by stepping over the
+/// range 1..order. this is most useful for order > 2
+fn check_degs(
+    mol: &Molecule,
+    axis: &Axis,
+    order: usize,
+    eps: f64,
+) -> Vec<Vec<usize>> {
+    let t = 360.0 / order as f64;
+    (1..order)
+        .flat_map(|d| {
+            mol.try_detect_buddies(&mol.rotate(t * d as f64, axis), eps)
+        })
+        .collect()
+}
+
 // using impl IntoIterator so you can pass a single axis/plane as Some(...)
 // instead of having to allocate a vector
+
+/// try to generate [Buddy]s for rotations of `deg` around each [Axis] in `axes`
 fn check_axes<'a>(
     mol: &Molecule,
     axes: impl IntoIterator<Item = &'a Axis>,
@@ -187,21 +208,27 @@ impl BigHash {
                 axes: check_axes(&mol, axes, 180.0, EPS),
                 planes: check_planes(&mol, planes, EPS),
             },
-            PointGroup::C3v { .. } => todo!(),
-            PointGroup::C5v { axis, plane } => Buddy {
-                axes: (1..5)
-                    .flat_map(|d| {
-                        mol.try_detect_buddies(
-                            &mol.rotate(72.0 * d as f64, axis),
-                            EPS,
-                        )
-                    })
-                    .collect(),
+            PointGroup::C3v { axis, plane } => Buddy {
+                axes: check_degs(&mol, axis, 3, EPS),
                 planes: check_planes(&mol, Some(plane), EPS),
             },
-            // could use c2v subgroup here
-            PointGroup::D3h { .. } => todo!(),
-            PointGroup::D5h { .. } => todo!(),
+
+            PointGroup::C5v { axis, plane } => Buddy {
+                axes: check_degs(&mol, axis, 5, EPS),
+                planes: check_planes(&mol, Some(plane), EPS),
+            },
+            PointGroup::D3h { c3, c2, sh, sv } => {
+                let mut axes = check_degs(&mol, c3, 3, EPS);
+                axes.extend(check_degs(&mol, c2, 2, EPS));
+                let planes = check_planes(&mol, [sh, sv], EPS);
+                Buddy { axes, planes }
+            }
+            PointGroup::D5h { c5, c2, sh, sv } => {
+                let mut axes = check_degs(&mol, c5, 5, EPS);
+                axes.extend(check_degs(&mol, c2, 2, EPS));
+                let planes = check_planes(&mol, [sh, sv], EPS);
+                Buddy { axes, planes }
+            }
         };
         Self {
             map: FxHashMap::<KeyChain, Target>::default(),
