@@ -45,80 +45,27 @@ impl approx::AbsDiffEq for Target {
 /// the fields are options because it's possible for `detect_buddies` to fail
 /// and find that not all atoms are matched. if this happens, we want to skip
 /// over those entirely instead of filling the Hash with junk geometries
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub(crate) enum Buddy {
-    C1,
-    C2 {
-        axis: Option<Vec<usize>>,
-    },
-    Cs {
-        plane: Option<Vec<usize>>,
-    },
-    C2v {
-        axis: Option<Vec<usize>>,
-        plane0: Option<Vec<usize>>,
-        plane1: Option<Vec<usize>>,
-    },
-    D2h {
-        axes: Vec<Option<Vec<usize>>>,
-        planes: Vec<Option<Vec<usize>>>,
-    },
+#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+pub(crate) struct Buddy {
+    axes: Vec<Option<Vec<usize>>>,
+    planes: Vec<Option<Vec<usize>>>,
 }
 
 impl Buddy {
     /// apply a Buddy to a Molecule, generating all of the symmetry-equivalent
     /// molecules
     pub(crate) fn apply(&self, mol: &Molecule) -> Vec<Molecule> {
+        let Buddy { axes, planes } = self;
         let mut ret = Vec::new();
-        match self {
-            Buddy::C1 => (),
-            Buddy::C2 { axis } => {
-                if let Some(axis) = axis {
-                    ret.push(Molecule::new(
-                        axis.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-            }
-            Buddy::Cs { plane } => {
-                if let Some(plane) = plane {
-                    ret.push(Molecule::new(
-                        plane.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-            }
-            Buddy::C2v {
-                axis,
-                plane0,
-                plane1,
-            } => {
-                if let Some(axis) = axis {
-                    ret.push(Molecule::new(
-                        axis.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-                if let Some(plane0) = plane0 {
-                    ret.push(Molecule::new(
-                        plane0.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-                if let Some(plane1) = plane1 {
-                    ret.push(Molecule::new(
-                        plane1.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-            }
-            Buddy::D2h { axes, planes } => {
-                for axis in axes.iter().flatten() {
-                    ret.push(Molecule::new(
-                        axis.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-                for plane in planes.iter().flatten() {
-                    ret.push(Molecule::new(
-                        plane.iter().map(|i| mol.atoms[*i]).collect(),
-                    ));
-                }
-            }
+        for axis in axes.iter().flatten() {
+            ret.push(Molecule::new(
+                axis.iter().map(|i| mol.atoms[*i]).collect(),
+            ));
+        }
+        for plane in planes.iter().flatten() {
+            ret.push(Molecule::new(
+                plane.iter().map(|i| mol.atoms[*i]).collect(),
+            ));
         }
         ret
     }
@@ -198,12 +145,16 @@ impl BigHash {
     /// NOTE: assumes mol is already normalized
     pub fn new(mol: Molecule, pg: PointGroup) -> Self {
         let buddy = match &pg {
-            PointGroup::C1 => Buddy::C1,
-            PointGroup::C2 { axis } => Buddy::C2 {
-                axis: mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8),
+            PointGroup::C1 => Buddy::default(),
+            PointGroup::C2 { axis } => Buddy {
+                axes: vec![
+                    mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8)
+                ],
+                planes: vec![],
             },
-            PointGroup::Cs { plane } => Buddy::Cs {
-                plane: mol.try_detect_buddies(&mol.reflect(plane), 1e-8),
+            PointGroup::Cs { plane } => Buddy {
+                axes: vec![],
+                planes: vec![mol.try_detect_buddies(&mol.reflect(plane), 1e-8)],
             },
             PointGroup::C2v { axis, planes } => {
                 let axis =
@@ -212,10 +163,9 @@ impl BigHash {
                     mol.try_detect_buddies(&mol.reflect(&planes[0]), 1e-8);
                 let plane1 =
                     mol.try_detect_buddies(&mol.reflect(&planes[1]), 1e-8);
-                Buddy::C2v {
-                    axis,
-                    plane0,
-                    plane1,
+                Buddy {
+                    axes: vec![axis],
+                    planes: vec![plane0, plane1],
                 }
             }
             PointGroup::D2h { axes, planes } => {
@@ -230,13 +180,28 @@ impl BigHash {
                     new_planes
                         .push(mol.try_detect_buddies(&mol.reflect(plane), 1e-8))
                 }
-                Buddy::D2h {
+                Buddy {
                     axes: new_axes,
                     planes: new_planes,
                 }
             }
             PointGroup::C3v { .. } => todo!(),
-            PointGroup::C5v { .. } => todo!(),
+            PointGroup::C5v { axis, plane } => {
+                let axes = (1..5)
+                    .map(|d| {
+                        mol.try_detect_buddies(
+                            &mol.rotate(72.0 * d as f64, axis),
+                            1e-8,
+                        )
+                    })
+                    .collect();
+                Buddy {
+                    axes,
+                    planes: vec![
+                        mol.try_detect_buddies(&mol.reflect(plane), 1e-8)
+                    ],
+                }
+            }
             // could use c2v subgroup here
             PointGroup::D3h { .. } => todo!(),
             PointGroup::D5h { .. } => todo!(),
