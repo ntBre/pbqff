@@ -619,7 +619,7 @@ impl Normal {
         let (
             n,
             nfc2,
-            nfc3,
+            _,
             mut fcs,
             mol,
             energies,
@@ -632,7 +632,7 @@ impl Normal {
             &energies,
             &mut fcs,
             n,
-            Derivative::Quartic(nfc2, nfc3, 0),
+            Derivative::Harmonic(nfc2),
             "freqs",
         );
         let (spectro, output) = self.harm_freqs("freqs", &mol, fc2);

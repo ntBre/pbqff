@@ -234,7 +234,11 @@ pub trait FiniteDifference {
         }
 
         let _ = std::fs::create_dir(dir);
-        let Derivative::Quartic(nfc2, nfc3, _) = deriv else { todo!() };
+        let (nfc2, nfc3) = match deriv {
+            Derivative::Harmonic(n) => (n, 0),
+            Derivative::Cubic(n, m) => (n, m),
+            Derivative::Quartic(n, m, _) => (n, m),
+        };
         intder::Intder::dump_fcs(
             dir,
             &fc2,
