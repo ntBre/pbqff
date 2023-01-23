@@ -282,6 +282,31 @@ impl BigHash {
             };
         }
 
+        macro_rules! dnh {
+            ($self:expr, $orig:expr, $pairs:expr, $planes:expr) => {
+                let buddies = $self.buddy.apply($orig);
+                for buddy in Some($orig).into_iter().chain(buddies.iter()) {
+                    for (axis, order) in $pairs {
+                        let deg = 360.0 / order as f64;
+                        for d in 1..order {
+                            let mol = &buddy.rotate(deg * d as f64, axis);
+                            let key = Self::to_keys(mol);
+                            if self.map.contains_key(&key) {
+                                return Some($self.map.get_mut(&key).unwrap());
+                            }
+                        }
+                    }
+                    // check the mirror planes
+                    for plane in $planes {
+                        let mol = Self::to_keys(&buddy.reflect(plane));
+                        if self.map.contains_key(&mol) {
+                            return Some($self.map.get_mut(&mol).unwrap());
+                        }
+                    }
+                }
+            };
+        }
+
         match &self.pg {
             C1 => (),
             C2 { axis } => {
@@ -314,26 +339,14 @@ impl BigHash {
                 cnv!(self, orig, axis, 5, Some(plane));
             }
             PointGroup::D2h { axes, planes } => {
-                let buddies = self.buddy.apply(orig);
-                for buddy in Some(orig).into_iter().chain(buddies.iter()) {
-                    for axis in axes {
-                        let mol = &buddy.rotate(180.0, axis);
-                        let key = Self::to_keys(mol);
-                        if self.map.contains_key(&key) {
-                            return Some(self.map.get_mut(&key).unwrap());
-                        }
-                    }
-                    // check the mirror planes
-                    for plane in planes {
-                        let mol = Self::to_keys(&buddy.reflect(plane));
-                        if self.map.contains_key(&mol) {
-                            return Some(self.map.get_mut(&mol).unwrap());
-                        }
-                    }
-                }
+                dnh!(self, orig, axes.iter().zip([2, 2, 2]), planes);
             }
-            PointGroup::D3h { .. } => todo!(),
-            PointGroup::D5h { .. } => todo!(),
+            PointGroup::D3h { c3, c2, sh, sv } => {
+                dnh!(self, orig, [c3, c2].iter().zip([3, 2]), [sh, sv]);
+            }
+            PointGroup::D5h { c5, c2, sh, sv } => {
+                dnh!(self, orig, [c5, c2].iter().zip([5, 2]), [sh, sv]);
+            }
         }
         None
     }
