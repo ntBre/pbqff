@@ -4,7 +4,7 @@ use std::{
 };
 
 use serde::{Deserialize, Serialize};
-use symm::PointGroup;
+use symm::{Axis, Plane, PointGroup};
 
 use rustc_hash::FxHashMap;
 
@@ -47,8 +47,8 @@ impl approx::AbsDiffEq for Target {
 /// over those entirely instead of filling the Hash with junk geometries
 #[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
 pub(crate) struct Buddy {
-    axes: Vec<Option<Vec<usize>>>,
-    planes: Vec<Option<Vec<usize>>>,
+    axes: Vec<Vec<usize>>,
+    planes: Vec<Vec<usize>>,
 }
 
 impl Buddy {
@@ -57,12 +57,12 @@ impl Buddy {
     pub(crate) fn apply(&self, mol: &Molecule) -> Vec<Molecule> {
         let Buddy { axes, planes } = self;
         let mut ret = Vec::new();
-        for axis in axes.iter().flatten() {
+        for axis in axes {
             ret.push(Molecule::new(
                 axis.iter().map(|i| mol.atoms[*i]).collect(),
             ));
         }
-        for plane in planes.iter().flatten() {
+        for plane in planes {
             ret.push(Molecule::new(
                 plane.iter().map(|i| mol.atoms[*i]).collect(),
             ));
@@ -132,6 +132,30 @@ impl Display for KeyChain {
     }
 }
 
+// using impl IntoIterator so you can pass a single axis/plane as Some(...)
+// instead of having to allocate a vector
+fn check_axes<'a>(
+    mol: &Molecule,
+    axes: impl IntoIterator<Item = &'a Axis>,
+    deg: f64,
+    eps: f64,
+) -> Vec<Vec<usize>> {
+    axes.into_iter()
+        .flat_map(|axis| mol.try_detect_buddies(&mol.rotate(deg, axis), eps))
+        .collect()
+}
+
+fn check_planes<'a>(
+    mol: &Molecule,
+    planes: impl IntoIterator<Item = &'a Plane>,
+    eps: f64,
+) -> Vec<Vec<usize>> {
+    planes
+        .into_iter()
+        .flat_map(|plane| mol.try_detect_buddies(&mol.reflect(plane), eps))
+        .collect()
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct BigHash {
     pub(crate) map: FxHashMap<KeyChain, Target>,
@@ -144,64 +168,37 @@ pub struct BigHash {
 impl BigHash {
     /// NOTE: assumes mol is already normalized
     pub fn new(mol: Molecule, pg: PointGroup) -> Self {
+        const EPS: f64 = 1e-8;
         let buddy = match &pg {
             PointGroup::C1 => Buddy::default(),
             PointGroup::C2 { axis } => Buddy {
-                axes: vec![
-                    mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8)
-                ],
+                axes: check_axes(&mol, Some(axis), 180.0, EPS),
                 planes: vec![],
             },
             PointGroup::Cs { plane } => Buddy {
                 axes: vec![],
-                planes: vec![mol.try_detect_buddies(&mol.reflect(plane), 1e-8)],
+                planes: check_planes(&mol, Some(plane), EPS),
             },
-            PointGroup::C2v { axis, planes } => {
-                let axis =
-                    mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8);
-                let plane0 =
-                    mol.try_detect_buddies(&mol.reflect(&planes[0]), 1e-8);
-                let plane1 =
-                    mol.try_detect_buddies(&mol.reflect(&planes[1]), 1e-8);
-                Buddy {
-                    axes: vec![axis],
-                    planes: vec![plane0, plane1],
-                }
-            }
-            PointGroup::D2h { axes, planes } => {
-                let mut new_axes = Vec::new();
-                for axis in axes {
-                    new_axes.push(
-                        mol.try_detect_buddies(&mol.rotate(180.0, axis), 1e-8),
-                    );
-                }
-                let mut new_planes = Vec::new();
-                for plane in planes {
-                    new_planes
-                        .push(mol.try_detect_buddies(&mol.reflect(plane), 1e-8))
-                }
-                Buddy {
-                    axes: new_axes,
-                    planes: new_planes,
-                }
-            }
+            PointGroup::C2v { axis, planes } => Buddy {
+                axes: check_axes(&mol, Some(axis), 180.0, EPS),
+                planes: check_planes(&mol, planes, EPS),
+            },
+            PointGroup::D2h { axes, planes } => Buddy {
+                axes: check_axes(&mol, axes, 180.0, EPS),
+                planes: check_planes(&mol, planes, EPS),
+            },
             PointGroup::C3v { .. } => todo!(),
-            PointGroup::C5v { axis, plane } => {
-                let axes = (1..5)
-                    .map(|d| {
+            PointGroup::C5v { axis, plane } => Buddy {
+                axes: (1..5)
+                    .flat_map(|d| {
                         mol.try_detect_buddies(
                             &mol.rotate(72.0 * d as f64, axis),
-                            1e-8,
+                            EPS,
                         )
                     })
-                    .collect();
-                Buddy {
-                    axes,
-                    planes: vec![
-                        mol.try_detect_buddies(&mol.reflect(plane), 1e-8)
-                    ],
-                }
-            }
+                    .collect(),
+                planes: check_planes(&mol, Some(plane), EPS),
+            },
             // could use c2v subgroup here
             PointGroup::D3h { .. } => todo!(),
             PointGroup::D5h { .. } => todo!(),
