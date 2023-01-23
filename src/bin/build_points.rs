@@ -32,7 +32,7 @@ fn main() {
         .expect("optimization failed");
         (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
     } else {
-        todo!()
+        unimplemented!()
     };
 
     let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
