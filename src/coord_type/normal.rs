@@ -37,6 +37,9 @@ pub struct Normal {
     /// the normal coordinates, called the LXM matrix in spectro
     pub lxm: Option<nalgebra::DMatrix<f64>>,
 
+    /// lx matrix, also passed to spectro::finish
+    pub lx: Option<nalgebra::DMatrix<f64>>,
+
     /// 1/√m where m is the atomic mass
     pub m12: Vec<f64>,
 
@@ -75,12 +78,18 @@ impl Normal {
             cols,
             o.lxm.iter().flatten().cloned(),
         );
+        let lx = nalgebra::DMatrix::from_iterator(
+            rows,
+            cols,
+            o.lx.iter().flatten().cloned(),
+        );
         writeln!(w, "Normal Coordinates:{lxm:.8}").unwrap();
         writeln!(w, "Harmonic Frequencies:").unwrap();
         for (i, (r, h)) in o.irreps.iter().zip(&o.harms).enumerate() {
             writeln!(w, "{i:5}{r:>5}{h:8.1}").unwrap();
         }
         self.lxm = Some(lxm);
+        self.lx = Some(lx);
         self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
         self.ncoords = o.harms.len();
         self.irreps = Some(o.irreps.clone());
@@ -290,6 +299,7 @@ where
             F4qcm::new(f4qcm),
             o.irreps,
             self.lxm.unwrap(),
+            self.lx.unwrap(),
         );
 
         (s, o)
@@ -380,6 +390,7 @@ where
             F4qcm::new(f4qcm),
             output.irreps,
             self.lxm.unwrap(),
+            self.lx.unwrap(),
         );
 
         (spectro, o)
