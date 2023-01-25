@@ -103,10 +103,14 @@ TEMPLATES = [MOLPRO_F12TZ]
 
 
 def make_radio_buttons(pairs, var, parent, **kwargs):
+    frame = tk.Frame(parent)
+    col = 0
     for (text, value) in pairs:
-        ttk.Radiobutton(parent, text=text, variable=var, value=value, **kwargs).grid(
-            column=3
+        ttk.Radiobutton(frame, text=text, variable=var, value=value, **kwargs).grid(
+            column=col, row=0, padx=5
         )
+        col += 1
+    return frame
 
 
 class Application(ttk.Frame):
@@ -119,79 +123,96 @@ class Application(ttk.Frame):
 
         self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
         ttk.Label(self, text="enter your geometry in Å:").grid(
-            column=3, row=1, sticky=tk.W
+            column=1, row=1, sticky=tk.W
         )
         self.geometry = tk.Text(self, width=80, height=10, undo=True)
-        self.geometry.grid(column=3, row=2)
+        self.geometry.grid(column=1, row=2, columnspan=2)
 
         self.optimize = tk.BooleanVar()
         check = ttk.Checkbutton(
             self,
             text="does it need to be optimized?",
             variable=self.optimize,
-        ).grid(column=3, row=4)
+        ).grid(column=1, row=4, stick="W")
 
-        ttk.Label(self, text="Charge").grid(column=3, row=5)
+        ttk.Label(self, text="Charge").grid(column=1, row=5, padx=10, sticky="E")
         self.charge = tk.IntVar()
-        name = ttk.Entry(self, textvariable=self.charge).grid(column=3, row=6)
+        name = ttk.Entry(self, textvariable=self.charge).grid(
+            column=2,
+            row=5,
+        )
 
-        ttk.Label(self, text="Step size in Å").grid(column=3, row=7)
+        ttk.Label(self, text="Step size in Å").grid(column=1, row=7, sticky="E")
         self.step_size = tk.DoubleVar(value=0.005)
-        name = ttk.Entry(self, textvariable=self.step_size).grid(column=3, row=8)
+        name = ttk.Entry(self, textvariable=self.step_size).grid(column=2, row=7)
 
-        ttk.Label(self, text="Sleep interval in sec").grid(column=3, row=9)
+        ttk.Label(self, text="Sleep interval in sec").grid(column=1, row=9, sticky="E")
         self.sleep_int = tk.IntVar(value=2)
-        ttk.Entry(self, textvariable=self.sleep_int).grid(column=3, row=10)
+        ttk.Entry(self, textvariable=self.sleep_int).grid(column=2, row=9)
 
-        ttk.Label(self, text="Max jobs to submit at once").grid(column=3, row=11)
+        ttk.Label(self, text="Max jobs to submit at once").grid(
+            column=1, row=11, sticky="E"
+        )
         self.job_limit = tk.IntVar(value=1024)
-        ttk.Entry(self, textvariable=self.job_limit).grid(column=3, row=12)
+        ttk.Entry(self, textvariable=self.job_limit).grid(column=2, row=11)
 
-        ttk.Label(self, text="Jobs per chunk").grid(column=3, row=13)
+        ttk.Label(self, text="Jobs per chunk").grid(column=1, row=13, sticky="E")
         self.chunk_size = tk.IntVar(value=1)
-        name = ttk.Entry(self, textvariable=self.chunk_size).grid(column=3, row=14)
+        name = ttk.Entry(self, textvariable=self.chunk_size).grid(column=2, row=13)
 
-        ttk.Label(self, text="Checkpoint interval (0 to disable)").grid(column=3)
+        ttk.Label(self, text="Checkpoint interval (0 to disable)").grid(
+            column=1, row=14, stick="E"
+        )
         self.check_int = tk.IntVar(value=100)
-        ttk.Entry(self, textvariable=self.check_int).grid(column=3)
+        ttk.Entry(self, textvariable=self.check_int).grid(column=2, row=14)
 
-        ttk.Label(self, text="Coordinate type").grid(column=3)
+        ttk.Label(self, text="Coordinate type").grid(column=1, sticky="E")
         choices = [("sic", "sic"), ("cart", "cart"), ("normal", "normal")]
         self.coord_type = tk.StringVar(value="sic")
-        make_radio_buttons(choices, self.coord_type, self)
+        f = make_radio_buttons(choices, self.coord_type, self)
+        f.grid(column=2, row=15)
 
-        ttk.Label(self, text="Chemistry program").grid(column=3)
+        ttk.Label(self, text="Chemistry program").grid(column=1, sticky="E")
         self.program = tk.StringVar(value="molpro")
-        make_radio_buttons(
+        f = make_radio_buttons(
             [("Molpro", "molpro"), ("Mopac", "mopac")],
             self.program,
             self,
             command=self.default_template,
         )
+        f.grid(column=2, row=16)
 
-        ttk.Label(self, text="enter your template input file").grid(
-            column=3, sticky=tk.W
+        ttk.Label(self, text="enter your template input file:").grid(
+            column=1, sticky=tk.W
         )
         self.template = tk.Text(self, width=80, height=10, undo=True)
         self.default_template()
-        self.template.grid(column=3)
+        self.template.grid(column=1, columnspan=3, sticky="W")
 
-        ttk.Label(self, text="Queuing System").grid(column=3)
+        l = ttk.Label(self, text="Queuing System")
+        l.grid(column=1, sticky="E")
+        row = l.grid_info()["row"]
         self.queue = tk.StringVar(value="pbs")
-        make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], self.queue, self)
+        f = make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], self.queue, self)
+        f.grid(column=2, row=row)
 
-        ttk.Label(self, text="Generated filename").grid(column=3)
+        ttk.Label(self, text="Generated filename").grid(
+            column=1, sticky="E", row=row + 3
+        )
         self.infile = tk.StringVar(value="pbqff.toml")
-        ttk.Entry(self, textvariable=self.infile).grid(column=3)
+        ttk.Entry(self, textvariable=self.infile).grid(column=2, row=row + 3)
 
-        button = ttk.Button(self, text="Generate", command=self.generate)
-        button.grid(column=3)
+        frame = tk.Frame(self)
+        button = ttk.Button(frame, text="Generate", command=self.generate)
+        button.grid(column=0, row=0, sticky="E", padx=5)
 
-        button = ttk.Button(self, text="Run", command=self.run)
-        button.grid(column=3)
+        button = ttk.Button(frame, text="Run", command=self.run)
+        button.grid(column=1, row=0, padx=5)
 
-        button = ttk.Button(self, text="Exit", command=parent.destroy)
-        button.grid(column=3)
+        button = ttk.Button(frame, text="Exit", command=parent.destroy)
+        button.grid(column=2, row=0, sticky="W", padx=5)
+
+        frame.grid(column=2, pady=10, sticky="W")
 
     def run(self):
         "run pbqff with the current input file"
