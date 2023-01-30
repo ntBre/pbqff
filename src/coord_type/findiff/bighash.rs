@@ -229,6 +229,10 @@ impl BigHash {
                 let planes = check_planes(&mol, [sh, sv], EPS);
                 Buddy { axes, planes }
             }
+            PointGroup::C2h { axis, plane } => Buddy {
+                axes: check_axes(&mol, [axis], 180.0, EPS),
+                planes: check_planes(&mol, [plane], EPS),
+            },
         };
         Self {
             map: FxHashMap::<KeyChain, Target>::default(),
@@ -271,7 +275,6 @@ impl BigHash {
                             return Some(self.map.get_mut(&key).unwrap());
                         }
                     }
-                    #[allow(for_loops_over_fallibles)]
                     for plane in $planes {
                         let mol = Self::to_keys(&buddy.reflect(plane));
                         if self.map.contains_key(&mol) {
@@ -310,14 +313,7 @@ impl BigHash {
         match &self.pg {
             C1 => (),
             C2 { axis } => {
-                let buddies = self.buddy.apply(orig);
-                for buddy in Some(orig).into_iter().chain(buddies.iter()) {
-                    // check C2 axis
-                    let mol = Self::to_keys(&buddy.rotate(180.0, axis));
-                    if self.map.contains_key(&mol) {
-                        return Some(self.map.get_mut(&mol).unwrap());
-                    }
-                }
+                cnv!(self, orig, axis, 2, []);
             }
             Cs { plane } => {
                 let buddies = self.buddy.apply(orig);
@@ -333,10 +329,10 @@ impl BigHash {
                 cnv!(self, orig, axis, 2, planes);
             }
             PointGroup::C3v { axis, plane } => {
-                cnv!(self, orig, axis, 3, Some(plane));
+                cnv!(self, orig, axis, 3, [plane]);
             }
             PointGroup::C5v { axis, plane } => {
-                cnv!(self, orig, axis, 5, Some(plane));
+                cnv!(self, orig, axis, 5, [plane]);
             }
             PointGroup::D2h { axes, planes } => {
                 dnh!(self, orig, axes.iter().zip([2, 2, 2]), planes);
@@ -346,6 +342,9 @@ impl BigHash {
             }
             PointGroup::D5h { c5, c2, sh, sv } => {
                 dnh!(self, orig, [c5, c2].iter().zip([5, 2]), [sh, sv]);
+            }
+            PointGroup::C2h { axis, plane } => {
+                cnv!(self, orig, axis, 2, [plane]);
             }
         }
         None
