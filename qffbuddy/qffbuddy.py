@@ -74,7 +74,7 @@ pbqff=etz(2)+edkr-edk
 show[1,f20.12],pbqff
 """
 
-MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14) PM6 SINGLET THREADS=1"
+MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 SINGLET THREADS=1"
 
 ATOMS = [
     "X",

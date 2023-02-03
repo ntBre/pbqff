@@ -13,7 +13,12 @@ fn main() -> Result<(), std::io::Error> {
     let _ = std::fs::remove_dir("freqs");
     // end inline
     let _ = std::fs::create_dir("pts");
-    let config = Config::load("testfiles/cart.toml");
+    let config = Config {
+        template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) \
+		   PM6 THREADS=1 external=testfiles/params.dat"
+            .to_owned(),
+        ..Config::load("testfiles/cart.toml")
+    };
     let queue = Local {
         chunk_size: 128,
         dir: "pts".to_string(),
