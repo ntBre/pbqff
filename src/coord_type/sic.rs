@@ -370,7 +370,7 @@ impl Fitted for Sic {
             (fcs, long_line, res)
         } else {
             match anpass.run() {
-                Ok(v) => v,
+                Ok(v) => (v.0, v.1, v.2),
                 Err(e) => return Err(Box::new(Err(FreqError(e.0)))),
             }
         };
