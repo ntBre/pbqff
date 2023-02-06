@@ -195,7 +195,10 @@ impl Cart {
                     config.charge,
                 )
                 .expect("optimization failed");
-                (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
+        let Some(cart) = res.cart_geom else {
+            panic!("failed to extract cart geom from {res:?}");
+        };
+                (Geom::Xyz(cart), res.energy)
             } else {
                 let ref_energy = ref_energy(
                     queue,
