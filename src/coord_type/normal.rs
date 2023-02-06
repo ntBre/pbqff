@@ -6,6 +6,7 @@
 
 use std::{io::Write, marker::Sync};
 
+use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
 use nalgebra::DVector;
 use psqs::{
@@ -13,6 +14,7 @@ use psqs::{
     program::{Job, Program, Template},
     queue::Queue,
 };
+use rust_anpass::Dmat;
 pub use rust_anpass::{fc::Fc, Bias};
 use serde::{Deserialize, Serialize};
 pub use spectro::{F3qcm, F4qcm, Output, Spectro};
@@ -278,7 +280,7 @@ where
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
-        let (s, o, ref_energy, pg) =
+        let (s, o, ref_energy, pg, fc2) =
             self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
         cleanup();
         let _ = std::fs::create_dir("pts");
@@ -293,6 +295,8 @@ where
         } else {
             self.run_fitted(&o, &s, w, pg, config, tmpl, queue)
         };
+        Intder::dump_fcs("freqs", &fc2, &f3qcm, &f4qcm);
+        s.write("freqs/spectro.in").unwrap();
         let (o, _) = s.finish(
             DVector::from(o.harms.clone()),
             F3qcm::new(f3qcm),
@@ -621,7 +625,7 @@ impl Normal {
         queue: &Q,
         w: &mut W,
         dir: &str,
-    ) -> (Spectro, Output, f64, PointGroup)
+    ) -> (Spectro, Output, f64, PointGroup, Dmat)
     where
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Q: Queue<P> + Sync,
@@ -646,8 +650,8 @@ impl Normal {
             Derivative::Harmonic(nfc2),
             "freqs",
         );
-        let (spectro, output) = self.harm_freqs("freqs", &mol, fc2);
-        (spectro, output, ref_energy, pg)
+        let (spectro, output) = self.harm_freqs("freqs", &mol, fc2.clone());
+        (spectro, output, ref_energy, pg, fc2)
     }
 
     /// run the harmonic frequencies through spectro
