@@ -58,7 +58,7 @@ struct Args {
     json: bool,
 
     /// don't delete any files while running the points
-    #[arg(short, default_value_t = false)]
+    #[arg(short, long, default_value_t = false)]
     no_del: bool,
 }
 

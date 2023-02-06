@@ -33,6 +33,9 @@ See the INPUT section for details about its contents.
 Resume from the checkpoint files in the current directory (\fIchk.json\fR and
 \fIres.chk\fR).
 .TP
+.BR \-n ", " \-\-no-del
+Don't delete any files when running the single-point energies.
+.TP
 .BR \-o ", " \-\-overwrite
 Overwrite a previous run.
 .TP
@@ -153,7 +156,8 @@ queue = "slurm"
 sleep_int = 2
 job_limit = 2048
 chunk_size = 1
-template = "scfcrt=1.D-21 aux(precision=14) PM6 THREADS=1 external=testfiles/params.dat"
+template = """scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
+external=testfiles/params.dat"""
 check_int = 100
 .RE
 .fi

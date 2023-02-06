@@ -33,6 +33,9 @@ See the INPUT section for details about its contents.
 Resume from the checkpoint files in the current directory (\fIchk.json\fR and
 \fIres.chk\fR).
 .TP
+.BR \-n ", " \-\-no-del
+Don't delete any files when running the single-point energies.
+.TP
 .BR \-o ", " \-\-overwrite
 Overwrite a previous run.
 .TP
