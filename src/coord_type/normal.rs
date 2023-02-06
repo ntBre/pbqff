@@ -151,7 +151,6 @@ impl Normal {
             .drain(dir, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
-        let _ = std::fs::create_dir("freqs");
         let (fcs, _) = self
             .anpass(
                 Some("freqs"),
@@ -290,6 +289,7 @@ where
 
         // TODO have to split these run_* methods into a prep_* and run_* so I
         // can save the Resume between them
+        let _ = std::fs::create_dir("freqs");
         let (f3qcm, f4qcm) = if self.findiff {
             self.run_findiff(&o, &s, pg, config, ref_energy, &tmpl, w, queue)
         } else {
