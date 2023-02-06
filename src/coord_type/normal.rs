@@ -298,6 +298,7 @@ where
         Intder::dump_fcs("freqs", &fc2, &f3qcm, &f4qcm);
         s.write("freqs/spectro.in").unwrap();
         let fin = spectro::SpectroFinish::new(
+            s,
             DVector::from(o.harms.clone()),
             F3qcm::new(f3qcm),
             F4qcm::new(f4qcm),
@@ -308,9 +309,18 @@ where
         fin.dump("freqs/finish.spectro").unwrap_or_else(|e| {
             eprintln!("failed to dump finish.spectro with `{e}`")
         });
-        let (o, _) = s.finish(fin);
+        let spectro::SpectroFinish {
+            spectro,
+            freq,
+            f3qcm,
+            f4qcm,
+            irreps,
+            lxm,
+            lx,
+        } = fin;
+        let (o, _) = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
 
-        (s, o)
+        (spectro, o)
     }
 
     type Resume = Resume;
@@ -393,6 +403,7 @@ where
         };
 
         let fin = spectro::SpectroFinish::new(
+            spectro,
             DVector::from(output.harms.clone()),
             F3qcm::new(f3qcm),
             F4qcm::new(f4qcm),
@@ -404,7 +415,16 @@ where
         fin.dump("freqs/finish.spectro").unwrap_or_else(|e| {
             eprintln!("failed to dump finish.spectro with `{e}`")
         });
-        let (o, _) = spectro.finish(fin);
+        let spectro::SpectroFinish {
+            spectro,
+            freq,
+            f3qcm,
+            f4qcm,
+            irreps,
+            lxm,
+            lx,
+        } = fin;
+        let (o, _) = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
 
         (spectro, o)
     }
