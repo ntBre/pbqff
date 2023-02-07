@@ -329,6 +329,7 @@ where
         #[allow(unused_assignments)] mut self,
         w: &mut W,
         queue: &Q,
+        config: &Config,
         Resume {
             normal,
             njobs,
@@ -343,7 +344,7 @@ where
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(dir, "chk.json", &mut energies, 0)
+              .resume(dir, "chk.json", &mut energies, config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");

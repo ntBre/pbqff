@@ -133,6 +133,7 @@ where
         mut self,
         w: &mut W,
         queue: &Q,
+        config: &Config,
         Resume {
             intder,
             taylor,
@@ -146,7 +147,7 @@ where
         let dir = "pts/inp";
         let _ = std::fs::create_dir_all(dir);
         let time = queue
-            .resume(dir, "chk.json", &mut energies, 0)
+            .resume(dir, "chk.json", &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 

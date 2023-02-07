@@ -113,6 +113,7 @@ fn c3h2_normal() {
         Normal::findiff(false),
         &mut std::io::stdout(),
         &queue,
+        &config,
         normal::Resume::load("res.chk"),
     );
     // harmonics

@@ -60,6 +60,7 @@ pub trait CoordType<
         self,
         w: &mut W,
         queue: &Q,
+        config: &Config,
         resume: Self::Resume,
     ) -> (Spectro, Output);
 }

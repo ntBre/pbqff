@@ -25,14 +25,15 @@ match m {
         for program in programs {
             for queue in queues {
                 for (val, fun) in [(true, "resume"), (false, "run")] {
-                    let resume = if val {
-                        format!(
+                    let mut resume = String::from("config,");
+                    if val {
+                        write!(
+                            resume,
                             "<{coord} as CoordType<::std::io::Stdout, \
 			     {queue}, {program}>>::Resume::load(\"res.chk\")"
                         )
-                    } else {
-                        "config".to_owned()
-                    };
+                        .unwrap();
+                    }
                     write!(
                         s,
                         "(
