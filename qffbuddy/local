@@ -1,3 +1,6 @@
 #!/bin/bash
 
-python qffbuddy.py --pbqff ../target/x86_64-unknown-linux-gnu/release/rust-pbqff "$@"
+script=/home/brent/Projects/rust-pbqff/qffbuddy/qffbuddy.py
+bin=/home/brent/Projects/rust-pbqff/target/x86_64-unknown-linux-gnu/release/rust-pbqff
+
+python $script --pbqff $bin "$@"
