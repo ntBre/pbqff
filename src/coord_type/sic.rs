@@ -81,7 +81,7 @@ where
 
         // use c2v subgroup for d2h
         if pg.is_d2h() {
-            writeln!(w, "full point group is D2h, using C2v subgroup").unwrap();
+            writeln!(w, "warning: full point group is D2h, using C2v subgroup").unwrap();
             pg = pg.subgroup(Pg::C2v).unwrap();
         };
 

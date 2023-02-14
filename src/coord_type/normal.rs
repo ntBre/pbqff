@@ -18,7 +18,7 @@ use rust_anpass::Dmat;
 pub use rust_anpass::{fc::Fc, Bias};
 use serde::{Deserialize, Serialize};
 pub use spectro::{F3qcm, F4qcm, Output, Spectro};
-use symm::{Irrep, Molecule, PointGroup};
+use symm::{Irrep, Molecule, Pg, PointGroup};
 use taylor::{Disps, Taylor};
 
 use crate::{
@@ -67,7 +67,7 @@ impl Normal {
     /// actual initialization of self with the results of the initial harmonic
     /// FF, must happen before build_points. TODO use phantomdata/generic trick
     /// to enforce that
-    pub fn prep_qff<W>(&mut self, w: &mut W, o: &Output)
+    pub fn prep_qff<W>(&mut self, w: &mut W, o: &Output, pg: PointGroup)
     where
         W: Write,
     {
@@ -90,11 +90,17 @@ impl Normal {
         for (i, (r, h)) in o.irreps.iter().zip(&o.harms).enumerate() {
             writeln!(w, "{i:5}{r:>5}{h:8.1}").unwrap();
         }
-        self.lxm = Some(lxm);
         self.lx = Some(lx);
         self.m12 = o.geom.weights().iter().map(|w| 1.0 / w.sqrt()).collect();
         self.ncoords = o.harms.len();
-        self.irreps = Some(o.irreps.clone());
+        self.irreps = Some(spectro::compute_irreps_in(
+            &o.geom,
+            &lxm,
+            o.harms.len(),
+            1e-4,
+            pg,
+        ));
+        self.lxm = Some(lxm);
     }
 
     /// run the QFF using a least-squares fitting
@@ -283,7 +289,7 @@ where
             self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
         cleanup();
         let _ = std::fs::create_dir("pts");
-        self.prep_qff(w, &o);
+        self.prep_qff(w, &o, pg);
 
         let tmpl = config.template.clone().into();
 
@@ -681,6 +687,15 @@ impl Normal {
             "freqs",
         );
         let (spectro, output) = self.harm_freqs("freqs", &mol, fc2.clone());
+
+        let pg = if pg.is_d2h() {
+            writeln!(w, "warning: full point group is D2h, using C2v subgroup")
+                .unwrap();
+            pg.subgroup(Pg::C2v).unwrap()
+        } else {
+            pg
+        };
+
         (spectro, output, ref_energy, pg, fc2)
     }
 
