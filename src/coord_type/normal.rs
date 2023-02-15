@@ -684,7 +684,7 @@ impl Normal {
             &mut fcs,
             n,
             Derivative::Harmonic(nfc2),
-            "freqs",
+            ".",
         );
         let (spectro, output) = self.harm_freqs("freqs", &mol, fc2.clone());
 
