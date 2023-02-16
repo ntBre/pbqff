@@ -713,7 +713,14 @@ impl Normal {
 
         // write input
         let input = format!("{dir}/spectro.in");
-        spectro.write(&input).unwrap();
+        match spectro.write(&input) {
+            Ok(_) => {}
+            Err(e) => {
+                eprintln!(
+                    "warning: failed to write spectro input to {input} for {e}"
+                )
+            }
+        }
 
         let (output, _) = spectro.run(spectro::Derivative::Harmonic(fc2));
         (spectro, output)
