@@ -12,7 +12,7 @@ use psqs::{
 use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 use symm::{Irrep, Molecule, Pg, PointGroup};
-use taylor::{Disps, Taylor};
+use taylor::Taylor;
 
 use super::{
     fitting::{AtomicNumbers, Fitted},
@@ -89,7 +89,7 @@ where
         writeln!(w, "Normalized Geometry:\n{mol:20.12}").unwrap();
         writeln!(w, "Point Group = {pg}").unwrap();
 
-        let (geoms, taylor, taylor_disps, atomic_numbers) =
+        let (geoms, taylor, atomic_numbers) =
             self.generate_pts(w, &mol, &pg, config.step_size).unwrap();
 
         let dir = "pts/inp";
@@ -102,7 +102,6 @@ where
         let resume = Resume::new(
             self.intder.clone(),
             taylor,
-            taylor_disps,
             atomic_numbers,
             config.step_size,
             jobs.len(),
@@ -121,7 +120,6 @@ where
             "freqs",
             &mut energies,
             &resume.taylor,
-            &resume.taylor_disps,
             &resume.atomic_numbers,
             resume.step_size,
         )
@@ -138,7 +136,6 @@ where
         Resume {
             intder,
             taylor,
-            taylor_disps,
             atomic_numbers,
             step_size,
             njobs,
@@ -159,7 +156,6 @@ where
             "freqs",
             &mut energies,
             &taylor,
-            &taylor_disps,
             &atomic_numbers,
             step_size,
         )
@@ -171,7 +167,6 @@ where
 pub struct Resume {
     intder: Intder,
     taylor: Taylor,
-    taylor_disps: Disps,
     atomic_numbers: Vec<usize>,
     step_size: f64,
 
@@ -183,7 +178,6 @@ impl Resume {
     pub fn new(
         intder: Intder,
         taylor: Taylor,
-        taylor_disps: Disps,
         atomic_numbers: Vec<usize>,
         step_size: f64,
         njobs: usize,
@@ -191,7 +185,6 @@ impl Resume {
         Self {
             intder,
             taylor,
-            taylor_disps,
             atomic_numbers,
             step_size,
             njobs,
@@ -258,7 +251,7 @@ impl Fitted for Sic {
         for (i, disp) in disps.iter().enumerate() {
             let disp = disp.as_slice();
             let m = Molecule::from_slices(
-                atomic_numbers.clone(),
+                &atomic_numbers,
                 &disp[..disp.len() - 3 * ndum],
             );
             let irrep = match m.irrep_approx(pg, SYMM_EPS) {
@@ -297,8 +290,7 @@ impl Fitted for Sic {
         mol: &Molecule,
         pg: &PointGroup,
         step_size: f64,
-    ) -> Result<(Vec<Geom>, Taylor, taylor::Disps, AtomicNumbers), IntderError>
-    {
+    ) -> Result<(Vec<Geom>, Taylor, AtomicNumbers), IntderError> {
         let Prep {
             atomic_numbers,
             nsic,
@@ -335,13 +327,13 @@ impl Fitted for Sic {
             // this is a bit unsightly, but I also don't want to duplicate the
             // `from_slices` code in psqs
             let mut mol = Molecule::from_slices(
-                atomic_numbers.clone(),
+                &atomic_numbers,
                 &geom.as_slice()[..geom.len() - 3 * ndum],
             );
             mol.to_angstrom();
             geoms.push(Geom::from(mol));
         }
-        Ok((geoms, taylor, taylor_disps, atomic_numbers))
+        Ok((geoms, taylor, atomic_numbers))
     }
 
     fn anpass<W: Write>(
@@ -349,7 +341,6 @@ impl Fitted for Sic {
         dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
-        taylor_disps: &taylor::Disps,
         step_size: f64,
         w: &mut W,
     ) -> Result<
@@ -358,7 +349,7 @@ impl Fitted for Sic {
     > {
         make_rel(energies);
         let anpass =
-            Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
+            Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
         if let Some(dir) = dir {
             write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
         }
@@ -417,21 +408,14 @@ impl Sic {
         dir: &str,
         energies: &mut [f64],
         taylor: &Taylor,
-        taylor_disps: &taylor::Disps,
         atomic_numbers: &AtomicNumbers,
         step_size: f64,
     ) -> Result<(Spectro, Output), FreqError> {
-        let (fcs, long_line) = match self.anpass(
-            Some(dir),
-            energies,
-            taylor,
-            taylor_disps,
-            step_size,
-            w,
-        ) {
-            Ok(value) => value,
-            Err(value) => return *value,
-        };
+        let (fcs, long_line) =
+            match self.anpass(Some(dir), energies, taylor, step_size, w) {
+                Ok(value) => value,
+                Err(value) => return *value,
+            };
 
         // intder_geom
         self.intder.disps = vec![long_line.disp.as_slice().to_vec()];
@@ -440,8 +424,7 @@ impl Sic {
         let refit_geom = refit_geom[0].as_slice();
         let l = refit_geom.len() - 3 * self.intder.ndum();
         let dummies = &refit_geom[l..];
-        let mol =
-            Molecule::from_slices(atomic_numbers.clone(), &refit_geom[..l]);
+        let mol = Molecule::from_slices(atomic_numbers, &refit_geom[..l]);
 
         writeln!(w, "\nRefit Geometry\n{mol:20.12}").unwrap();
 

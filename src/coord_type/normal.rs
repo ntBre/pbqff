@@ -19,7 +19,7 @@ pub use rust_anpass::{fc::Fc, Bias};
 use serde::{Deserialize, Serialize};
 pub use spectro::{F3qcm, F4qcm, Output, Spectro};
 use symm::{Irrep, Molecule, Pg, PointGroup};
-use taylor::{Disps, Taylor};
+use taylor::Taylor;
 
 use crate::{
     cleanup,
@@ -120,7 +120,7 @@ impl Normal {
         Q: Queue<P> + Sync,
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
-        let (geoms, taylor, taylor_disps, _atomic_numbers) = self
+        let (geoms, taylor, _atomic_numbers) = self
             .generate_pts(w, &o.geom, &pg, config.step_size)
             .unwrap();
         let dir = "pts";
@@ -139,7 +139,6 @@ impl Normal {
             njobs: jobs.len(),
             deriv: DerivType::Fitted {
                 taylor,
-                taylor_disps,
                 step_size: config.step_size,
             },
             output: o.clone(),
@@ -147,7 +146,7 @@ impl Normal {
         };
         resume.dump(CHK_NAME);
 
-        let DerivType::Fitted { taylor, taylor_disps, step_size, ..} =
+        let DerivType::Fitted { taylor, step_size, ..} =
 	    resume.deriv else {
 		unreachable!();
 	    };
@@ -158,14 +157,7 @@ impl Normal {
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
-            .anpass(
-                Some("freqs"),
-                &mut energies,
-                &taylor,
-                &taylor_disps,
-                step_size,
-                w,
-            )
+            .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
             .unwrap();
         // needed in case taylor eliminated some of the higher derivatives
         // by symmetry. this should give the maximum, full sizes without
@@ -367,21 +359,10 @@ where
                 let quarts = &fcs[nfc2 + nfc3..];
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
-            DerivType::Fitted {
-                taylor,
-                taylor_disps,
-                step_size,
-            } => {
+            DerivType::Fitted { taylor, step_size } => {
                 let _ = std::fs::create_dir("freqs");
                 let (fcs, _) = self
-                    .anpass(
-                        Some("freqs"),
-                        &mut energies,
-                        &taylor,
-                        &taylor_disps,
-                        step_size,
-                        w,
-                    )
+                    .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
                     .unwrap();
                 // needed in case taylor eliminated some of the higher
                 // derivatives by symmetry. this should give the maximum, full
@@ -448,7 +429,6 @@ pub enum DerivType {
     },
     Fitted {
         taylor: Taylor,
-        taylor_disps: Disps,
         step_size: f64,
     },
 }
@@ -542,7 +522,7 @@ impl Fitted for Normal {
         mol: &Molecule,
         pg: &PointGroup,
         step_size: f64,
-    ) -> Result<(Vec<Geom>, Taylor, Disps, AtomicNumbers), Self::Error> {
+    ) -> Result<(Vec<Geom>, Taylor, AtomicNumbers), Self::Error> {
         let mut irreps: Vec<_> = self
             .irreps
             .as_ref()
@@ -569,7 +549,7 @@ impl Fitted for Normal {
             }
             geoms.push(Geom::Xyz(zip_atoms(&names, coords.into())))
         }
-        Ok((geoms, taylor, taylor_disps, mol.atomic_numbers()))
+        Ok((geoms, taylor, mol.atomic_numbers()))
     }
 
     /// perform the initial anpass fitting, but we can't refit on the geometry
@@ -580,7 +560,6 @@ impl Fitted for Normal {
         dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
-        taylor_disps: &taylor::Disps,
         step_size: f64,
         w: &mut W,
     ) -> Result<
@@ -589,7 +568,7 @@ impl Fitted for Normal {
     > {
         make_rel(energies);
         let anpass =
-            Taylor::to_anpass(taylor, taylor_disps, energies, step_size);
+            Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
         if let Some(dir) = dir {
             write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
         }

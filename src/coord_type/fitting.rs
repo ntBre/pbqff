@@ -4,7 +4,7 @@ use psqs::geom::Geom;
 use spectro::{Output, Spectro};
 use std::io::Write;
 use symm::{Molecule, PointGroup};
-use taylor::{Disps, Taylor};
+use taylor::Taylor;
 
 use super::FreqError;
 
@@ -31,14 +31,13 @@ pub trait Fitted {
         mol: &Molecule,
         pg: &PointGroup,
         step_size: f64,
-    ) -> Result<(Vec<Geom>, Taylor, Disps, AtomicNumbers), Self::Error>;
+    ) -> Result<(Vec<Geom>, Taylor, AtomicNumbers), Self::Error>;
 
     fn anpass<W: Write>(
         &self,
         dir: Option<&str>,
         energies: &mut [f64],
         taylor: &Taylor,
-        taylor_disps: &taylor::Disps,
         step_size: f64,
         w: &mut W,
     ) -> Result<AnpassRes, AnpassError>;
