@@ -94,7 +94,7 @@ where
 
         let dir = "pts/inp";
         let jobs =
-            P::build_jobs(&geoms, dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
