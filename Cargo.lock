@@ -328,7 +328,7 @@ dependencies = [
  "regex",
  "serde",
  "symm",
- "tensor",
+ "tensor 0.1.0",
 ]
 
 [[package]]
@@ -796,7 +796,7 @@ dependencies = [
  "serde",
  "serde_json",
  "symm",
- "tensor",
+ "tensor 0.1.0 (git+https://github.com/ntBre/tensor)",
 ]
 
 [[package]]
@@ -808,6 +808,7 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "symm"
 version = "0.1.0"
+source = "git+https://github.com/ntBre/symm#2cb25050501001decc52f831290a2cac6b5fa162"
 dependencies = [
  "approx",
  "nalgebra",
@@ -838,6 +839,14 @@ dependencies = [
 [[package]]
 name = "tensor"
 version = "0.1.0"
+dependencies = [
+ "approx",
+]
+
+[[package]]
+name = "tensor"
+version = "0.1.0"
+source = "git+https://github.com/ntBre/tensor#4a839ee4003fbc6234979261b5baf59c79a16440"
 dependencies = [
  "approx",
 ]

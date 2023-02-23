@@ -19,7 +19,7 @@ rust-anpass = { path = "/home/brent/Projects/rust-anpass" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 spectro = { path = "/home/brent/Projects/spectro/spectro" }
-symm = { path = "/home/brent/Projects/symm" }
+symm = { git = "https://github.com/ntBre/symm" }
 taylor = { path = "/home/brent/Projects/taylor" }
 toml = "0.5.8"
 rustc-hash = "1.1.0"
