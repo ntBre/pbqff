@@ -81,7 +81,10 @@ macro_rules! check {
 fn c3h2_normal() {
     cleanup();
     init();
-    let config = Config::load("testfiles/cart.toml");
+    let config = Config {
+        check_int: 1,
+        ..Config::load("testfiles/cart.toml")
+    };
     let queue = Local {
         dir: "pts".to_string(),
         chunk_size: 512,
