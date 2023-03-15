@@ -70,7 +70,7 @@ fn index(n: usize, a: usize, b: usize, c: usize, d: usize) -> usize {
     }
 }
 
-type Idx = (usize, usize, usize, usize);
+pub type Idx = (usize, usize, usize, usize);
 
 /// a trait for CoordTypes that rely on finite differences instead of fittings
 pub trait FiniteDifference {
