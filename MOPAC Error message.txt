@@ -1,2 +1,0 @@
-
-          MOPAC input data-set file: "pts/job.00001663" does not exist.
