@@ -14,8 +14,8 @@ pub mod bighash;
 /// geometry
 #[derive(Debug, PartialEq)]
 pub struct Proto {
-    geom: Option<Geom>,
-    coeff: f64,
+    pub geom: Option<Geom>,
+    pub coeff: f64,
 }
 
 pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
@@ -30,16 +30,18 @@ pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
         .collect()
 }
 
+#[macro_export]
 macro_rules! geom {
     ($s:ident, $names:ident, $coords:ident, $step_size:ident, $($steps: expr),* ) => {
 	Some($s.new_geom($names.clone(), $coords.clone(), $step_size, vec![$($steps),*]))
     };
 }
 
+#[macro_export]
 macro_rules! proto {
     ($s:ident, $names: ident, $coords: ident, $step_size: ident, $scale: expr, $( $steps: expr ),* ) => {
 	Proto {
-	    geom: geom!($s, $names, $coords, $step_size, $($steps),*),
+	    geom: $crate::geom!($s, $names, $coords, $step_size, $($steps),*),
 	    coeff: $scale,
 	}
     };
