@@ -342,8 +342,6 @@ pub trait FiniteDifference {
         }
     }
 
-    // there is an issue with the all same case => index 0, also an issue with the
-    // 2-2 case => index 2
     fn make4d(
         &self,
         names: &[&str],
