@@ -647,18 +647,7 @@ impl FiniteDifference for Normal {
         let k = k as isize;
         let l = l as isize;
 
-        let make4d_3_1 = |i, _, _, l| {
-            vec![
-                proto!(self, names, coords, step, 1. * scale, i, i, i, l),
-                proto!(self, names, coords, step, -3. * scale, i, l),
-                proto!(self, names, coords, step, 3. * scale, -i, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, -i, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, i, -l),
-                proto!(self, names, coords, step, 3. * scale, i, -l),
-                proto!(self, names, coords, step, -3. * scale, -i, -l),
-                proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -l),
-            ]
-        };
+        let make4d_3_1 = |_, _, _, _| vec![];
 
         let make4d_2_2 = |i, _, k, _| {
             vec![
@@ -674,22 +663,7 @@ impl FiniteDifference for Normal {
             ]
         };
 
-        let make4d_2_1_1 = |i, _, k, l| {
-            vec![
-                proto!(self, names, coords, step, 1. * scale, i, i, k, l),
-                proto!(self, names, coords, step, -2. * scale, k, l),
-                proto!(self, names, coords, step, 1. * scale, -i, -i, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, -k, l),
-                proto!(self, names, coords, step, 2. * scale, -k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, -k, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, k, -l),
-                proto!(self, names, coords, step, 2. * scale, k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, k, -l),
-                proto!(self, names, coords, step, 1. * scale, i, i, -k, -l),
-                proto!(self, names, coords, step, -2. * scale, -k, -l),
-                proto!(self, names, coords, step, 1. * scale, -i, -i, -k, -l),
-            ]
-        };
+        let make4d_2_1_1 = |_, _, _, _| vec![];
 
         if i == j && i == k && i == l {
             vec![
@@ -729,24 +703,7 @@ impl FiniteDifference for Normal {
         } else if k == l {
             make4d_2_1_1(k, l, i, j)
         } else {
-            vec![
-                proto!(self, names, coords, step, 1. * scale, i, j, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, -j, k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, j, k, l),
-                proto!(self, names, coords, step, 1. * scale, -i, -j, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, j, -k, l),
-                proto!(self, names, coords, step, 1. * scale, i, -j, -k, l),
-                proto!(self, names, coords, step, 1. * scale, -i, j, -k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -j, -k, l),
-                proto!(self, names, coords, step, -1. * scale, i, j, k, -l),
-                proto!(self, names, coords, step, 1. * scale, i, -j, k, -l),
-                proto!(self, names, coords, step, 1. * scale, -i, j, k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, -j, k, -l),
-                proto!(self, names, coords, step, 1. * scale, i, j, -k, -l),
-                proto!(self, names, coords, step, -1. * scale, i, -j, -k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, j, -k, -l),
-                proto!(self, names, coords, step, 1. * scale, -i, -j, -k, -l),
-            ]
+            vec![]
         }
     }
 }
