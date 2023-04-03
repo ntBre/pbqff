@@ -33,6 +33,9 @@ struct RawConfig {
     /// the template to use for the quantum chemistry program
     template: String,
 
+    /// the template to use for the queuing system
+    queue_template: Option<String>,
+
     /// the quantum chemistry program to use. options supported currently are
     /// mopac and molpro
     program: Program,
@@ -77,6 +80,7 @@ pub struct Config {
     pub step_size: f64,
     pub coord_type: CoordType,
     pub template: String,
+    pub queue_template: Option<String>,
     pub program: Program,
     pub queue: Queue,
     pub sleep_int: usize,
@@ -102,6 +106,7 @@ impl From<RawConfig> for Config {
             queue: rc.queue,
             findiff: rc.findiff.unwrap_or(false),
             check_int: rc.check_int,
+            queue_template: rc.queue_template,
         }
     }
 }
@@ -178,6 +183,7 @@ HCC =               147.81488230
             queue: Queue::Slurm,
             findiff: false,
             check_int: 100,
+            queue_template: None,
         };
         assert_eq!(got, want);
     }

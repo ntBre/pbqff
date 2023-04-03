@@ -22,6 +22,7 @@ macro_rules! queue {
             $config.sleep_int,
             "pts",
             $no_del,
+            $config.queue_template.clone(),
         )
     };
 }
