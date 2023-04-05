@@ -21,8 +21,9 @@ macro_rules! time {
     };
 }
 
-pub use cart::*;
-pub use sic::*;
+pub use cart::{Cart, CartGeom, Derivative, FirstPart, Nderiv};
+pub use sic::Sic;
+pub(crate) use sic::{make_rel, write_file, FreqError};
 pub mod cart;
 pub mod findiff;
 pub mod fitting;
