@@ -17,9 +17,6 @@ use super::{
     CoordType, Load, SPECTRO_HEADER,
 };
 
-#[cfg(test)]
-mod bench;
-
 /// debugging options. currently supported options: disp, fcs, none
 pub(crate) static DEBUG: &str = "none";
 

@@ -1,4 +1,3 @@
-#![feature(test)]
 pub mod config;
 pub mod coord_type;
 
