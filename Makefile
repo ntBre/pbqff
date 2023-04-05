@@ -29,11 +29,11 @@ build:
 ifeq (${DEBUG}, 1)
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --bin rust-pbqff --target x86_64-unknown-linux-gnu
+	cargo build --features vers --bin rust-pbqff --target x86_64-unknown-linux-gnu
 else
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --bin rust-pbqff --release --target x86_64-unknown-linux-gnu
+	cargo build --features vers --bin rust-pbqff --release --target x86_64-unknown-linux-gnu
 endif
 
 
