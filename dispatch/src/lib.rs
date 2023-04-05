@@ -14,7 +14,7 @@ pub fn dispatch(_item: TokenStream) -> TokenStream {
         "Sic::new(Intder::load_file(\"intder.in\"))",
     ];
     let programs = ["Mopac", "Molpro"];
-    let queues = ["Pbs", "Slurm"];
+    let queues = ["Pbs", "Slurm", "Local"];
     let mut s = String::from(
         "fn dispatch(config: &Config, args: Args) -> (Spectro, Output) {
     let m = (config.coord_type, config.program, config.queue, args.checkpoint);

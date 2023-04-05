@@ -3,7 +3,7 @@ use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 use dispatch::dispatch;
 use psqs::{
     program::{molpro::Molpro, mopac::Mopac},
-    queue::{pbs::Pbs, slurm::Slurm},
+    queue::{pbs::Pbs, slurm::Slurm, local::Local},
 };
 use rust_pbqff::{
     cleanup,
