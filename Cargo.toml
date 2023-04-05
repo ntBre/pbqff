@@ -11,16 +11,16 @@ members = [
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-intder = { path = "/home/brent/Projects/intder" }
+intder = { git = "https://github.com/ntBre/intder" }
 libc = "0.2.126"
 nalgebra = "0.32.2"
-psqs = { path = "/home/brent/Projects/psqs" }
+psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
-spectro = { path = "/home/brent/Projects/spectro/spectro" }
+spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
-taylor = { path = "/home/brent/Projects/taylor" }
+taylor = { git = "https://github.com/ntBre/taylor" }
 toml = "0.5.8"
 rustc-hash = "1.1.0"
 clap = { version = "4.0.18", features = ["derive"] }
