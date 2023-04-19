@@ -45,3 +45,41 @@ check_int = 100%
 
 # qffbuddy
 An optional GUI for preparing input files and running pbqff is also included in the qffbuddy directory
+
+# Citations
+For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff: Push-Button Quartic Force Fields." 
+*J. Chem. Theory Comput.*, (accepted). DOI: [10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129) (link should work soon)
+
+```
+@article{Westbrook23_pbqff,
+  author = 	 {Brent R. Westbrook and Ryan C. Fortenberry},
+  title = 	 {pbqff: Push-Button Quartic Force Fields},
+  journal = 	 {J. Chem. Theory Comput.},
+  year = 	 2023,
+  note = 	 {(accepted)}}
+```
+
+If you use symmetry-internal coordinates, you may also want to cite the original `INTDER` code by Wesley Allen:
+
+```
+@misc{intder,
+ author = {W. D. Allen and coworkers},
+ note = {$INTDER\ 2005$ is a General Program Written by W. D. Allen and Coworkers, which Performs Vibrational Analysis and Higher-Order Non-Linear Transformations.},
+ year = {2005}
+}
+```
+
+And for the original VPT2 code in `SPECTRO`, you can cite
+
+```
+@incollection{spectro91,
+ address = {Greenwich, Connecticut},
+ author = {J. F. Gaw and A. Willets and W. H. Green and N. C. Handy},
+ booktitle = {Advances in Molecular Vibrations and Collision Dynamics},
+ editor = {Joel M. Bowman and Mark A. Ratner},
+ pages = {170-185},
+ publisher = {JAI Press, Inc.},
+ title = {{SPECTRO: A} Program for the Derivation of Spectrscopic Constants From Provided Quartic Force Fields and Cubic Dipole Fields},
+ year = {1991}
+}
+```
