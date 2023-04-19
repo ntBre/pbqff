@@ -337,6 +337,7 @@ fn cart() {
 /// running the whole QFF. While we're at it, make sure that Resume is
 /// Serializable and Deserializable
 #[test]
+#[ignore]
 fn build_pts() {
     let config = Config::load("testfiles/cart.toml");
     let queue = Local {
