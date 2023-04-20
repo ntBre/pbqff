@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::Stdout;
+use std::str::FromStr;
 
 use approx::abs_diff_ne;
 use approx::assert_abs_diff_eq;
@@ -7,7 +8,6 @@ use intder::Intder;
 use nalgebra::dvector;
 use psqs::geom::Geom;
 use psqs::program::mopac::Mopac;
-use psqs::program::Template;
 use psqs::queue::local::Local;
 use rust_anpass::Dvec;
 use spectro::Output;
@@ -26,7 +26,6 @@ use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::Load;
 use crate::coord_type::Sic;
-use crate::optimize;
 
 #[test]
 #[ignore]
@@ -337,26 +336,20 @@ fn cart() {
 /// running the whole QFF. While we're at it, make sure that Resume is
 /// Serializable and Deserializable
 #[test]
-#[ignore]
 fn build_pts() {
     let config = Config::load("testfiles/cart.toml");
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
-    let (geom, ref_energy) = {
-        let res = optimize::<Local, Mopac>(
-            &queue,
-            config.geometry.clone(),
-            Template::from(&config.template),
-            config.charge,
-        )
-        .expect("optimization failed in build_pts");
-        (Geom::Xyz(res.cart_geom.unwrap()), res.energy)
-    };
+    let geom = Molecule::from_str(
+        "
+C       0.0000000000   0.0000000000   0.0000000000
+C       1.4361996710   0.0000000000   0.0000000000
+C       0.7993316434   1.1932051034   0.0000000000
+H       2.3607105070  -0.5060383826   0.0000000000
+H       0.8934572640   2.2429362586  -0.0000000000",
+    )
+    .unwrap()
+    .atoms;
+    let ref_energy = 0.0;
 
-    let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
     // 3 * #atoms
     let n = 3 * geom.len();
     let nfc2 = n * n;
@@ -367,7 +360,6 @@ fn build_pts() {
     let mut mol = Molecule::new(geom.to_vec());
     mol.normalize();
     let pg = mol.point_group();
-    println!("normalized geometry:\n{mol}");
     let mut target_map = BigHash::new(mol.clone(), pg);
 
     let geoms = Cart.build_points(
