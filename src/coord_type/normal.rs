@@ -291,9 +291,33 @@ where
         // TODO have to split these run_* methods into a prep_* and run_* so I
         // can save the Resume between them
         let _ = std::fs::create_dir("freqs");
-        let (f3qcm, f4qcm) = if self.findiff {
-            self.run_findiff(&o, &s, pg, config, ref_energy, &tmpl, w, queue)
+        let ref_energy = if config.template != config.hybrid_template {
+            crate::ref_energy(
+                queue,
+                Geom::Xyz(s.geom.clone().atoms),
+                config.hybrid_template.clone().into(),
+                config.charge,
+            )
         } else {
+            ref_energy
+        };
+        let (f3qcm, f4qcm) = if self.findiff {
+            self.run_findiff(
+                &o,
+                &s,
+                pg,
+                config,
+                ref_energy,
+                &config.hybrid_template.clone().into(),
+                w,
+                queue,
+            )
+        } else {
+            if config.template != config.hybrid_template {
+                eprintln!(
+                    "hybrid_template not used for fitted normal coordinates"
+                );
+            }
             self.run_fitted(&o, &s, w, pg, config, tmpl, queue)
         };
         Intder::dump_fcs("freqs", &fc2, &f3qcm, &f4qcm);
