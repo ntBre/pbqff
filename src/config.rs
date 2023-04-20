@@ -33,6 +33,11 @@ struct RawConfig {
     /// the template to use for the quantum chemistry program
     template: String,
 
+    /// optional quantum chemistry program template to use for the cubic and
+    /// quartic force constants. only used for finite-difference normal
+    /// coordinate QFFs
+    hybrid_template: Option<String>,
+
     /// the template to use for the queuing system
     queue_template: Option<String>,
 
@@ -80,6 +85,7 @@ pub struct Config {
     pub step_size: f64,
     pub coord_type: CoordType,
     pub template: String,
+    pub hybrid_template: String,
     pub queue_template: Option<String>,
     pub program: Program,
     pub queue: Queue,
@@ -98,6 +104,9 @@ impl From<RawConfig> for Config {
             charge: rc.charge,
             step_size: rc.step_size,
             coord_type: rc.coord_type,
+            hybrid_template: rc
+                .hybrid_template
+                .unwrap_or_else(|| rc.template.clone()),
             template: rc.template,
             program: rc.program,
             sleep_int: rc.sleep_int,
@@ -184,6 +193,10 @@ HCC =               147.81488230
             findiff: false,
             check_int: 100,
             queue_template: None,
+            hybrid_template: String::from(
+                "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
+		 external=testfiles/params.dat",
+            ),
         };
         assert_eq!(got, want);
     }
