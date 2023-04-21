@@ -105,7 +105,7 @@ TEMPLATES = [MOLPRO_F12TZ]
 def make_radio_buttons(pairs, var, parent, **kwargs):
     frame = tk.Frame(parent)
     col = 0
-    for (text, value) in pairs:
+    for text, value in pairs:
         ttk.Radiobutton(frame, text=text, variable=var, value=value, **kwargs).grid(
             column=col, row=0, padx=5
         )
@@ -126,14 +126,14 @@ class Application(ttk.Frame):
             column=1, row=1, sticky=tk.W
         )
         self.geometry = tk.Text(self, width=80, height=10, undo=True)
-        self.geometry.grid(column=1, row=2, columnspan=2)
+        self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
 
         self.optimize = tk.BooleanVar()
         check = ttk.Checkbutton(
             self,
             text="does it need to be optimized?",
             variable=self.optimize,
-        ).grid(column=1, row=4, stick="W")
+        ).grid(column=1, row=4, sticky=tk.W)
 
         ttk.Label(self, text="Charge").grid(column=1, row=5, padx=10, sticky="E")
         self.charge = tk.IntVar()
@@ -182,13 +182,6 @@ class Application(ttk.Frame):
         )
         f.grid(column=2, row=16)
 
-        ttk.Label(self, text="enter your template input file:").grid(
-            column=1, sticky=tk.W
-        )
-        self.template = tk.Text(self, width=80, height=10, undo=True)
-        self.default_template()
-        self.template.grid(column=1, columnspan=3, sticky="W")
-
         l = ttk.Label(self, text="Queuing System")
         l.grid(column=1, sticky="E")
         row = l.grid_info()["row"]
@@ -196,11 +189,34 @@ class Application(ttk.Frame):
         f = make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], self.queue, self)
         f.grid(column=2, row=row)
 
+        ttk.Label(self, text="enter your template input file:").grid(
+            column=1, sticky=tk.W
+        )
+        self.template = tk.Text(self, width=80, height=10, undo=True)
+        self.default_template()
+        self.template.grid(column=1, columnspan=2, sticky="W")
+
+        self.is_hybrid = tk.BooleanVar()
+        butt = ttk.Checkbutton(
+            self,
+            text="do you want to use a hybrid method?",
+            variable=self.is_hybrid,
+            command=self.toggle_hybrid,
+        )
+        butt.grid(column=1, stick="W")
+        self.hybrid_label = ttk.Label(
+            self, text="enter your template input file for cubics and quartics:"
+        )
+        self.hybrid_row = butt.grid_info()["row"] + 1
+        self.hybrid_template = tk.Text(self, width=80, height=10, undo=True)
+
         ttk.Label(self, text="Generated filename").grid(
-            column=1, sticky="E", row=row + 3
+            column=1, sticky=tk.W, row=row + 13
         )
         self.infile = tk.StringVar(value="pbqff.toml")
-        ttk.Entry(self, textvariable=self.infile).grid(column=2, row=row + 3)
+        ttk.Entry(self, textvariable=self.infile).grid(
+            column=2, row=row + 13, sticky=tk.W
+        )
 
         frame = tk.Frame(self)
         button = ttk.Button(frame, text="Generate", command=self.generate)
@@ -244,6 +260,16 @@ class Application(ttk.Frame):
         "clear the template input box and fill with `new_value`"
         self.template.delete("1.0", "end")
         self.template.insert("1.0", new_value)
+
+    def toggle_hybrid(self):
+        if self.is_hybrid.get():
+            self.hybrid_label.grid(row=self.hybrid_row, column=1, sticky=tk.W)
+            self.hybrid_template.grid(
+                row=self.hybrid_row + 1, column=1, sticky=tk.W, columnspan=2
+            )
+        else:
+            self.hybrid_label.grid_remove()
+            self.hybrid_template.grid_remove()
 
     def generate(self):
         with open(self.infile.get(), "w") as out:
