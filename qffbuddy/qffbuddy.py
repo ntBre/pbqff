@@ -335,7 +335,7 @@ include a custom template.""",
         self.queue_template_label = ttk.Label(
             self.queue_template_panel, text="queue template:"
         )
-        self.queue_template_input = st.ScrolledText(
+        self.queue_template = st.ScrolledText(
             self.queue_template_panel, width=80, height=10, undo=True
         )
 
@@ -344,10 +344,10 @@ include a custom template.""",
     def toggle_queue_template(self):
         if self.show_queue_template.get():
             self.queue_template_label.grid(column=0, sticky=tk.W)
-            self.queue_template_input.grid(column=0, sticky=tk.W, columnspan=2)
+            self.queue_template.grid(column=0, sticky=tk.W, columnspan=2)
         else:
             self.queue_template_label.grid_remove()
-            self.queue_template_input.grid_remove()
+            self.queue_template.grid_remove()
 
     def template_input(self):
         ttk.Label(self.main_panel, text="enter your template input file:").grid(
@@ -392,6 +392,10 @@ include a custom template.""",
             self.template.delete("1.0", "end")
             self.template.insert("1.0", new_value)
 
+    def fill_queue_template(self, new_value):
+        self.queue_template.delete("1.0", "end")
+        self.queue_template.insert("1.0", new_value)
+
     def hybrid_input(self):
         self.is_hybrid = tk.BooleanVar()
         self.hybrid_panel = tk.Frame(self)
@@ -427,10 +431,7 @@ option is only supported for finite difference normal coordinate QFFs.""",
 
     def generate(self):
         with open(self.infile.get(), "w") as out:
-            if self.optimize.get():
-                opt = "true"
-            else:
-                opt = "false"
+            opt = str(self.optimize.get()).lower()
             out.write(
                 f"""geometry = \"\"\"
 {self.geometry.get('1.0', 'end').strip()}
@@ -442,12 +443,25 @@ sleep_int = {self.sleep_int.get()}
 job_limit = {self.job_limit.get()}
 chunk_size = {self.chunk_size.get()}
 coord_type = \"{self.coord_type.get()}\"
+findiff = {str(self.findiff.get()).lower()}
 template = \"\"\"{self.template.get("1.0", "end").strip()}\"\"\"
 program = \"{self.program.get()}\"
 queue = \"{self.queue.get()}\"
 check_int = {self.check_int.get()}
 """
             )
+            if self.show_queue_template.get():
+                out.write(
+                    f"""
+queue_template = \"\"\"{self.queue_template.get("1.0", "end")}\"\"\"
+"""
+                )
+            if self.is_hybrid.get():
+                out.write(
+                    f"""
+hybrid_template = \"\"\"{self.hybrid_template.get("1.0", "end")}\"\"\"
+"""
+                )
 
 
 class MenuBar(tk.Menu):
@@ -559,6 +573,10 @@ class MenuBar(tk.Menu):
         app.job_limit.set(d["job_limit"])
         app.chunk_size.set(d["chunk_size"])
         app.fill_template(d["template"])
+        if d["hybrid_template"] != "":
+            app.fill_template(d["hybrid_template"], hybrid=True)
+        if d["queue_template"] != "":
+            app.fill_queue_template(d["queue_template"])
 
 
 if __name__ == "__main__":
