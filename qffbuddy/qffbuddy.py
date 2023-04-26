@@ -153,27 +153,32 @@ class Application(ttk.Frame):
 
         self.hybrid_panel.grid(column=1, sticky=tk.W)
 
-        lower_panel = tk.Frame(self)
-        ttk.Label(lower_panel, text="Generated filename").grid(
+        self.build_lower_panel(row)
+
+        self.lower_panel.grid(column=1)
+
+    def build_lower_panel(self, row):
+        """build the lower panel of the main interface, including the
+        generated filename input andthe final buttons"""
+        self.lower_panel = tk.Frame(self)
+        ttk.Label(self.lower_panel, text="Generated filename").grid(
             column=0, sticky=tk.W, row=row + 13
         )
         self.infile = tk.StringVar(value="pbqff.toml")
-        ttk.Entry(lower_panel, textvariable=self.infile).grid(
+        ttk.Entry(self.lower_panel, textvariable=self.infile).grid(
             column=2, row=row + 13, sticky=tk.W
         )
-        frame = tk.Frame(lower_panel)
+        frame = tk.Frame(self.lower_panel)
         button = ttk.Button(frame, text="Generate", command=self.generate)
         button.grid(column=0, row=0, sticky="E", padx=5)
 
         button = ttk.Button(frame, text="Run", command=self.run)
         button.grid(column=1, row=0, padx=5)
 
-        button = ttk.Button(frame, text="Exit", command=parent.destroy)
+        button = ttk.Button(frame, text="Exit", command=self.parent.destroy)
         button.grid(column=2, row=0, sticky="W", padx=5)
 
         frame.grid(column=2, pady=10, sticky="W")
-
-        lower_panel.grid(column=1)
 
     def step_size_input(self):
         ttk.Label(self.main_panel, text="Step size in Å").grid(
