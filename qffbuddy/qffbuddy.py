@@ -122,66 +122,46 @@ class Application(ttk.Frame):
         parent.columnconfigure(0, weight=1)
         parent.rowconfigure(0, weight=1)
         self.parent = parent
+        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+        self.main_panel = tk.Frame(self)
+        self.main_panel.grid(column=1)
 
         self.geometry_input()
 
-        self.optimize = tk.BooleanVar()
-        check = ttk.Checkbutton(
-            self,
-            text="does it need to be optimized?",
-            variable=self.optimize,
-        ).grid(column=1, row=4, sticky=tk.W)
+        self.optimize_prompt()
 
-        ttk.Label(self, text="Charge").grid(column=1, row=5, padx=10, sticky="E")
-        self.charge = tk.IntVar()
-        name = ttk.Entry(self, textvariable=self.charge).grid(
-            column=2,
-            row=5,
-        )
+        self.charge_input()
 
-        ttk.Label(self, text="Step size in Å").grid(column=1, row=7, sticky="E")
-        self.step_size = tk.DoubleVar(value=0.005)
-        name = ttk.Entry(self, textvariable=self.step_size).grid(column=2, row=7)
+        self.step_size_input()
+        self.sleep_int_input()
+        self.job_limit_input()
+        self.chunk_size_input()
+        self.check_int_input()
 
-        ttk.Label(self, text="Sleep interval in sec").grid(column=1, row=9, sticky="E")
-        self.sleep_int = tk.IntVar(value=2)
-        ttk.Entry(self, textvariable=self.sleep_int).grid(column=2, row=9)
+        self.coord_type_input()
 
-        ttk.Label(self, text="Max jobs to submit at once").grid(
-            column=1, row=11, sticky="E"
-        )
-        self.job_limit = tk.IntVar(value=1024)
-        ttk.Entry(self, textvariable=self.job_limit).grid(column=2, row=11)
+        self.program_input()
 
-        ttk.Label(self, text="Jobs per chunk").grid(column=1, row=13, sticky="E")
-        self.chunk_size = tk.IntVar(value=1)
-        name = ttk.Entry(self, textvariable=self.chunk_size).grid(column=2, row=13)
+        row = self.queue_input()
 
-        ttk.Label(self, text="Checkpoint interval (0 to disable)").grid(
-            column=1, row=14, stick="E"
-        )
-        self.check_int = tk.IntVar(value=100)
-        ttk.Entry(self, textvariable=self.check_int).grid(column=2, row=14)
-
-        self.coord_select()
-
-        self.chem_prog()
-
-        row = self.queue_system()
+        self.queue_template_panel.grid(column=1, sticky=tk.W)
 
         self.template_input()
 
         self.hybrid_input()
 
-        ttk.Label(self, text="Generated filename").grid(
-            column=1, sticky=tk.W, row=row + 13
+        self.hybrid_panel.grid(column=1, sticky=tk.W)
+
+        lower_panel = tk.Frame(self)
+        ttk.Label(lower_panel, text="Generated filename").grid(
+            column=0, sticky=tk.W, row=row + 13
         )
         self.infile = tk.StringVar(value="pbqff.toml")
-        ttk.Entry(self, textvariable=self.infile).grid(
+        ttk.Entry(lower_panel, textvariable=self.infile).grid(
             column=2, row=row + 13, sticky=tk.W
         )
-
-        frame = tk.Frame(self)
+        frame = tk.Frame(lower_panel)
         button = ttk.Button(frame, text="Generate", command=self.generate)
         button.grid(column=0, row=0, sticky="E", padx=5)
 
@@ -193,17 +173,75 @@ class Application(ttk.Frame):
 
         frame.grid(column=2, pady=10, sticky="W")
 
+        lower_panel.grid(column=1)
+
+    def step_size_input(self):
+        ttk.Label(self.main_panel, text="Step size in Å").grid(
+            column=1, row=7, sticky="E"
+        )
+        self.step_size = tk.DoubleVar(value=0.005)
+        name = ttk.Entry(self.main_panel, textvariable=self.step_size).grid(
+            column=2, row=7
+        )
+
+    def sleep_int_input(self):
+        ttk.Label(self.main_panel, text="Sleep interval in sec").grid(
+            column=1, row=9, sticky="E"
+        )
+        self.sleep_int = tk.IntVar(value=2)
+        ttk.Entry(self.main_panel, textvariable=self.sleep_int).grid(column=2, row=9)
+
+    def job_limit_input(self):
+        ttk.Label(self.main_panel, text="Max jobs to submit at once").grid(
+            column=1, row=11, sticky="E"
+        )
+        self.job_limit = tk.IntVar(value=1024)
+        ttk.Entry(self.main_panel, textvariable=self.job_limit).grid(column=2, row=11)
+
+    def chunk_size_input(self):
+        ttk.Label(self.main_panel, text="Jobs per chunk").grid(
+            column=1, row=13, sticky="E"
+        )
+        self.chunk_size = tk.IntVar(value=1)
+        name = ttk.Entry(self.main_panel, textvariable=self.chunk_size).grid(
+            column=2, row=13
+        )
+
+    def check_int_input(self):
+        ttk.Label(self.main_panel, text="Checkpoint interval (0 to disable)").grid(
+            column=1, row=14, stick="E"
+        )
+        self.check_int = tk.IntVar(value=100)
+        ttk.Entry(self.main_panel, textvariable=self.check_int).grid(column=2, row=14)
+
+    def charge_input(self):
+        ttk.Label(self.main_panel, text="Charge").grid(
+            column=1, row=5, padx=10, sticky="E"
+        )
+        self.charge = tk.IntVar()
+        name = ttk.Entry(self.main_panel, textvariable=self.charge).grid(
+            column=2,
+            row=5,
+        )
+
+    def optimize_prompt(self):
+        self.optimize = tk.BooleanVar()
+        check = ttk.Checkbutton(
+            self.main_panel,
+            text="does it need to be optimized?",
+            variable=self.optimize,
+        ).grid(column=1, row=4, sticky=tk.W)
+
     def geometry_input(self):
-        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        ttk.Label(self, text="enter your geometry in Å:").grid(
+        ttk.Label(self.main_panel, text="enter your geometry in Å:").grid(
             column=1, row=1, sticky=tk.W
         )
-        self.geometry = st.ScrolledText(self, width=80, height=10, undo=True)
+        self.geometry = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
         self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
 
-    def coord_select(self):
+    def coord_type_input(self):
         "select the type of coordinates to use for the QFF"
-        label = ttk.Label(self, text="Coordinate type")
+        label = ttk.Label(self.main_panel, text="Coordinate type")
         label.grid(column=1, sticky="E")
         Hovertip(
             label,
@@ -218,61 +256,65 @@ fitting is always used for SICs. An additional checkbox will appear to toggle
 between these for Normals.""",
         )
         self.coord_type = tk.StringVar(value="sic")
-        frame = make_radio_buttons(
+        self.findiff_frame = make_radio_buttons(
             [("SIC", "sic"), ("Cartesian", "cart"), ("Normal", "normal")],
             self.coord_type,
-            self,
+            self.main_panel,
             command=self.toggle_normal,
         )
         self.findiff = tk.BooleanVar(value=False)
+        self.findiff_button = ttk.Checkbutton(
+            self.findiff_frame,
+            text="finite differences?",
+            variable=self.findiff,
+        )
+        Hovertip(
+            self.findiff_button,
+            "Compute the force constants directly with finite differences \
+instead of performing a fitting with ANPASS",
+        )
 
-        frame.grid(column=2, row=15)
+        self.findiff_frame.grid(column=2, row=15)
 
     def toggle_normal(self):
         "check if `self.coord_type` is normal and hide/show the findiff prompt accordingly"
         if self.coord_type.get() == "normal":
-            self.findiff_button = ttk.Checkbutton(
-                self,
-                text="finite differences?",
-                variable=self.findiff,
-            )
-            Hovertip(
-                self.findiff_button,
-                "Compute the force constants directly with finite differences \
-instead of performing a fitting with ANPASS",
-            )
-            self.findiff_button.grid(row=15, column=3, sticky=tk.W)
+            self.findiff_button.grid(row=0, column=4, sticky=tk.W)
         else:
             self.findiff.set(False)
             self.findiff_button.grid_remove()
 
-    def chem_prog(self, column=2, row=16):
+    def program_input(self, column=2, row=16):
         "select the chemistry program to use"
-        ttk.Label(self, text="Chemistry program").grid(column=1, sticky="E")
+        ttk.Label(self.main_panel, text="Chemistry program").grid(column=1, sticky="E")
         self.program = tk.StringVar(value="molpro")
         f = make_radio_buttons(
             [("Molpro", "molpro"), ("Mopac", "mopac")],
             self.program,
-            self,
+            self.main_panel,
             command=self.default_template,
         )
         f.grid(column=column, row=row)
 
-    def queue_system(self):
+    def queue_input(self):
         "select the queuing system to use"
-        l = ttk.Label(self, text="Queuing System")
+        l = ttk.Label(self.main_panel, text="Queuing System")
         l.grid(column=1, sticky="E")
         row = l.grid_info()["row"]
         self.queue = tk.StringVar(value="pbs")
         f = make_radio_buttons(
-            [("PBS", "pbs"), ("Slurm", "slurm"), ("Local", "local")], self.queue, self
+            [("PBS", "pbs"), ("Slurm", "slurm"), ("Local", "local")],
+            self.queue,
+            self.main_panel,
         )
         f.grid(column=2, row=row)
 
+        self.queue_template_panel = tk.Frame(self)
+
         self.show_queue_template = tk.BooleanVar(value=False)
         b = ttk.Checkbutton(
-            self,
-            text="custom template?",
+            self.queue_template_panel,
+            text="custom queue template?",
             variable=self.show_queue_template,
             command=self.toggle_queue_template,
         )
@@ -281,18 +323,30 @@ instead of performing a fitting with ANPASS",
             """pbqff includes default templates for the supported queue types, but you can also
 include a custom template.""",
         )
-        b.grid(column=3, row=row)
+        b.grid(column=0, sticky=tk.W)
+
+        self.queue_template_label = ttk.Label(
+            self.queue_template_panel, text="queue template:"
+        )
+        self.queue_template_input = st.ScrolledText(
+            self.queue_template_panel, width=80, height=10, undo=True
+        )
 
         return row
 
     def toggle_queue_template(self):
-        return
+        if self.show_queue_template.get():
+            self.queue_template_label.grid(column=0, sticky=tk.W)
+            self.queue_template_input.grid(column=0, sticky=tk.W, columnspan=2)
+        else:
+            self.queue_template_label.grid_remove()
+            self.queue_template_input.grid_remove()
 
     def template_input(self):
-        ttk.Label(self, text="enter your template input file:").grid(
+        ttk.Label(self.main_panel, text="enter your template input file:").grid(
             column=1, sticky=tk.W
         )
-        self.template = st.ScrolledText(self, width=80, height=10, undo=True)
+        self.template = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
         self.default_template()
         self.template.grid(column=1, columnspan=2, sticky="W")
 
@@ -333,13 +387,14 @@ include a custom template.""",
 
     def hybrid_input(self):
         self.is_hybrid = tk.BooleanVar()
+        self.hybrid_panel = tk.Frame(self)
         butt = ttk.Checkbutton(
-            self,
+            self.hybrid_panel,
             text="do you want to use a hybrid method?",
             variable=self.is_hybrid,
             command=self.toggle_hybrid,
         )
-        butt.grid(column=1, stick="W")
+        butt.grid(column=1, sticky=tk.W)
         Hovertip(
             butt,
             """Use the main template input file above for the harmonic force constants and a
@@ -347,17 +402,18 @@ different template for the cubic and quartic force constants. Currently this
 option is only supported for finite difference normal coordinate QFFs.""",
         )
         self.hybrid_label = ttk.Label(
-            self, text="enter your template input file for cubics and quartics:"
+            self.hybrid_panel,
+            text="enter your template input file for cubics and quartics:",
         )
         self.hybrid_row = butt.grid_info()["row"] + 1
-        self.hybrid_template = st.ScrolledText(self, width=80, height=10, undo=True)
+        self.hybrid_template = st.ScrolledText(
+            self.hybrid_panel, width=80, height=10, undo=True
+        )
 
     def toggle_hybrid(self):
         if self.is_hybrid.get():
-            self.hybrid_label.grid(row=self.hybrid_row, column=1, sticky=tk.W)
-            self.hybrid_template.grid(
-                row=self.hybrid_row + 1, column=1, sticky=tk.W, columnspan=2
-            )
+            self.hybrid_label.grid(column=1, sticky=tk.W)
+            self.hybrid_template.grid(column=1, sticky=tk.W, columnspan=2)
         else:
             self.hybrid_label.grid_remove()
             self.hybrid_template.grid_remove()
@@ -403,13 +459,14 @@ class MenuBar(tk.Menu):
 
         self.main_templates = tk.Menu(self.menu_templates)
         self.menu_templates.add_cascade(menu=self.main_templates, label="Main")
-
         self.build_template_menus(self.main_templates)
 
         self.hybrid_templates = tk.Menu(self.menu_templates)
         self.menu_templates.add_cascade(menu=self.hybrid_templates, label="Hybrid")
-
         self.build_template_menus(self.hybrid_templates, hybrid=True)
+
+        self.queue_templates = tk.Menu(self.menu_templates)
+        self.menu_templates.add_cascade(menu=self.queue_templates, label="Queue")
 
     def build_template_menus(self, menu_var, hybrid=False):
         menu_var.add_command(
