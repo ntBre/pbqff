@@ -116,16 +116,18 @@ def make_radio_buttons(pairs, var, parent, **kwargs):
 
 
 class Application(ttk.Frame):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, root, *args, **kwargs):
         ttk.Frame.__init__(self, parent, *args, **kwargs)
-        parent.title("qffbuddy")
-        parent.columnconfigure(0, weight=1)
-        parent.rowconfigure(0, weight=1)
+        self.root = root
+        self.root.title("qffbuddy")
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(0, weight=1)
         self.parent = parent
-        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+
+        self.grid(column=0, row=0, sticky=(tk.N, tk.W))
 
         self.main_panel = tk.Frame(self)
-        self.main_panel.grid(column=1)
+        self.main_panel.grid(column=1, sticky="nw")
 
         self.geometry_input()
 
@@ -175,7 +177,7 @@ class Application(ttk.Frame):
         button = ttk.Button(frame, text="Run", command=self.run)
         button.grid(column=1, row=0, padx=5)
 
-        button = ttk.Button(frame, text="Exit", command=self.parent.destroy)
+        button = ttk.Button(frame, text="Exit", command=self.root.destroy)
         button.grid(column=2, row=0, sticky="W", padx=5)
 
         frame.grid(column=2, pady=10, sticky="W")
@@ -365,7 +367,7 @@ include a custom template.""",
         if res:
             self.generate()
             os.system(f"{args.pbqff} -t 8 -o {self.infile.get()} & disown -h")
-            self.parent.destroy()
+            self.root.destroy()
 
     def default_template(self):
         self.template.delete("1.0", "end")
@@ -562,7 +564,22 @@ class MenuBar(tk.Menu):
 if __name__ == "__main__":
     root = tk.Tk()
     root.option_add("*tearOff", tk.FALSE)
-    app = Application(root, padding="3 3 12 12")
+    # from https://stackoverflow.com/a/3092341/12935407
+    canvas = tk.Canvas(root)
+    app = Application(canvas, root, padding="3 3 12 12")
+    vsb = tk.Scrollbar(root, orient="vertical", command=canvas.yview)
+    canvas.configure(yscrollcommand=vsb.set)
+
+    vsb.pack(side="right", fill="y")
+    canvas.pack(side="left", fill="both", expand=True)
+    canvas.create_window((0, 0), window=app, anchor="nw")
+
+    app.bind(
+        "<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all"))
+    )
+    canvas.bind("<Button-4>", lambda event: canvas.yview_scroll(-1, "units"))
+    canvas.bind("<Button-5>", lambda event: canvas.yview_scroll(1, "units"))
+
     menu = MenuBar(root)
     if args.infile is not None:
         menu.parse_infile(args.infile)
