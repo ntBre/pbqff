@@ -573,10 +573,14 @@ class MenuBar(tk.Menu):
         app.job_limit.set(d["job_limit"])
         app.chunk_size.set(d["chunk_size"])
         app.fill_template(d["template"])
-        if d["hybrid_template"] != "":
-            app.fill_template(d["hybrid_template"], hybrid=True)
-        if d["queue_template"] != "":
-            app.fill_queue_template(d["queue_template"])
+
+        it = d["hybrid_template"]
+        if it is not None and it != "":
+            app.fill_template(it, hybrid=True)
+
+        it = d["queue_template"]
+        if it is not None and it != "":
+            app.fill_queue_template(it)
 
 
 if __name__ == "__main__":
