@@ -9,6 +9,8 @@ import io
 import re
 import os
 import tkinter.messagebox as msg
+import tkinter.scrolledtext as st
+from idlelib.tooltip import Hovertip
 
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
@@ -121,12 +123,7 @@ class Application(ttk.Frame):
         parent.rowconfigure(0, weight=1)
         self.parent = parent
 
-        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
-        ttk.Label(self, text="enter your geometry in Å:").grid(
-            column=1, row=1, sticky=tk.W
-        )
-        self.geometry = tk.Text(self, width=80, height=10, undo=True)
-        self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
+        self.geometry_input()
 
         self.optimize = tk.BooleanVar()
         check = ttk.Checkbutton(
@@ -166,49 +163,15 @@ class Application(ttk.Frame):
         self.check_int = tk.IntVar(value=100)
         ttk.Entry(self, textvariable=self.check_int).grid(column=2, row=14)
 
-        ttk.Label(self, text="Coordinate type").grid(column=1, sticky="E")
-        choices = [("sic", "sic"), ("cart", "cart"), ("normal", "normal")]
-        self.coord_type = tk.StringVar(value="sic")
-        f = make_radio_buttons(choices, self.coord_type, self)
-        f.grid(column=2, row=15)
+        self.coord_select()
 
-        ttk.Label(self, text="Chemistry program").grid(column=1, sticky="E")
-        self.program = tk.StringVar(value="molpro")
-        f = make_radio_buttons(
-            [("Molpro", "molpro"), ("Mopac", "mopac")],
-            self.program,
-            self,
-            command=self.default_template,
-        )
-        f.grid(column=2, row=16)
+        self.chem_prog()
 
-        l = ttk.Label(self, text="Queuing System")
-        l.grid(column=1, sticky="E")
-        row = l.grid_info()["row"]
-        self.queue = tk.StringVar(value="pbs")
-        f = make_radio_buttons([("PBS", "pbs"), ("Slurm", "slurm")], self.queue, self)
-        f.grid(column=2, row=row)
+        row = self.queue_system()
 
-        ttk.Label(self, text="enter your template input file:").grid(
-            column=1, sticky=tk.W
-        )
-        self.template = tk.Text(self, width=80, height=10, undo=True)
-        self.default_template()
-        self.template.grid(column=1, columnspan=2, sticky="W")
+        self.template_input()
 
-        self.is_hybrid = tk.BooleanVar()
-        butt = ttk.Checkbutton(
-            self,
-            text="do you want to use a hybrid method?",
-            variable=self.is_hybrid,
-            command=self.toggle_hybrid,
-        )
-        butt.grid(column=1, stick="W")
-        self.hybrid_label = ttk.Label(
-            self, text="enter your template input file for cubics and quartics:"
-        )
-        self.hybrid_row = butt.grid_info()["row"] + 1
-        self.hybrid_template = tk.Text(self, width=80, height=10, undo=True)
+        self.hybrid_input()
 
         ttk.Label(self, text="Generated filename").grid(
             column=1, sticky=tk.W, row=row + 13
@@ -229,6 +192,109 @@ class Application(ttk.Frame):
         button.grid(column=2, row=0, sticky="W", padx=5)
 
         frame.grid(column=2, pady=10, sticky="W")
+
+    def geometry_input(self):
+        self.grid(column=0, row=0, sticky=(tk.N, tk.W, tk.E, tk.S))
+        ttk.Label(self, text="enter your geometry in Å:").grid(
+            column=1, row=1, sticky=tk.W
+        )
+        self.geometry = st.ScrolledText(self, width=80, height=10, undo=True)
+        self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
+
+    def coord_select(self):
+        "select the type of coordinates to use for the QFF"
+        label = ttk.Label(self, text="Coordinate type")
+        label.grid(column=1, sticky="E")
+        Hovertip(
+            label,
+            """The coordinate system to use for the QFF. SIC requires a template INTDER input
+file named 'intder.in' in the current directory to specify the internal
+coordinates. Cartesian displaces directly along the x, y, and z axes. Normal
+uses a Cartesian HFF to generate normal coordinates and uses those for the rest
+of the QFF.
+
+Currently, finite differences are always used for Cartesians, and an ANPASS
+fitting is always used for SICs. An additional checkbox will appear to toggle
+between these for Normals.""",
+        )
+        self.coord_type = tk.StringVar(value="sic")
+        frame = make_radio_buttons(
+            [("SIC", "sic"), ("Cartesian", "cart"), ("Normal", "normal")],
+            self.coord_type,
+            self,
+            command=self.toggle_normal,
+        )
+        self.findiff = tk.BooleanVar(value=False)
+
+        frame.grid(column=2, row=15)
+
+    def toggle_normal(self):
+        "check if `self.coord_type` is normal and hide/show the findiff prompt accordingly"
+        if self.coord_type.get() == "normal":
+            self.findiff_button = ttk.Checkbutton(
+                self,
+                text="finite differences?",
+                variable=self.findiff,
+            )
+            Hovertip(
+                self.findiff_button,
+                "Compute the force constants directly with finite differences \
+instead of performing a fitting with ANPASS",
+            )
+            self.findiff_button.grid(row=15, column=3, sticky=tk.W)
+        else:
+            self.findiff.set(False)
+            self.findiff_button.grid_remove()
+
+    def chem_prog(self, column=2, row=16):
+        "select the chemistry program to use"
+        ttk.Label(self, text="Chemistry program").grid(column=1, sticky="E")
+        self.program = tk.StringVar(value="molpro")
+        f = make_radio_buttons(
+            [("Molpro", "molpro"), ("Mopac", "mopac")],
+            self.program,
+            self,
+            command=self.default_template,
+        )
+        f.grid(column=column, row=row)
+
+    def queue_system(self):
+        "select the queuing system to use"
+        l = ttk.Label(self, text="Queuing System")
+        l.grid(column=1, sticky="E")
+        row = l.grid_info()["row"]
+        self.queue = tk.StringVar(value="pbs")
+        f = make_radio_buttons(
+            [("PBS", "pbs"), ("Slurm", "slurm"), ("Local", "local")], self.queue, self
+        )
+        f.grid(column=2, row=row)
+
+        self.show_queue_template = tk.BooleanVar(value=False)
+        b = ttk.Checkbutton(
+            self,
+            text="custom template?",
+            variable=self.show_queue_template,
+            command=self.toggle_queue_template,
+        )
+        Hovertip(
+            b,
+            """pbqff includes default templates for the supported queue types, but you can also
+include a custom template.""",
+        )
+        b.grid(column=3, row=row)
+
+        return row
+
+    def toggle_queue_template(self):
+        return
+
+    def template_input(self):
+        ttk.Label(self, text="enter your template input file:").grid(
+            column=1, sticky=tk.W
+        )
+        self.template = st.ScrolledText(self, width=80, height=10, undo=True)
+        self.default_template()
+        self.template.grid(column=1, columnspan=2, sticky="W")
 
     def run(self):
         "run pbqff with the current input file"
@@ -256,10 +322,35 @@ class Application(ttk.Frame):
         self.geometry.delete("1.0", "end")
         self.geometry.insert("1.0", new_value)
 
-    def fill_template(self, new_value):
+    def fill_template(self, new_value, hybrid=False):
         "clear the template input box and fill with `new_value`"
-        self.template.delete("1.0", "end")
-        self.template.insert("1.0", new_value)
+        if hybrid:
+            self.hybrid_template.delete("1.0", "end")
+            self.hybrid_template.insert("1.0", new_value)
+        else:
+            self.template.delete("1.0", "end")
+            self.template.insert("1.0", new_value)
+
+    def hybrid_input(self):
+        self.is_hybrid = tk.BooleanVar()
+        butt = ttk.Checkbutton(
+            self,
+            text="do you want to use a hybrid method?",
+            variable=self.is_hybrid,
+            command=self.toggle_hybrid,
+        )
+        butt.grid(column=1, stick="W")
+        Hovertip(
+            butt,
+            """Use the main template input file above for the harmonic force constants and a
+different template for the cubic and quartic force constants. Currently this
+option is only supported for finite difference normal coordinate QFFs.""",
+        )
+        self.hybrid_label = ttk.Label(
+            self, text="enter your template input file for cubics and quartics:"
+        )
+        self.hybrid_row = butt.grid_info()["row"] + 1
+        self.hybrid_template = st.ScrolledText(self, width=80, height=10, undo=True)
 
     def toggle_hybrid(self):
         if self.is_hybrid.get():
@@ -309,19 +400,34 @@ class MenuBar(tk.Menu):
 
         self.menu_templates = tk.Menu(self)
         self.add_cascade(menu=self.menu_templates, label="Templates")
-        self.menu_templates.add_command(
+
+        self.main_templates = tk.Menu(self.menu_templates)
+        self.menu_templates.add_cascade(menu=self.main_templates, label="Main")
+
+        self.build_template_menus(self.main_templates)
+
+        self.hybrid_templates = tk.Menu(self.menu_templates)
+        self.menu_templates.add_cascade(menu=self.hybrid_templates, label="Hybrid")
+
+        self.build_template_menus(self.hybrid_templates, hybrid=True)
+
+    def build_template_menus(self, menu_var, hybrid=False):
+        menu_var.add_command(
             label="F12-DZ",
-            command=lambda: app.fill_template(MOLPRO_F12TZ.replace("TZ", "DZ")),
+            command=lambda: app.fill_template(MOLPRO_F12TZ.replace("TZ", "DZ"), hybrid),
         )
-        self.menu_templates.add_command(
-            label="F12-TZ", command=lambda: app.fill_template(MOLPRO_F12TZ)
+        menu_var.add_command(
+            label="F12-TZ", command=lambda: app.fill_template(MOLPRO_F12TZ, hybrid)
         )
-        self.menu_templates.add_command(
+        menu_var.add_command(
             label="F12-DZ-cCR",
-            command=lambda: app.fill_template(MOLPRO_F12TZCCR.replace("TZ", "DZ")),
+            command=lambda: app.fill_template(
+                MOLPRO_F12TZCCR.replace("TZ", "DZ"), hybrid
+            ),
         )
-        self.menu_templates.add_command(
-            label="F12-TZ-cCR", command=lambda: app.fill_template(MOLPRO_F12TZCCR)
+        menu_var.add_command(
+            label="F12-TZ-cCR",
+            command=lambda: app.fill_template(MOLPRO_F12TZCCR, hybrid),
         )
 
     def import_geom(self):
