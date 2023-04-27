@@ -183,50 +183,56 @@ class Application(ttk.Frame):
         frame.grid(column=2, pady=10, sticky="W")
 
     def step_size_input(self):
-        ttk.Label(self.main_panel, text="Step size in Å").grid(
-            column=1, row=7, sticky="E"
-        )
+        l = ttk.Label(self.main_panel, text="Step size in Å")
+        l.grid(column=1, row=7, sticky="E")
+        Hovertip(l, """Displacement size to use in the QFF""")
         self.step_size = tk.DoubleVar(value=0.005)
         name = ttk.Entry(self.main_panel, textvariable=self.step_size).grid(
             column=2, row=7
         )
 
     def sleep_int_input(self):
-        ttk.Label(self.main_panel, text="Sleep interval in sec").grid(
-            column=1, row=9, sticky="E"
-        )
+        l = ttk.Label(self.main_panel, text="Sleep interval in sec")
+        l.grid(column=1, row=9, sticky="E")
+        Hovertip(l, "pbqff will wait this long before polling the running jobs again")
         self.sleep_int = tk.IntVar(value=2)
         ttk.Entry(self.main_panel, textvariable=self.sleep_int).grid(column=2, row=9)
 
     def job_limit_input(self):
-        ttk.Label(self.main_panel, text="Max jobs to submit at once").grid(
-            column=1, row=11, sticky="E"
+        l = ttk.Label(self.main_panel, text="Max jobs to submit at once")
+        l.grid(column=1, row=11, sticky="E")
+        Hovertip(
+            l,
+            """The maximum number of jobs to submit at one time. "Jobs" here refers to pbqff
+jobs, not queue system jobs. The number of queued jobs will be job_limit
+(this value) divided by chunk_size (Jobs per chunk).""",
         )
         self.job_limit = tk.IntVar(value=1024)
         ttk.Entry(self.main_panel, textvariable=self.job_limit).grid(column=2, row=11)
 
     def chunk_size_input(self):
-        ttk.Label(self.main_panel, text="Jobs per chunk").grid(
-            column=1, row=13, sticky="E"
-        )
+        l = ttk.Label(self.main_panel, text="Jobs per chunk")
+        l.grid(column=1, row=13, sticky="E")
+        Hovertip(l, "The number of pbqff jobs to group into a single queue submission")
         self.chunk_size = tk.IntVar(value=1)
         name = ttk.Entry(self.main_panel, textvariable=self.chunk_size).grid(
             column=2, row=13
         )
 
     def check_int_input(self):
-        ttk.Label(self.main_panel, text="Checkpoint interval (0 to disable)").grid(
-            column=1, row=14, stick="E"
-        )
+        l = ttk.Label(self.main_panel, text="Checkpoint interval (0 to disable)")
+        l.grid(column=1, row=14, stick="E")
+        Hovertip(l, "The number of polling cycles between checkpoints")
         self.check_int = tk.IntVar(value=100)
         ttk.Entry(self.main_panel, textvariable=self.check_int).grid(column=2, row=14)
 
     def charge_input(self):
-        ttk.Label(self.main_panel, text="Charge").grid(
-            column=1, row=5, padx=10, sticky="E"
-        )
+        l = ttk.Label(self.main_panel, text="Charge")
+        Hovertip(l, """Molecular charge""")
+        l.grid(column=1, row=5, padx=10, sticky="E")
         self.charge = tk.IntVar()
-        name = ttk.Entry(self.main_panel, textvariable=self.charge).grid(
+        c = ttk.Entry(self.main_panel, textvariable=self.charge)
+        c.grid(
             column=2,
             row=5,
         )
@@ -237,11 +243,21 @@ class Application(ttk.Frame):
             self.main_panel,
             text="does it need to be optimized?",
             variable=self.optimize,
-        ).grid(column=1, row=4, sticky=tk.W)
+        )
+        check.grid(column=1, row=4, sticky=tk.W)
+        Hovertip(
+            check,
+            """If checked, pbqff will optimize the geometry in the selected quantum chemistry
+program.""",
+        )
 
     def geometry_input(self):
-        ttk.Label(self.main_panel, text="enter your geometry in Å:").grid(
-            column=1, row=1, sticky=tk.W
+        l = ttk.Label(self.main_panel, text="enter your geometry in Å:")
+        l.grid(column=1, row=1, sticky=tk.W)
+        Hovertip(
+            l,
+            """Input your molecular geometry in a format recognized by your quantum chemistry
+program of choice. pbqff recognizes Z-matrices and XYZ geometries in general.""",
         )
         self.geometry = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
         self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
@@ -301,7 +317,13 @@ instead of performing a fitting with ANPASS",
 
     def program_input(self, column=2, row=16):
         "select the chemistry program to use"
-        ttk.Label(self.main_panel, text="Chemistry program").grid(column=1, sticky="E")
+        l = ttk.Label(self.main_panel, text="Chemistry program")
+        l.grid(column=1, sticky="E")
+        Hovertip(
+            l,
+            """The chemistry program to use for geometry optimizations and single-point energy
+computations""",
+        )
         self.program = tk.StringVar(value="molpro")
         f = make_radio_buttons(
             [("Molpro", "molpro"), ("Mopac", "mopac")],
@@ -314,6 +336,12 @@ instead of performing a fitting with ANPASS",
     def queue_input(self):
         "select the queuing system to use"
         l = ttk.Label(self.main_panel, text="Queuing System")
+        Hovertip(
+            l,
+            """The queuing system to use. PBS and Slurm will submit jobs to the corresponding
+queues and monitor them using the qstat and squeue utilities. A Local queue will
+run jobs directly on the current computer using the bash shell as a mock queue.""",
+        )
         l.grid(column=1, sticky="E")
         row = l.grid_info()["row"]
         self.queue = tk.StringVar(value="pbs")
@@ -358,8 +386,15 @@ include a custom template.""",
             self.queue_template.grid_remove()
 
     def template_input(self):
-        ttk.Label(self.main_panel, text="enter your template input file:").grid(
-            column=1, sticky=tk.W
+        l = ttk.Label(self.main_panel, text="enter your template input file:")
+        l.grid(column=1, sticky=tk.W)
+        Hovertip(
+            l,
+            """The template input file for the quantum chemistry program of choice. Some
+programs support special string substitutions. Molpro, for example, supports
+{{.geom}} replacement for the geometry and {{.charge}} for the molecular charge.
+Mopac expects the full template to be given here, verbatim. See the Templates
+menu for some examples.""",
         )
         self.template = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
         self.default_template()
