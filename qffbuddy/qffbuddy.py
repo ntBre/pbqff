@@ -283,6 +283,14 @@ instead of performing a fitting with ANPASS",
 
         self.findiff_frame.grid(column=2, row=15)
 
+    def set_findiff(self, value):
+        "set `self.findiff` to `value` and update the display accordingly"
+        self.findiff.set(value)
+        if value:
+            self.findiff_button.grid(row=0, column=4, sticky=tk.W)
+        else:
+            self.findiff_button.grid_remove()
+
     def toggle_normal(self):
         "check if `self.coord_type` is normal and hide/show the findiff prompt accordingly"
         if self.coord_type.get() == "normal":
@@ -574,12 +582,19 @@ class MenuBar(tk.Menu):
         app.chunk_size.set(d["chunk_size"])
         app.fill_template(d["template"])
 
+        app.set_findiff(d["findiff"] is not None and d["findiff"])
+        app.toggle_normal()
+
         it = d["hybrid_template"]
         if it is not None and it != "":
+            app.is_hybrid.set(True)
+            app.toggle_hybrid()
             app.fill_template(it, hybrid=True)
 
         it = d["queue_template"]
         if it is not None and it != "":
+            app.show_queue_template.set(True)
+            app.toggle_queue_template()
             app.fill_queue_template(it)
 
 
