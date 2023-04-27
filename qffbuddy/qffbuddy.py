@@ -12,6 +12,12 @@ import tkinter.messagebox as msg
 import tkinter.scrolledtext as st
 from idlelib.tooltip import Hovertip
 
+
+class MyHovertip(Hovertip):
+    def __init__(self, anchor_widget, text, hover_delay=500):
+        super().__init__(anchor_widget, text, hover_delay)
+
+
 parser = argparse.ArgumentParser(
     prog="qffbuddy",
     description="helper for generating pbqff input files",
@@ -185,7 +191,7 @@ class Application(ttk.Frame):
     def step_size_input(self):
         l = ttk.Label(self.main_panel, text="Step size in Å")
         l.grid(column=1, row=7, sticky="E")
-        Hovertip(l, """Displacement size to use in the QFF""")
+        MyHovertip(l, """Displacement size to use in the QFF""")
         self.step_size = tk.DoubleVar(value=0.005)
         name = ttk.Entry(self.main_panel, textvariable=self.step_size).grid(
             column=2, row=7
@@ -194,14 +200,14 @@ class Application(ttk.Frame):
     def sleep_int_input(self):
         l = ttk.Label(self.main_panel, text="Sleep interval in sec")
         l.grid(column=1, row=9, sticky="E")
-        Hovertip(l, "pbqff will wait this long before polling the running jobs again")
+        MyHovertip(l, "pbqff will wait this long before polling the running jobs again")
         self.sleep_int = tk.IntVar(value=2)
         ttk.Entry(self.main_panel, textvariable=self.sleep_int).grid(column=2, row=9)
 
     def job_limit_input(self):
         l = ttk.Label(self.main_panel, text="Max jobs to submit at once")
         l.grid(column=1, row=11, sticky="E")
-        Hovertip(
+        MyHovertip(
             l,
             """The maximum number of jobs to submit at one time. "Jobs" here refers to pbqff
 jobs, not queue system jobs. The number of queued jobs will be job_limit
@@ -213,7 +219,9 @@ jobs, not queue system jobs. The number of queued jobs will be job_limit
     def chunk_size_input(self):
         l = ttk.Label(self.main_panel, text="Jobs per chunk")
         l.grid(column=1, row=13, sticky="E")
-        Hovertip(l, "The number of pbqff jobs to group into a single queue submission")
+        MyHovertip(
+            l, "The number of pbqff jobs to group into a single queue submission"
+        )
         self.chunk_size = tk.IntVar(value=1)
         name = ttk.Entry(self.main_panel, textvariable=self.chunk_size).grid(
             column=2, row=13
@@ -222,13 +230,13 @@ jobs, not queue system jobs. The number of queued jobs will be job_limit
     def check_int_input(self):
         l = ttk.Label(self.main_panel, text="Checkpoint interval (0 to disable)")
         l.grid(column=1, row=14, stick="E")
-        Hovertip(l, "The number of polling cycles between checkpoints")
+        MyHovertip(l, "The number of polling cycles between checkpoints")
         self.check_int = tk.IntVar(value=100)
         ttk.Entry(self.main_panel, textvariable=self.check_int).grid(column=2, row=14)
 
     def charge_input(self):
         l = ttk.Label(self.main_panel, text="Charge")
-        Hovertip(l, """Molecular charge""")
+        MyHovertip(l, """Molecular charge""")
         l.grid(column=1, row=5, padx=10, sticky="E")
         self.charge = tk.IntVar()
         c = ttk.Entry(self.main_panel, textvariable=self.charge)
@@ -245,7 +253,7 @@ jobs, not queue system jobs. The number of queued jobs will be job_limit
             variable=self.optimize,
         )
         check.grid(column=1, row=4, sticky=tk.W)
-        Hovertip(
+        MyHovertip(
             check,
             """If checked, pbqff will optimize the geometry in the selected quantum chemistry
 program.""",
@@ -254,7 +262,7 @@ program.""",
     def geometry_input(self):
         l = ttk.Label(self.main_panel, text="enter your geometry in Å:")
         l.grid(column=1, row=1, sticky=tk.W)
-        Hovertip(
+        MyHovertip(
             l,
             """Input your molecular geometry in a format recognized by your quantum chemistry
 program of choice. pbqff recognizes Z-matrices and XYZ geometries in general.""",
@@ -266,7 +274,7 @@ program of choice. pbqff recognizes Z-matrices and XYZ geometries in general."""
         "select the type of coordinates to use for the QFF"
         label = ttk.Label(self.main_panel, text="Coordinate type")
         label.grid(column=1, sticky="E")
-        Hovertip(
+        MyHovertip(
             label,
             """The coordinate system to use for the QFF. SIC requires a template INTDER input
 file named 'intder.in' in the current directory to specify the internal
@@ -291,7 +299,7 @@ between these for Normals.""",
             text="finite differences?",
             variable=self.findiff,
         )
-        Hovertip(
+        MyHovertip(
             self.findiff_button,
             "Compute the force constants directly with finite differences \
 instead of performing a fitting with ANPASS",
@@ -319,7 +327,7 @@ instead of performing a fitting with ANPASS",
         "select the chemistry program to use"
         l = ttk.Label(self.main_panel, text="Chemistry program")
         l.grid(column=1, sticky="E")
-        Hovertip(
+        MyHovertip(
             l,
             """The chemistry program to use for geometry optimizations and single-point energy
 computations""",
@@ -336,7 +344,7 @@ computations""",
     def queue_input(self):
         "select the queuing system to use"
         l = ttk.Label(self.main_panel, text="Queuing System")
-        Hovertip(
+        MyHovertip(
             l,
             """The queuing system to use. PBS and Slurm will submit jobs to the corresponding
 queues and monitor them using the qstat and squeue utilities. A Local queue will
@@ -361,7 +369,7 @@ run jobs directly on the current computer using the bash shell as a mock queue."
             variable=self.show_queue_template,
             command=self.toggle_queue_template,
         )
-        Hovertip(
+        MyHovertip(
             b,
             """pbqff includes default templates for the supported queue types, but you can also
 include a custom template.""",
@@ -388,7 +396,7 @@ include a custom template.""",
     def template_input(self):
         l = ttk.Label(self.main_panel, text="enter your template input file:")
         l.grid(column=1, sticky=tk.W)
-        Hovertip(
+        MyHovertip(
             l,
             """The template input file for the quantum chemistry program of choice. Some
 programs support special string substitutions. Molpro, for example, supports
@@ -449,7 +457,7 @@ menu for some examples.""",
             command=self.toggle_hybrid,
         )
         butt.grid(column=1, sticky=tk.W)
-        Hovertip(
+        MyHovertip(
             butt,
             """Use the main template input file above for the harmonic force constants and a
 different template for the cubic and quartic force constants. Currently this
