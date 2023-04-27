@@ -30,6 +30,10 @@ args = parser.parse_args()
 
 RE_MOLPRO = re.compile("molpro", re.IGNORECASE)
 
+###############################
+# Quantum chemistry templates #
+###############################
+
 MOLPRO_F12TZ = """memory,1,g
 gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
 gthresh,optgrad=1.d-8,optstep=1.d-8;
@@ -84,6 +88,56 @@ show[1,f20.12],pbqff
 
 MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 SINGLET THREADS=1"
 
+###################
+# Queue templates #
+###################
+
+SEQUOIA_TEMPLATE = """#!/bin/sh
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o {{.basename}}.out
+#PBS -W umask=022
+#PBS -l walltime=9999:00:00
+#PBS -l ncpus=1
+#PBS -l mem=8gb
+
+module load molpro
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+cd $WORKDIR
+mkdir -p $TMPDIR
+"""
+
+MAPLE_TEMPLATE = """#!/bin/sh
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o {{.basename}}.out
+#PBS -W umask=022
+#PBS -l walltime=9999:00:00
+#PBS -l ncpus=1
+#PBS -l mem=8gb
+#PBS -q workq
+
+module load openpbs molpro
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+cd $WORKDIR
+mkdir -p $TMPDIR
+"""
+
+ELAND_TEMPLATE = """#!/bin/bash
+#SBATCH --job-name={{.basename}}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o pts/{{.basename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+"""
+
 ATOMS = [
     "X",
     "H",
@@ -105,9 +159,6 @@ ATOMS = [
     "Cl",
     "Ar",
 ]
-
-
-TEMPLATES = [MOLPRO_F12TZ]
 
 
 def make_radio_buttons(pairs, var, parent, **kwargs):
@@ -539,6 +590,19 @@ class MenuBar(tk.Menu):
 
         self.queue_templates = tk.Menu(self.menu_templates)
         self.menu_templates.add_cascade(menu=self.queue_templates, label="Queue")
+        self.build_queue_template_menus()
+
+    def build_queue_template_menus(self):
+        for q, t in [
+            ("Eland", ELAND_TEMPLATE),
+            ("Maple", MAPLE_TEMPLATE),
+            ("Sequoia", SEQUOIA_TEMPLATE),
+        ]:
+            # this looks stupid, but you have to bind t on each iteration or
+            # all of them will end up with the value of the last iteration
+            self.queue_templates.add_command(
+                label=q, command=lambda t=t: app.fill_queue_template(t)
+            )
 
     def build_template_menus(self, menu_var, hybrid=False):
         menu_var.add_command(
