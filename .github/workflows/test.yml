@@ -23,7 +23,8 @@ jobs:
       - name: cargo generate-lockfile
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
+      - name: install mopac
+        run: conda install -c conda-forge mopac
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
-        run: conda install -c conda-forge mopac
         run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored
