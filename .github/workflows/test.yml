@@ -27,10 +27,10 @@ jobs:
         id: target-cache-restore
         uses: actions/cache/restore@v3
         with:
-          path: mopac/build/mopac
+          path: /opt/mopac
           key: ${{ matrix.toolchain }}-target
       - name: install mopac
-        if: hashFiles('mopac') == ''
+        if: hashFiles('/opt/mopac') == ''
         run: |
             sudo apt install -y python3 python3-numpy
             git clone https://github.com/openmopac/mopac.git
@@ -39,11 +39,6 @@ jobs:
             cd build
             cmake ..
             make
-            mkdir -p /opt/mopac
-            cp mopac /opt/mopac/.
-      - name: copy mopac
-        if: hashFiles('mopac') != ''
-        run: |
             mkdir -p /opt/mopac
             cp mopac /opt/mopac/.
       - name: Save cached mopac
