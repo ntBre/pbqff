@@ -29,6 +29,10 @@ jobs:
         with:
           path: mopac/build/mopac
           key: ${{ matrix.toolchain }}-target
+        run: |
+        mkdir -p /opt/mopac
+        cp mopac /opt/mopac/.
+        if: hashFiles('mopac') == ''
       - name: install mopac
         run: |
             sudo apt install -y python3 python3-numpy
