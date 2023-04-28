@@ -42,6 +42,10 @@ jobs:
             make
             pwd
             ls
+      - name: check output files
+        run: |
+             ls pts
+             cat pts/*.out
       - name: copy over mopac
         run: |
             mkdir -p /opt/mopac
