@@ -27,7 +27,7 @@ jobs:
         id: cache-mopac
         uses: actions/cache@v3
         with:
-          path: /mopac/build/mopac
+          path: mopac/build/mopac
           key: ${{ runner.os }}-build-mopac
       - name: install mopac
         if: steps.cache-mopac.outputs.cache-hit != 'true'
