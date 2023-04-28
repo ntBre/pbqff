@@ -40,6 +40,7 @@ jobs:
             cmake ..
             make
       - name: copy over mopac
+        run: |
             mkdir -p /opt/mopac
             cp mopac/build/mopac /opt/mopac/.
       # https://twitter.com/jonhoo/status/1571290371124260865
