@@ -29,9 +29,6 @@ jobs:
         with:
           path: mopac/build/mopac
           key: ${{ matrix.toolchain }}-target
-        run: |
-            mkdir -p /opt/mopac
-            cp mopac /opt/mopac/.
         if: hashFiles('mopac') == ''
       - name: install mopac
         run: |
@@ -42,6 +39,11 @@ jobs:
             cd build
             cmake ..
             make
+            mkdir -p /opt/mopac
+            cp mopac /opt/mopac/.
+        if: hashFiles('mopac') != ''
+      - name: copy mopac
+        run: |
             mkdir -p /opt/mopac
             cp mopac /opt/mopac/.
       - name: Save cached mopac
