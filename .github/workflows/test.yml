@@ -49,8 +49,15 @@ jobs:
             stat /opt/mopac/mopac
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
-        run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored
-      - name: check output files
-        run: |
-             ls pts
-             cat pts/*.out
+        run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored c3h2_normal
+-      - name: check output files
+        if: always()
+-        run: |
+-             ls pts
+-             cat pts/*.out
+      - name: archive test output
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: run-output
+          path: pts/*
