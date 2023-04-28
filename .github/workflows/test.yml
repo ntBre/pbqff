@@ -29,6 +29,7 @@ jobs:
         with:
           path: mopac/build/mopac
           key: ${{ runner.os }}-build-mopac
+          fail-on-cache-miss: true
       - name: install mopac
         if: steps.cache-mopac.outputs.cache-hit != 'true'
         run: |
