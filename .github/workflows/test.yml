@@ -26,8 +26,12 @@ jobs:
       - name: install mopac
         run: |
             git clone https://github.com/openmopac/mopac.git
+	    pwd
+	    ls
             mkdir build
             cd build
+	    pwd
+	    cmake --version
             cmake ..
             make
             mkdir -p /opt/mopac
