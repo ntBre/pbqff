@@ -30,8 +30,8 @@ jobs:
           path: mopac/build/mopac
           key: ${{ matrix.toolchain }}-target
         run: |
-        mkdir -p /opt/mopac
-        cp mopac /opt/mopac/.
+            mkdir -p /opt/mopac
+            cp mopac /opt/mopac/.
         if: hashFiles('mopac') == ''
       - name: install mopac
         run: |
