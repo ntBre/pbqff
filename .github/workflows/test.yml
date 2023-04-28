@@ -24,11 +24,11 @@ jobs:
         if: hashFiles('Cargo.lock') == ''
         run: cargo generate-lockfile
       - name: Restore cached mopac
-	id: target-cache-restore
-	uses: actions/cache/restore@v3
-	with:
-	  path: mopac/build/mopac
-	  key: ${{ matrix.toolchain }}-target
+        id: target-cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: mopac/build/mopac
+          key: ${{ matrix.toolchain }}-target
       - name: install mopac
         run: |
             sudo apt install -y python3 python3-numpy
@@ -41,11 +41,11 @@ jobs:
             mkdir -p /opt/mopac
             cp mopac /opt/mopac/.
       - name: Save cached mopac
-	id: target-cache-save
-	uses: actions/cache/save@v3
-	with:
-	  path: mopac/build/mopac
-	  key: ${{ steps.target-cache-restore.outputs.cache-primary-key }}
+        id: target-cache-save
+        uses: actions/cache/save@v3
+        with:
+          path: mopac/build/mopac
+          key: ${{ steps.target-cache-restore.outputs.cache-primary-key }}
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored
