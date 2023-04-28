@@ -29,8 +29,8 @@ jobs:
         with:
           path: mopac/build/mopac
           key: ${{ matrix.toolchain }}-target
-        if: hashFiles('mopac') == ''
       - name: install mopac
+        if: hashFiles('mopac') == ''
         run: |
             sudo apt install -y python3 python3-numpy
             git clone https://github.com/openmopac/mopac.git
@@ -41,8 +41,8 @@ jobs:
             make
             mkdir -p /opt/mopac
             cp mopac /opt/mopac/.
-        if: hashFiles('mopac') != ''
       - name: copy mopac
+        if: hashFiles('mopac') != ''
         run: |
             mkdir -p /opt/mopac
             cp mopac /opt/mopac/.
