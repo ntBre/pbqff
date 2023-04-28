@@ -25,4 +25,5 @@ jobs:
         run: cargo generate-lockfile
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
+        run: conda install -c conda-forge mopac
         run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored
