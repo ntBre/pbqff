@@ -39,10 +39,13 @@ jobs:
             cd build
             cmake ..
             make
+	    pwd
+	    ls
       - name: copy over mopac
         run: |
             mkdir -p /opt/mopac
             cp mopac/build/mopac /opt/mopac/.
+	    stat /opt/mopac/mopac
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets -- --test-threads=1 --include-ignored
