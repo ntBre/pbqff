@@ -4,15 +4,17 @@ of generating [spectral data](https://github.com/ntBre/spectro) from them
 
 # Coordinate Types
 pbqff supports running QFFs in the following coordinate systems:
-- Symmetry-internal coordinates (SICs) via [intder](https://github.com/ntBre/intder)
+- Symmetry-internal coordinates (SICs) via
+  [intder](https://github.com/ntBre/intder)
 - Cartesian coordinates
 - Normal coordinates
 
-The normal coordinates are determined automatically by running a Cartesian harmonic force field.
+The normal coordinates are determined automatically by running a Cartesian
+harmonic force field.
 
 # Programs and Queues
-pbqff supports Molpro and Mopac for computing single-point energies and the
-PBS and Slurm queuing systems via [psqs](https://github.com/ntBre/psqs)
+pbqff supports Molpro and Mopac for computing single-point energies and the PBS
+and Slurm queuing systems via [psqs](https://github.com/ntBre/psqs)
 
 # Input
 An example input file for a Mopac QFF on *c*-C<sub>3</sub>H<sub>2</sub> looks like:
@@ -44,11 +46,14 @@ check_int = 100%
 ```
 
 # qffbuddy
-An optional GUI for preparing input files and running pbqff is also included in the qffbuddy directory
+An optional GUI for preparing input files and running pbqff is also included in
+the qffbuddy directory
 
 # Citations
-For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff: Push-Button Quartic Force Fields." 
-*J. Chem. Theory Comput.*, (accepted). DOI: [10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129) (link should work soon)
+For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff:
+Push-Button Quartic Force Fields." *J. Chem. Theory Comput.*, (accepted). DOI:
+[10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129) (link
+should work soon)
 
 ```
 @article{Westbrook23_pbqff,
@@ -59,7 +64,8 @@ For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff: P
   note = 	 {(accepted)}}
 ```
 
-If you use symmetry-internal coordinates, you may also want to cite the original `INTDER` code by Wesley Allen:
+If you use symmetry-internal coordinates, you may also want to cite the original
+`INTDER` code by Wesley Allen:
 
 ```
 @misc{intder,
