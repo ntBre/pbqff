@@ -25,6 +25,7 @@ jobs:
         run: cargo generate-lockfile
       - name: install mopac
         run: |
+            sudo apt install -y python3 python3-numpy
             git clone https://github.com/openmopac/mopac.git
             cd mopac
             mkdir build
