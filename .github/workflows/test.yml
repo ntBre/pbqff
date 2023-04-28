@@ -30,7 +30,7 @@ jobs:
           path: /opt/mopac
           key: ${{ matrix.toolchain }}-target
       - name: install mopac
-        if: hashFiles('/opt/mopac') == ''
+        if: steps.target-cache-restore.outputs.cache-hit != 'true'
         run: |
             sudo apt install -y python3 python3-numpy
             git clone https://github.com/openmopac/mopac.git
