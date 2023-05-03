@@ -6,9 +6,19 @@ of generating [spectral data](https://github.com/ntBre/spectro) from them
 Assuming you have the [Rust toolchain](https://www.rust-lang.org/tools/install)
 installed, run
 
-```rust
-cargo build --release --bin rust-pbqff --features vers
+```bash
+make install
 ```
+
+As you can see in the Makefile, this simply runs
+
+```bash
+cargo build --features vers --bin rust-pbqff --release
+sudo ln -s target/release/rust-pbqff /usr/bin/pbqff
+```
+
+to build the binary in release mode, and link it into your `$PATH` under the
+name `pbqff`.
 
 # Coordinate Types
 pbqff supports running QFFs in the following coordinate systems:
