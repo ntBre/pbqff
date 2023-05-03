@@ -2,6 +2,14 @@
 pbqff automates the construction of quartic force fields (QFFs) and the process
 of generating [spectral data](https://github.com/ntBre/spectro) from them
 
+# Installation
+Assuming you have the [Rust toolchain](https://www.rust-lang.org/tools/install)
+installed, run
+
+```rust
+cargo build --release --bin rust-pbqff --features vers
+```
+
 # Coordinate Types
 pbqff supports running QFFs in the following coordinate systems:
 - Symmetry-internal coordinates (SICs) via
