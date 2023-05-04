@@ -24,7 +24,7 @@ parser = argparse.ArgumentParser(
     prog="qffbuddy",
     description="helper for generating pbqff input files",
 )
-parser.add_argument("-p", "--pbqff", help="path to pbqff executable")
+parser.add_argument("-p", "--pbqff", help="path to pbqff executable", default="pbqff")
 parser.add_argument(
     "infile", help="start the configuration based on infile", default=None, nargs="?"
 )
