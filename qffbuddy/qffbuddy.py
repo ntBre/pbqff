@@ -563,7 +563,7 @@ queue_template = \"\"\"{self.queue_template.get("1.0", "end")}\"\"\"
             if self.is_hybrid.get():
                 out.write(
                     f"""
-hybrid_template = \"\"\"{self.hybrid_template.get("1.0", "end")}\"\"\"
+hybrid_template = \"\"\"{self.hybrid_template.get("1.0", "end").strip()}\"\"\"
 """
                 )
 
