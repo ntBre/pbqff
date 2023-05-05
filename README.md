@@ -1,3 +1,6 @@
+[![check](https://github.com/ntBre/pbqff/actions/workflows/check.yml/badge.svg)](https://github.com/ntBre/pbqff/actions/workflows/check.yml)
+[![test](https://github.com/ntBre/pbqff/actions/workflows/test.yml/badge.svg)](https://github.com/ntBre/pbqff/actions/workflows/test.yml)
+
 # pbqff
 pbqff automates the construction of quartic force fields (QFFs) and the process
 of generating [spectral data](https://github.com/ntBre/spectro) from them
