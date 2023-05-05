@@ -73,8 +73,7 @@ the qffbuddy directory
 # Citations
 For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff:
 Push-Button Quartic Force Fields." *J. Chem. Theory Comput.*, (accepted). DOI:
-[10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129) (link
-should work soon)
+[10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129)
 
 ```
 @article{Westbrook23_pbqff,
