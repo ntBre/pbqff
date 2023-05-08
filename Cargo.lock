@@ -412,7 +412,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#3ded53cd245ffbeebf81d894725d1ec70bafe4c6"
+source = "git+https://github.com/ntBre/intder#eb0d7628b3bad17e0a34b7c2023c63462f413aa1"
 dependencies = [
  "approx",
  "lazy_static",
