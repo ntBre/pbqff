@@ -221,7 +221,7 @@ impl Fitted for Sic {
         pg: &PointGroup,
         w: &mut W,
     ) -> Result<Prep, IntderError> {
-        let mut intder = &mut self.intder;
+        let intder = &mut self.intder;
         let atomic_numbers = mol.atomic_numbers();
         let nsic = intder.symmetry_internals.len();
         let mut disps = Vec::new();
