@@ -12,8 +12,6 @@ use rust_pbqff::{
     Intder,
 };
 
-include!(concat!(env!("OUT_DIR"), "/version.rs"));
-
 macro_rules! queue {
     ($q:ty, $config:ident, $no_del:expr) => {
         <$q>::new(
@@ -65,6 +63,20 @@ struct Args {
 
 use spectro::{Output, Spectro};
 dispatch!();
+
+fn version() -> String {
+    #[cfg(feature = "vers")]
+    let id = {
+        let repo = git2::Repository::discover(".").unwrap();
+        let head = repo.head().unwrap();
+        let x =
+            String::from(&head.peel_to_commit().unwrap().id().to_string()[..8]);
+        x
+    };
+    #[cfg(not(feature = "vers"))]
+    let id = "deadbeef".to_owned();
+    id
+}
 
 fn main() -> Result<(), std::io::Error> {
     let args = Args::parse();

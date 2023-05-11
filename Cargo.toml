@@ -25,6 +25,7 @@ toml = "0.7.3"
 rustc-hash = "1.1.0"
 clap = { version = "4.2.4", features = ["derive"] }
 dispatch = { path = "dispatch" }
+git2 = { version = "0.17.1", optional = true }
 
 [dev-dependencies]
 approx = "0.5.1"
@@ -32,9 +33,6 @@ approx = "0.5.1"
 [[bin]]
 name = "cart"
 path = "src/bin/cart.rs"
-
-[build-dependencies]
-git2 = { version = "0.17.1", optional = true }
 
 [features]
 vers = ["dep:git2"]

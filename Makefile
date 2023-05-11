@@ -13,7 +13,7 @@ clean:
 	cargo clean
 
 clippy:
-	cargo clippy --all
+	cargo clippy --all --features vers
 
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
