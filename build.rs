@@ -1,6 +1,6 @@
 use std::{env, fs, path::Path};
 
-#[cfg(vers)]
+#[cfg(feature = "vers")]
 fn main() {
     println!("cargo:rerun-if-changed=.git/index");
     let repo = git2::Repository::discover(".").unwrap();
@@ -21,7 +21,7 @@ fn main() {
     .unwrap();
 }
 
-#[cfg(not(vers))]
+#[cfg(not(feature = "vers"))]
 fn main() {
     println!("cargo:rerun-if-changed=.git/index");
     let id = "deadbeef";
