@@ -6,6 +6,7 @@ pbqff automates the construction of quartic force fields (QFFs) and the process
 of generating [spectral data](https://github.com/ntBre/spectro) from them
 
 # Installation
+
 Assuming you have the [Rust toolchain](https://www.rust-lang.org/tools/install)
 installed, run
 
@@ -22,6 +23,29 @@ sudo ln -s target/release/rust-pbqff /usr/bin/pbqff
 
 to build the binary in release mode, and link it into your `$PATH` under the
 name `pbqff`.
+
+## Dependencies
+
+If you're installing `pbqff` on a "normal" machine, you're very likely to have
+most of these programs already. But if you install on a fresh, minimal Ubuntu
+installation (like I do in [this
+video](https://www.youtube.com/watch?v=y-FH-LBqzXM)), you might need to install
+some or all of these:
+
+- curl (for rustup install)
+- rust nightly toolchain
+- git
+- make
+- openssl (on arch) or libssl-dev (on ubuntu) (for vers feature)
+- pkg-config (for locating openssl)
+- gcc (for linking)
+- python3, python3-tk, idle3 (for qffbuddy)
+- cmake, gfortran, libblas-dev, liblapack-dev (for MOPAC)
+
+For installing or building `pbqff` itself, you can skip this last set, which are
+required for building MOPAC from source. However, if you want to run the tests
+for `pbqff`, you will need MOPAC installed at `/opt/mopac/mopac`, so these
+dependencies are necessary in that case.
 
 # Coordinate Types
 pbqff supports running QFFs in the following coordinate systems:
