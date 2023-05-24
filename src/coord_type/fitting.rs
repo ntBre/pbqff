@@ -1,4 +1,6 @@
-//! least-squares fitted coord types
+//! Compute force constants using [ordinary
+//! least-squares](https://en.wikipedia.org/wiki/Ordinary_least_squares)
+//! fitting.
 
 use psqs::geom::Geom;
 use spectro::{Output, Spectro};

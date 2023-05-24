@@ -1,3 +1,5 @@
+//! Cartesian coordinate QFFs.
+
 use std::{io, marker::Sync};
 
 use psqs::{

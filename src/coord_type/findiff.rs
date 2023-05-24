@@ -1,3 +1,6 @@
+//! Compute force constants using [finite
+//! differences](https://en.wikipedia.org/wiki/Finite_difference).
+
 use self::bighash::BigHash;
 
 use super::{cart::DEBUG, CartGeom, Derivative};

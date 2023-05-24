@@ -1,4 +1,4 @@
-//! Coordinate types for QFF displacements
+//! Coordinate types for QFF displacements.
 
 use std::{io::Write, path::Path};
 

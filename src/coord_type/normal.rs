@@ -1,8 +1,10 @@
-//! automatic normal coordinates. the normal coordinates are obtained by
-//! running a harmonic, cartesian force field and feeding that to spectro to
-//! obtain the LXM matrix. then the cartesian QFF machinery is used to
-//! generate the normal coordinate displacements, which can be fed back in
-//! to spectro at the end as f3qcm and f4qcm
+//! Automatic normal coordinate QFFs.
+//!
+//! The normal coordinates are obtained by running a harmonic, [Cart] force
+//! field and feeding that to spectro to obtain the LXM matrix. Then the
+//! cartesian QFF machinery is used to generate the normal coordinate
+//! displacements, which can be fed back in to spectro at the end as f3qcm and
+//! f4qcm
 
 use std::{io::Write, marker::Sync};
 
@@ -25,12 +27,12 @@ use crate::{
     cleanup,
     config::Config,
     coord_type::{write_file, CHK_NAME},
-    proto,
 };
 
 use super::{
     findiff::{
-        atom_parts, bighash::BigHash, zip_atoms, FiniteDifference, Idx, Proto,
+        atom_parts, bighash::BigHash, proto, zip_atoms, FiniteDifference, Idx,
+        Proto,
     },
     fitting::{AtomicNumbers, Fitted},
     make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv,
