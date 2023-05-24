@@ -133,3 +133,6 @@ And for the original VPT2 code in `SPECTRO`, you can cite
  year = {1991}
 }
 ```
+
+# TODOs
+- [ ] factor out commonality in first part of `CoordType::run`
