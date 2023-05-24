@@ -21,7 +21,8 @@ pub fn cleanup() {
     }
 }
 
-/// Some if the optimization succeeds, None otherwise
+/// Optimize the geometry in `geom` using `template` and the provided `queue`.
+/// Creates the `opt` directory if it doesn't already exist.
 pub fn optimize<
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
@@ -40,6 +41,8 @@ pub fn optimize<
     Ok(res.pop().unwrap())
 }
 
+/// Like [optimize] but runs a single-point energy instead of an optimization.
+/// Also creates the `opt` directory, if it doesn't already exist.
 pub fn ref_energy<
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
