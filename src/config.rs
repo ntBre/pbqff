@@ -1,60 +1,30 @@
+//! Configuration settings for running a pbqff
+
 use serde::{Deserialize, Serialize};
 
 mod coord_type;
 pub use coord_type::*;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 struct RawConfig {
-    /// the geometry to start with
     geometry: String,
-
-    /// whether or not to optimize the structure first
     optimize: bool,
-
-    /// charge on the molecule
     charge: isize,
-
-    /// distance in Å to displace the atoms
     step_size: f64,
-
-    /// how long to sleep between intervals polling running jobs
     sleep_int: usize,
-
-    /// limit for the number of jobs to run at once
     job_limit: usize,
-
-    /// the number of jobs to include a single submit script
     chunk_size: usize,
-
-    /// whether to use SICs or Cartesian coordinates
     coord_type: CoordType,
-
-    /// the template to use for the quantum chemistry program
     template: String,
-
-    /// optional quantum chemistry program template to use for the cubic and
-    /// quartic force constants. only used for finite-difference normal
-    /// coordinate QFFs
     hybrid_template: Option<String>,
-
-    /// the template to use for the queuing system
     queue_template: Option<String>,
-
-    /// the quantum chemistry program to use. options supported currently are
-    /// mopac and molpro
     program: Program,
-
-    /// the type of queuing system to use. options supported currently are pbs
-    /// and slurm
     queue: Queue,
-
-    /// whether to use finite differences or a least-squares fitting to obtain
-    /// the force constants. currently this only affects normal coordinates.
-    /// defaults to false
     findiff: Option<bool>,
-
-    /// interval for dumping checkpoint files. 0 means no checkpoints
     check_int: usize,
 }
 
@@ -79,20 +49,59 @@ pub enum Queue {
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(from = "RawConfig")]
 pub struct Config {
+    /// the geometry to start with. Parsed from a string using
+    /// [psqs::geom::Geom]'s implementation of [std::str::FromStr]
     pub geometry: psqs::geom::Geom,
+
+    /// whether or not to optimize the structure before running the QFF
     pub optimize: bool,
+
+    /// charge on the molecule
     pub charge: isize,
+
+    /// distance in Å to displace the atoms
     pub step_size: f64,
+
+    /// whether to use SICs or Cartesian coordinates
     pub coord_type: CoordType,
+
+    /// the template to use for the quantum chemistry program
     pub template: String,
+
+    /// optional quantum chemistry program template to use for the cubic and
+    /// quartic force constants. only used for finite-difference normal
+    /// coordinate QFFs. If not supplied, this defaults to the same value as
+    /// `template`
     pub hybrid_template: String,
+
+    /// the optional template to use for the queuing system. If this is not
+    /// provided, the queue's implementation of
+    /// [psqs::queue::Queue::default_submit_script] will be used
     pub queue_template: Option<String>,
+
+    /// the quantum chemistry program to use. options supported currently are
+    /// mopac and molpro, as deserialized from [Program]
     pub program: Program,
+
+    /// the type of queuing system to use. options supported currently are pbs
+    /// and slurm, as deserialized from [Queue]
     pub queue: Queue,
+
+    /// how long to sleep between intervals polling running jobs
     pub sleep_int: usize,
+
+    /// limit for the number of jobs to run at once
     pub job_limit: usize,
+
+    /// the number of jobs to include a single submit script
     pub chunk_size: usize,
+
+    /// whether to use finite differences or a least-squares fitting to obtain
+    /// the force constants. currently this only affects normal coordinates.
+    /// defaults to false
     pub findiff: bool,
+
+    /// interval for dumping checkpoint files. 0 means no checkpoints
     pub check_int: usize,
 }
 
@@ -121,6 +130,8 @@ impl From<RawConfig> for Config {
 }
 
 impl Config {
+    /// load a [Config] from the TOML file specified by `filename`. panics on
+    /// failure to read the file and on failure to deserialize it
     pub fn load(filename: &str) -> Self {
         let contents = std::fs::read_to_string(filename)
             .expect("failed to load config file");
@@ -152,52 +163,5 @@ template = {}
             self.coord_type,
             self.template,
         )
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn config() {
-        let got = Config::load("testfiles/test.toml");
-        let want = Config {
-            geometry: psqs::geom::Geom::Zmat(
-                "C
-C 1 CC
-C 1 CC 2 CCC
-H 2 CH 1 HCC 3 180.0
-H 3 CH 1 HCC 2 180.0
-
-CC =                  1.42101898
-CCC =                55.60133141
-CH =                  1.07692776
-HCC =               147.81488230
-"
-                .to_string(),
-            ),
-            optimize: true,
-            charge: 0,
-            step_size: 0.005,
-            coord_type: CoordType::Sic,
-            template: String::from(
-                "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
-		 external=testfiles/params.dat",
-            ),
-            program: Program::Mopac,
-            sleep_int: 2,
-            job_limit: 2048,
-            chunk_size: 1,
-            queue: Queue::Slurm,
-            findiff: false,
-            check_int: 100,
-            queue_template: None,
-            hybrid_template: String::from(
-                "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
-		 external=testfiles/params.dat",
-            ),
-        };
-        assert_eq!(got, want);
     }
 }
