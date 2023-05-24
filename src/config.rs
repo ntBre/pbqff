@@ -1,6 +1,9 @@
 //! Configuration settings for running a pbqff
 
-use std::fmt::Display;
+use std::{
+    fmt::{Debug, Display},
+    path::Path,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -156,12 +159,17 @@ impl From<RawConfig> for Config {
 
 impl Config {
     /// load a [Config] from the TOML file specified by `filename`. panics on
-    /// failure to read the file and on failure to deserialize it
-    pub fn load(filename: &str) -> Self {
-        let contents = std::fs::read_to_string(filename)
+    /// failure to read the file and on failure to deserialize it.
+    ///
+    /// TODO return a result with real error handling
+    pub fn load<P>(filename: P) -> Self
+    where
+        P: AsRef<Path> + Debug,
+    {
+        let contents = std::fs::read_to_string(&filename)
             .expect("failed to load config file");
         toml::from_str(&contents).unwrap_or_else(|e| {
-            panic!("failed to deserialize config file '{filename}' with {e}")
+            panic!("failed to deserialize config file '{filename:?}' with {e}")
         })
     }
 }
