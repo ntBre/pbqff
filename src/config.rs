@@ -74,6 +74,8 @@ impl Display for Queue {
     }
 }
 
+/// Construct a full `Config` using [Config::load] on a TOML file or use
+/// [Config::new] and the Builder pattern
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(from = "RawConfig")]
 pub struct Config {
@@ -157,7 +159,70 @@ impl From<RawConfig> for Config {
     }
 }
 
+macro_rules! int_builders {
+    ($($name: ident$(,)*)*) => {
+        $(pub fn $name(mut self, i: usize) -> Self {
+            self.$name = i;
+            self
+        })*
+    }
+}
+
 impl Config {
+    /// Construct a [Config] with default values for `step_size` (0.005 Å),
+    /// `hybrid_template` (`template`), `queue_template` (`None`), `sleep_int`
+    /// (1 second), `job_limit` (128), `chunk_size` (1), `findiff` (`true`), and
+    /// `check_int` (0; disabled)
+    pub fn new(
+        geometry: psqs::geom::Geom,
+        optimize: bool,
+        charge: isize,
+        coord_type: CoordType,
+        template: String,
+        program: Program,
+        queue: Queue,
+    ) -> Self {
+        Self {
+            geometry,
+            optimize,
+            charge,
+            step_size: 0.005,
+            coord_type,
+            template: template.clone(),
+            hybrid_template: template,
+            queue_template: None,
+            program,
+            queue,
+            sleep_int: 1,
+            job_limit: 128,
+            chunk_size: 1,
+            findiff: true,
+            check_int: 0,
+        }
+    }
+
+    pub fn step_size(mut self, step_size: f64) -> Self {
+        self.step_size = step_size;
+        self
+    }
+
+    pub fn hybrid_template(mut self, t: String) -> Self {
+        self.hybrid_template = t;
+        self
+    }
+
+    pub fn queue_template(mut self, t: Option<String>) -> Self {
+        self.queue_template = t;
+        self
+    }
+
+    int_builders!(sleep_int, job_limit, chunk_size, check_int);
+
+    pub fn findiff(mut self, b: bool) -> Self {
+        self.findiff = b;
+        self
+    }
+
     /// load a [Config] from the TOML file specified by `filename`. panics on
     /// failure to read the file and on failure to deserialize it.
     ///
