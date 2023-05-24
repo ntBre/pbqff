@@ -30,18 +30,18 @@ pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
         .collect()
 }
 
-#[macro_export]
 macro_rules! geom {
     ($s:ident, $names:ident, $coords:ident, $step_size:ident, $($steps: expr),* ) => {
 	Some($s.new_geom($names.clone(), $coords.clone(), $step_size, vec![$($steps),*]))
     };
 }
 
-#[macro_export]
+pub(crate) use geom;
+
 macro_rules! proto {
     ($s:ident, $names: ident, $coords: ident, $step_size: ident, $scale: expr, $( $steps: expr ),* ) => {
 	Proto {
-	    geom: $crate::geom!($s, $names, $coords, $step_size, $($steps),*),
+	    geom: $crate::coord_type::findiff::geom!($s, $names, $coords, $step_size, $($steps),*),
 	    coeff: $scale,
 	}
     };
@@ -52,6 +52,8 @@ macro_rules! proto {
 	}
     }
 }
+
+pub(crate) use proto;
 
 pub(crate) fn atom_parts(atoms: &Vec<Atom>) -> (Vec<&str>, Vec<f64>) {
     let mut names = Vec::new();

@@ -8,7 +8,6 @@ use spectro::{Output, Spectro};
 
 use crate::config::Config;
 
-#[macro_export]
 macro_rules! time {
     ($w:expr, $label:expr, $($s:stmt;)*) => {
         let now = ::std::time::Instant::now();
