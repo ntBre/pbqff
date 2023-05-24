@@ -200,7 +200,7 @@ impl Resume {
 impl Load for Resume {}
 
 /// returned by [Sic::prepare_points]. see its documentation for details
-pub struct Prep {
+struct Prep {
     atomic_numbers: Vec<usize>,
 
     /// number of symmetry internal coordinates
