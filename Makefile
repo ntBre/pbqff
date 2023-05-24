@@ -18,6 +18,9 @@ clippy:
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
 
+doc:
+	cargo doc --no-deps ${ARGS}
+
 TARGET =
 ifeq (${DEBUG}, 1)
 	TARGET += target/x86_64-unknown-linux-gnu/debug/rust-pbqff
