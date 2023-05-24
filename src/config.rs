@@ -1,5 +1,7 @@
 //! Configuration settings for running a pbqff
 
+use std::fmt::Display;
+
 use serde::{Deserialize, Serialize};
 
 mod coord_type;
@@ -36,6 +38,15 @@ pub enum Program {
     Molpro,
 }
 
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Program::Mopac => write!(f, "mopac"),
+            Program::Molpro => write!(f, "molpro"),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Queue {
     #[serde(alias = "pbs")]
@@ -44,6 +55,20 @@ pub enum Queue {
     Slurm,
     #[serde(alias = "local")]
     Local,
+}
+
+impl Display for Queue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Queue::Pbs => "pbs",
+                Queue::Slurm => "slurm",
+                Queue::Local => "local",
+            }
+        )
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
@@ -143,25 +168,46 @@ impl Config {
 
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let Config {
+            geometry,
+            optimize,
+            charge,
+            step_size,
+            coord_type,
+            template,
+            hybrid_template,
+            queue_template,
+            program,
+            queue,
+            sleep_int,
+            job_limit,
+            chunk_size,
+            findiff,
+            check_int,
+        } = self;
         write!(
             f,
             "
 Configuration Options:
 geometry = {{
-{}
+{geometry}
 }}
-optimize = {}
-charge = {}
-step_size = {}
-coord_type = {}
-template = {}
+optimize = {optimize}
+charge = {charge}
+step_size = {step_size}
+coord_type = {coord_type}
+template = {template}
+hybrid_template = {hybrid_template}
+queue_template = {}
+program = {program}
+queue = {queue}
+sleep_int = {sleep_int}
+job_limit = {job_limit}
+chunk_size = {chunk_size}
+findiff = {findiff}
+check_int = {check_int}
 ",
-            self.geometry.to_string().trim(),
-            self.optimize,
-            self.charge,
-            self.step_size,
-            self.coord_type,
-            self.template,
+            queue_template.as_ref().unwrap_or(&String::new()),
         )
     }
 }
