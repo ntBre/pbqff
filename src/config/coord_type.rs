@@ -12,17 +12,17 @@ pub enum CoordType {
 }
 
 impl CoordType {
-    /// Returns `true` if the coord type is [`cart`].
+    /// Returns `true` if the coord type is [`Cart`].
     ///
-    /// [`cart`]: CoordType::cart
+    /// [`Cart`]: CoordType::Cart
     #[must_use]
     pub fn is_cart(&self) -> bool {
         matches!(self, Self::Cart)
     }
 
-    /// Returns `true` if the coord type is [`sic`].
+    /// Returns `true` if the coord type is [`Sic`].
     ///
-    /// [`sic`]: CoordType::sic
+    /// [`Sic`]: CoordType::Sic
     #[must_use]
     pub fn is_sic(&self) -> bool {
         matches!(self, Self::Sic)

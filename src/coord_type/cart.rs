@@ -136,7 +136,7 @@ impl FiniteDifference for Cart {
     }
 }
 
-/// contains just the fields of Config needed for running [first_part]
+/// contains just the fields of Config needed for running [Cart::first_part]
 pub struct FirstPart {
     pub template: String,
     pub optimize: bool,
@@ -160,7 +160,7 @@ impl From<Config> for FirstPart {
 impl Cart {
     /// run the "first part" of the Cartesian QFF, including the optimization if
     /// requested and the generation and running of the single-point energies
-    pub(crate) fn first_part<W, Q, P>(
+    pub fn first_part<W, Q, P>(
         &self,
         w: &mut W,
         config: &FirstPart,

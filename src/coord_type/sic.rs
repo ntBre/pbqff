@@ -194,7 +194,7 @@ impl Resume {
 
 impl Load for Resume {}
 
-/// returned by [prepare_points]. see its documentation for details
+/// returned by [Sic::prepare_points]. see its documentation for details
 pub struct Prep {
     atomic_numbers: Vec<usize>,
 
@@ -212,8 +212,8 @@ impl Fitted for Sic {
     type Prep = Prep;
     type Error = IntderError;
 
-    /// prepare to [generate_pts] by determining the symmetries of each SIC and
-    /// sorting them into the correct order for [Taylor::make_checks]
+    /// prepare to [Self::generate_pts] by determining the symmetries of each
+    /// SIC and sorting them into the correct order for [Taylor::make_checks]
     fn prepare_points<W: Write>(
         &mut self,
         mol: &Molecule,
