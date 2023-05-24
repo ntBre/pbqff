@@ -1,3 +1,5 @@
+//! Symmetry-internal coordinate (SIC) QFFs.
+
 use std::{fmt::Display, io::Write, marker::Sync, path::Path};
 
 pub use intder::IntderError;
@@ -26,11 +28,14 @@ pub(crate) static DEBUG: bool = false;
 /// the precision to call things symmetric
 const SYMM_EPS: f64 = 1e-6;
 
+/// The main type for running SIC QFFs.
 pub struct Sic {
+    /// An [Intder] used for generating the displacements
     pub intder: Intder,
 }
 
 impl Sic {
+    /// Construct a [Sic] from an [Intder]
     pub fn new(intder: Intder) -> Self {
         Self { intder }
     }
