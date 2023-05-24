@@ -27,7 +27,7 @@ pub use sic::Sic;
 pub(crate) use sic::{make_rel, write_file, FreqError};
 pub mod cart;
 pub mod findiff;
-pub mod fitting;
+pub mod fitted;
 pub mod normal;
 pub mod sic;
 

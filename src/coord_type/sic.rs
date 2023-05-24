@@ -17,7 +17,7 @@ use symm::{Irrep, Molecule, Pg, PointGroup};
 use taylor::Taylor;
 
 use super::{
-    fitting::{AtomicNumbers, Fitted},
+    fitted::{AtomicNumbers, Fitted},
     CoordType, Load, SPECTRO_HEADER,
 };
 use crate::{config::Config, optimize};

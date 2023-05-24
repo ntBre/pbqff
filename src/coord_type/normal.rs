@@ -34,7 +34,7 @@ use super::{
         atom_parts, bighash::BigHash, proto, zip_atoms, FiniteDifference, Idx,
         Proto,
     },
-    fitting::{AtomicNumbers, Fitted},
+    fitted::{AtomicNumbers, Fitted},
     make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv,
     SPECTRO_HEADER,
 };
