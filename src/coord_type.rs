@@ -1,3 +1,5 @@
+//! Coordinate types for QFF displacements
+
 use std::{io::Write, path::Path};
 
 use psqs::{program::Program, queue::Queue};
@@ -40,23 +42,24 @@ const SPECTRO_HEADER: [usize; 30] = [
 /// the name for the checkpoint file written here
 const CHK_NAME: &str = "res.chk";
 
+/// The very high-level description of a coordinate type for running QFFs.
+///
+/// Given a [Queue], an output destination, and a [Config], return the final
+/// [Spectro] and [Output]
 pub trait CoordType<
     W: Write,
     Q: Queue<P>,
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 >
 {
-    /// run a full qff, taking the configuration from `config`, the intder
-    /// template from `intder`, and the spectro template from `spectro`. Only
-    /// the simple internal and symmetry internal coordinates are read from the
-    /// intder template. The input options, weights, and curvils are copied from
-    /// the spectro template, but the geometry will be updated
-    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
-
-    /// contains all of the data necessary to resume from a checkpoint
+    /// All of the data necessary to resume from a checkpoint.
     type Resume: Load;
 
-    /// resume from a checkpoint and finish the run
+    /// Run a full QFF on `queue`, taking the configuration from `config`, and
+    /// return the final [Spectro] and [Output] structs. Log any output to `w`.
+    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
+
+    /// Like [Self::run], but load a checkpoint from `resume`.
     fn resume(
         self,
         w: &mut W,
@@ -66,6 +69,7 @@ pub trait CoordType<
     ) -> (Spectro, Output);
 }
 
+/// Read and write checkpoints for [CoordType::resume].
 pub trait Load: Sized + Serialize + for<'a> Deserialize<'a> {
     fn load(p: impl AsRef<Path>) -> Self {
         let f = std::fs::File::open(p).unwrap();
