@@ -531,19 +531,7 @@ pub fn to_qcm(
 }
 
 impl Fitted for Normal {
-    type Prep = ();
-
     type Error = ();
-
-    fn prepare_points<W: Write>(
-        &mut self,
-        _mol: &Molecule,
-        _step_size: f64,
-        _pg: &PointGroup,
-        _w: &mut W,
-    ) -> Result<Self::Prep, Self::Error> {
-        Ok(())
-    }
 
     fn generate_pts<W: Write>(
         &mut self,

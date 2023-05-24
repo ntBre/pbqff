@@ -16,16 +16,8 @@ type AnpassRes = (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias);
 type AnpassError = Box<Result<(Spectro, Output), FreqError>>;
 
 pub trait Fitted {
-    type Prep;
+    /// The error returned by a failing [Self::generate_points].
     type Error;
-
-    fn prepare_points<W: Write>(
-        &mut self,
-        mol: &Molecule,
-        step_size: f64,
-        pg: &PointGroup,
-        w: &mut W,
-    ) -> Result<Self::Prep, Self::Error>;
 
     fn generate_pts<W: Write>(
         &mut self,

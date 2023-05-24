@@ -214,80 +214,7 @@ pub struct Prep {
 }
 
 impl Fitted for Sic {
-    type Prep = Prep;
     type Error = IntderError;
-
-    /// prepare to [Self::generate_pts] by determining the symmetries of each
-    /// SIC and sorting them into the correct order for [Taylor::make_checks]
-    fn prepare_points<W: Write>(
-        &mut self,
-        mol: &Molecule,
-        step_size: f64,
-        pg: &PointGroup,
-        w: &mut W,
-    ) -> Result<Prep, IntderError> {
-        let intder = &mut self.intder;
-        let atomic_numbers = mol.atomic_numbers();
-        let nsic = intder.symmetry_internals.len();
-        let mut disps = Vec::new();
-        for i in 0..nsic {
-            let mut disp = vec![0.0; nsic];
-            disp[i] = step_size;
-            disps.push(disp);
-        }
-        intder.geom = intder::geom::Geom::from(mol.clone());
-        intder.geom.to_bohr();
-        intder.disps = disps;
-        let ndum = if intder
-            .simple_internals
-            .iter()
-            .any(|s| matches!(s, Siic::Lin1(..)))
-        {
-            // default to Z, hopefully this only applies for semp disaster
-            intder.add_dummies(pg.axis().unwrap_or_else(|| {
-                eprintln!("LIN1 but no axis in point group, using z");
-                symm::Axis::Z
-            }))
-        } else {
-            0
-        };
-        let disps = intder.convert_disps()?;
-        let mut irreps = Vec::new();
-        for (i, disp) in disps.iter().enumerate() {
-            let disp = disp.as_slice();
-            let m = Molecule::from_slices(
-                &atomic_numbers,
-                &disp[..disp.len() - 3 * ndum],
-            );
-            let irrep = match m.irrep_approx(pg, SYMM_EPS) {
-                Ok(rep) => rep,
-                Err(e) => {
-                    eprintln!(
-                        "irrep determination failed on coord {i}/{} with {}",
-                        disps.len(),
-                        e.msg()
-                    );
-                    Irrep::A
-                }
-            };
-            irreps.push((i, irrep));
-        }
-        irreps.sort_by_key(|k| k.1);
-        let just_irreps: Vec<_> = irreps.iter().map(|s| s.1).collect();
-        let mut new_sics = Vec::new();
-        for irrep in &irreps {
-            new_sics.push(intder.symmetry_internals[irrep.0].clone());
-        }
-        intder.symmetry_internals = new_sics;
-        writeln!(w, "\nSymmetry Internal Coordinates:").unwrap();
-        intder.print_sics(w, &just_irreps);
-        Ok(Prep {
-            atomic_numbers,
-            nsic,
-            ndum,
-            irreps,
-        })
-    }
 
     fn generate_pts<W: Write>(
         &mut self,
@@ -404,6 +331,77 @@ pub(crate) fn write_file(
 pub struct FreqError(pub String);
 
 impl Sic {
+    /// prepare to [Self::generate_pts] by determining the symmetries of each
+    /// SIC and sorting them into the correct order for [Taylor::make_checks]
+    fn prepare_points<W: Write>(
+        &mut self,
+        mol: &Molecule,
+        step_size: f64,
+        pg: &PointGroup,
+        w: &mut W,
+    ) -> Result<Prep, IntderError> {
+        let intder = &mut self.intder;
+        let atomic_numbers = mol.atomic_numbers();
+        let nsic = intder.symmetry_internals.len();
+        let mut disps = Vec::new();
+        for i in 0..nsic {
+            let mut disp = vec![0.0; nsic];
+            disp[i] = step_size;
+            disps.push(disp);
+        }
+        intder.geom = intder::geom::Geom::from(mol.clone());
+        intder.geom.to_bohr();
+        intder.disps = disps;
+        let ndum = if intder
+            .simple_internals
+            .iter()
+            .any(|s| matches!(s, Siic::Lin1(..)))
+        {
+            // default to Z, hopefully this only applies for semp disaster
+            intder.add_dummies(pg.axis().unwrap_or_else(|| {
+                eprintln!("LIN1 but no axis in point group, using z");
+                symm::Axis::Z
+            }))
+        } else {
+            0
+        };
+        let disps = intder.convert_disps()?;
+        let mut irreps = Vec::new();
+        for (i, disp) in disps.iter().enumerate() {
+            let disp = disp.as_slice();
+            let m = Molecule::from_slices(
+                &atomic_numbers,
+                &disp[..disp.len() - 3 * ndum],
+            );
+            let irrep = match m.irrep_approx(pg, SYMM_EPS) {
+                Ok(rep) => rep,
+                Err(e) => {
+                    eprintln!(
+                        "irrep determination failed on coord {i}/{} with {}",
+                        disps.len(),
+                        e.msg()
+                    );
+                    Irrep::A
+                }
+            };
+            irreps.push((i, irrep));
+        }
+        irreps.sort_by_key(|k| k.1);
+        let just_irreps: Vec<_> = irreps.iter().map(|s| s.1).collect();
+        let mut new_sics = Vec::new();
+        for irrep in &irreps {
+            new_sics.push(intder.symmetry_internals[irrep.0].clone());
+        }
+        intder.symmetry_internals = new_sics;
+        writeln!(w, "\nSymmetry Internal Coordinates:").unwrap();
+        intder.print_sics(w, &just_irreps);
+        Ok(Prep {
+            atomic_numbers,
+            nsic,
+            ndum,
+            irreps,
+        })
+    }
     /// run the frequency portion of a QFF in `dir`. The caller is responsible
     /// for ensuring this directory exists.
     #[allow(clippy::too_many_arguments)]
