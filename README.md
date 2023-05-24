@@ -129,10 +129,13 @@ And for the original VPT2 code in `SPECTRO`, you can cite
  editor = {Joel M. Bowman and Mark A. Ratner},
  pages = {170-185},
  publisher = {JAI Press, Inc.},
- title = {{SPECTRO: A} Program for the Derivation of Spectrscopic Constants From Provided Quartic Force Fields and Cubic Dipole Fields},
+ title = {{SPECTRO: A} Program for the Derivation of Spectroscopic Constants From Provided Quartic Force Fields and Cubic Dipole Fields},
  year = {1991}
 }
 ```
 
 # TODOs
 - [ ] factor out commonality in first part of `CoordType::run`
+- [ ] use or delete `Fitted` trait
+  - `Findiff` actually has some default methods that make it useful, but
+    `Fitted` doesn't provide any default methods and isn't used as a bound
