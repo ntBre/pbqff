@@ -92,9 +92,9 @@ checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
 
 [[package]]
 name = "bumpalo"
-version = "3.12.2"
+version = "3.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c6ed94e98ecff0c12dd1b04c15ec0d7d9458ca8fe806cea6f12954efe74c63b"
+checksum = "a3e2c3daef883ecc1b5d58c15adae93470a91d425f3532ba1695849656af3fc1"
 
 [[package]]
 name = "bytemuck"
@@ -357,7 +357,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#c08481873c4008fdad965b2b19c5b1f64342160c"
+source = "git+https://github.com/ntBre/intder#c3a719bef35204d9c3da42c4169add3e4ca4c7cd"
 dependencies = [
  "approx",
  "lazy_static",
@@ -371,9 +371,9 @@ dependencies = [
 
 [[package]]
 name = "io-lifetimes"
-version = "1.0.10"
+version = "1.0.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9c66c74d2ae7e79a5a8f7ac924adbe38ee42a859c6539ad869eb51f0b52dc220"
+checksum = "eae7b9aee968036d54dce06cebaefd919e4472e753296daccd6d344e3e2df0c2"
 dependencies = [
  "hermit-abi 0.3.1",
  "libc",
@@ -654,7 +654,7 @@ dependencies = [
 [[package]]
 name = "psqs"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/psqs#52a4ded533833573255e9e4722b8265c45dd0c15"
+source = "git+https://github.com/ntBre/psqs#911c5c301a91440ff455361f61cd82a9e635f16d"
 dependencies = [
  "chrono",
  "lazy_static",
@@ -724,7 +724,7 @@ checksum = "436b050e76ed2903236f032a59761c1eb99e1b0aead2c257922771dab1fc8c78"
 [[package]]
 name = "rust-anpass"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/rust-anpass#3df920beb6ade3b967c539fa6f7f323e367e7437"
+source = "git+https://github.com/ntBre/rust-anpass#e81a5c336d9d78ed6ad4cffc79cd351b80caba4c"
 dependencies = [
  "approx",
  "nalgebra",
@@ -850,7 +850,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#f38ed404f5ab5df4e290f3382297dd00df727f97"
+source = "git+https://github.com/ntBre/spectro#cdbf36b72a9ca171a1be9785ab457edf6b14b082"
 dependencies = [
  "nalgebra",
  "serde",
@@ -868,7 +868,7 @@ checksum = "73473c0e59e6d5812c5dfe2a064a6444949f089e20eec9a2e5506596494e4623"
 [[package]]
 name = "symm"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/symm#3772a64a7ddbc095cb6134337a04275d1e26b23a"
+source = "git+https://github.com/ntBre/symm#0954c688eed640a9b66cf1e9e0b6d305d24063c2"
 dependencies = [
  "approx",
  "nalgebra",
@@ -900,7 +900,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#7fb8106816ae950648a9225150c2d586a605ff76"
+source = "git+https://github.com/ntBre/taylor#55222705c173d341586f4909e24514450148faf7"
 dependencies = [
  "nalgebra",
  "rust-anpass",
@@ -965,9 +965,9 @@ dependencies = [
 
 [[package]]
 name = "toml_edit"
-version = "0.19.9"
+version = "0.19.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92d964908cec0d030b812013af25a0e57fddfadb1e066ecc6681d86253129d4f"
+checksum = "2380d56e8670370eee6566b0bfd4265f65b3f432e8c6d85623f728d4fa31f739"
 dependencies = [
  "indexmap",
  "serde",
@@ -990,9 +990,9 @@ checksum = "92888ba5573ff080736b3648696b70cafad7d250551175acbaa4e0385b3e1460"
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.8"
+version = "1.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5464a87b239f13a63a501f2701565754bae92d243d4bb7eb12f6d57d2269bf4"
+checksum = "b15811caf2415fb889178633e7724bad2509101cde276048e013b9def5e51fa0"
 
 [[package]]
 name = "unicode-normalization"
