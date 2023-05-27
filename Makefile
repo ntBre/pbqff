@@ -80,3 +80,9 @@ profile.cart:
 
 profile.build_points:
 	$(call profile,build_points)
+
+memprofile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
+                heaptrack -o /tmp/heaptrack.pbqff.%p.zst ${BASE}/target/release/$(1)
+
+memprofile.cart:
+	$(call memprofile,cart)
