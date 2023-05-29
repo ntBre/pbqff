@@ -357,7 +357,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#c3a719bef35204d9c3da42c4169add3e4ca4c7cd"
+source = "git+https://github.com/ntBre/intder#7d905e9133213352b472c2dffaff4547af36cb0a"
 dependencies = [
  "approx",
  "lazy_static",
@@ -706,9 +706,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.8.2"
+version = "1.8.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1a59b5d8e97dee33696bf13c5ba8ab85341c002922fba050069326b9c498974"
+checksum = "81ca098a9821bd52d6b24fd8b10bd081f47d39c22778cafaa75a2857a62c6390"
 dependencies = [
  "aho-corasick",
  "memchr",
