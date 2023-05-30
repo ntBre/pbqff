@@ -96,16 +96,19 @@ the qffbuddy directory
 
 # Citations
 For `pbqff` itself, please cite B. R. Westbrook and R. C. Fortenberry. "pbqff:
-Push-Button Quartic Force Fields." *J. Chem. Theory Comput.*, (accepted). DOI:
+Push-Button Quartic Force Fields." *J. Chem. Theory Comput.*, 2023. DOI:
 [10.1021/acs.jctc.3c00129](https://doi.org/10.1021/acs.jctc.3c00129)
 
 ```
 @article{Westbrook23_pbqff,
-  author = 	 {Brent R. Westbrook and Ryan C. Fortenberry},
-  title = 	 {pbqff: Push-Button Quartic Force Fields},
-  journal = 	 {J. Chem. Theory Comput.},
-  year = 	 2023,
-  note = 	 {(accepted)}}
+  author = {Brent R. Westbrook and Ryan C. Fortenberry},
+  title = {pbqff: Push-Button Quartic Force Fields},
+  journal = {J. Chem. Theory Comput.},
+  volume = 19,
+  number = 9,
+  pages = {2606-2615},
+  year = 2023,
+}
 ```
 
 If you use symmetry-internal coordinates, you may also want to cite the original
