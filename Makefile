@@ -42,6 +42,7 @@ endif
 install:
 	cargo build --features vers --bin rust-pbqff --release
 	sudo ln -s $(realpath target/release/rust-pbqff) /usr/bin/pbqff
+	sudo ln -s $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
 
 BASE = /home/brent/Projects/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
