@@ -43,7 +43,7 @@ jobs:
         uses: actions-rs/clippy-check@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          args: --workspace --all-targets
+          args: --all-targets --all-features --workspace -- -D warnings
   doc:
     runs-on: ubuntu-latest
     name: nightly / doc
