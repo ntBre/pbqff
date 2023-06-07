@@ -12,7 +12,7 @@ members = [
 
 [dependencies]
 intder = { git = "https://github.com/ntBre/intder" }
-libc = "0.2.145"
+libc = "0.2.146"
 nalgebra = "0.32.2"
 psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
