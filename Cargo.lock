@@ -363,7 +363,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#5ebeb33c6b7131fa1400e6cbf758471d61075682"
+source = "git+https://github.com/ntBre/intder#4c2f4e0f3f73796b18f06bd3392449e43d72c7b8"
 dependencies = [
  "approx",
  "nalgebra",
@@ -719,7 +719,7 @@ checksum = "436b050e76ed2903236f032a59761c1eb99e1b0aead2c257922771dab1fc8c78"
 [[package]]
 name = "rust-anpass"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/rust-anpass#77d45115be7e484c695919f5c614f4e6cd790ab0"
+source = "git+https://github.com/ntBre/rust-anpass#984cda6abf35f98375b450b1e9899184eb7fc2a7"
 dependencies = [
  "approx",
  "nalgebra",
@@ -776,9 +776,9 @@ checksum = "f91339c0467de62360649f8d3e185ca8de4224ff281f66000de5eb2a77a79041"
 
 [[package]]
 name = "safe_arch"
-version = "0.6.0"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "794821e4ccb0d9f979512f9c1973480123f9bd62a90d74ab0f9426fcf8f4a529"
+checksum = "62a7484307bd40f8f7ccbacccac730108f2cae119a3b11c74485b48aa9ea650f"
 dependencies = [
  "bytemuck",
 ]
@@ -845,7 +845,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#e9c49653862cc3995ee885a11dd8d03075b1cd8a"
+source = "git+https://github.com/ntBre/spectro#2b0fc5f936ac9cf03e7fb9977e00bf4f449733ce"
 dependencies = [
  "nalgebra",
  "serde",
@@ -895,7 +895,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#1cbce494c44d6059371cedcf23272247fe40624c"
+source = "git+https://github.com/ntBre/taylor#293a3487f14745fd57f240c8cf46305a61f90053"
 dependencies = [
  "nalgebra",
  "rust-anpass",
@@ -1083,9 +1083,9 @@ checksum = "ed9d5b4305409d1fc9482fee2d7f9bcbf24b3972bf59817ef757e23982242a93"
 
 [[package]]
 name = "wide"
-version = "0.7.9"
+version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5cd0496a71f3cc6bc4bf0ed91346426a5099e93d89807e663162dc5a1069ff65"
+checksum = "40018623e2dba2602a9790faba8d33f2ebdebf4b86561b83928db735f8784728"
 dependencies = [
  "bytemuck",
  "safe_arch",
