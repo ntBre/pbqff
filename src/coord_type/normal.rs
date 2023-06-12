@@ -6,7 +6,7 @@
 //! displacements, which can be fed back in to spectro at the end as f3qcm and
 //! f4qcm
 
-use std::{io::Write, marker::Sync};
+use std::{error::Error, io::Write, marker::Sync};
 
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
@@ -283,8 +283,15 @@ where
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
-        let (s, o, ref_energy, pg, fc2) =
-            self.cart_part(&FirstPart::from(config.clone()), queue, w, "pts");
+        let CartPart {
+            spectro: s,
+            output: o,
+            ref_energy,
+            pg,
+            fc2,
+        } = self
+            .cart_part(&FirstPart::from(config.clone()), queue, w, "pts")
+            .unwrap();
         cleanup();
         let _ = std::fs::create_dir("pts");
         self.prep_qff(w, &o, pg);
@@ -723,6 +730,15 @@ impl FiniteDifference for Normal {
     }
 }
 
+/// returned from [Normal::cart_part]
+pub struct CartPart {
+    pub spectro: Spectro,
+    pub output: Output,
+    pub ref_energy: f64,
+    pub pg: PointGroup,
+    pub fc2: Dmat,
+}
+
 impl Normal {
     /// run the Cartesian harmonic force field and return the spectro output,
     /// from which we can extract the geometry and normal coordinates (lxm)
@@ -732,7 +748,7 @@ impl Normal {
         queue: &Q,
         w: &mut W,
         dir: &str,
-    ) -> (Spectro, Output, f64, PointGroup, Dmat)
+    ) -> Result<CartPart, Box<dyn Error>>
     where
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Q: Queue<P> + Sync,
@@ -748,7 +764,7 @@ impl Normal {
             ref_energy,
             pg,
             ..
-        } = Cart.first_part(w, config, queue, Nderiv::Two, dir).unwrap();
+        } = Cart.first_part(w, config, queue, Nderiv::Two, dir)?;
         let (fc2, _, _) = self.make_fcs(
             &mut target_map,
             &energies,
@@ -767,7 +783,13 @@ impl Normal {
             pg
         };
 
-        (spectro, output, ref_energy, pg, fc2)
+        Ok(CartPart {
+            spectro,
+            output,
+            ref_energy,
+            pg,
+            fc2,
+        })
     }
 
     /// run the harmonic frequencies through spectro
