@@ -1,6 +1,6 @@
 //! Cartesian coordinate QFFs.
 
-use std::{io, marker::Sync};
+use std::{error::Error, io, marker::Sync};
 
 use psqs::{
     geom::Geom,
@@ -72,14 +72,24 @@ where
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 {
     fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
-        let (n, nfc2, nfc3, mut fcs, mol, energies, mut target_map, _, _) =
-            Cart.first_part(
+        let FirstOutput {
+            n,
+            nfc2,
+            nfc3,
+            mut fcs,
+            mol,
+            energies,
+            mut target_map,
+            ..
+        } = Cart
+            .first_part(
                 w,
                 &FirstPart::from(config.clone()),
                 queue,
                 Nderiv::Four,
                 "pts",
-            );
+            )
+            .unwrap();
 
         time!(w, "freqs",
           let (fc2, f3, f4) = self.make_fcs(
@@ -169,17 +179,7 @@ impl Cart {
         queue: &Q,
         nderiv: Nderiv,
         dir: &str,
-    ) -> (
-        usize,
-        usize,
-        usize,
-        Vec<f64>,
-        Molecule,
-        Vec<f64>,
-        BigHash,
-        f64,
-        PointGroup,
-    )
+    ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
         Q: Queue<P> + Sync,
@@ -258,14 +258,33 @@ impl Cart {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies, 0)
-              .expect("single-point calculations failed");
+              .drain(dir, jobs, &mut energies, 0)?;
         );
 
         eprintln!("total job time: {time:.1} sec");
 
-        (
-            n, nfc2, nfc3, fcs, mol, energies, target_map, ref_energy, pg,
-        )
+        Ok(FirstOutput {
+            n,
+            nfc2,
+            nfc3,
+            fcs,
+            mol,
+            energies,
+            target_map,
+            ref_energy,
+            pg,
+        })
     }
+}
+
+pub struct FirstOutput {
+    pub n: usize,
+    pub nfc2: usize,
+    pub nfc3: usize,
+    pub fcs: Vec<f64>,
+    pub mol: Molecule,
+    pub energies: Vec<f64>,
+    pub target_map: BigHash,
+    pub ref_energy: f64,
+    pub pg: PointGroup,
 }

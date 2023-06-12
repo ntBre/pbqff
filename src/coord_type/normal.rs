@@ -30,6 +30,7 @@ use crate::{
 };
 
 use super::{
+    cart::FirstOutput,
     findiff::{
         atom_parts, bighash::BigHash, proto, zip_atoms, FiniteDifference, Idx,
         Proto,
@@ -737,17 +738,17 @@ impl Normal {
         Q: Queue<P> + Sync,
         W: Write,
     {
-        let (
+        let FirstOutput {
             n,
             nfc2,
-            _,
             mut fcs,
             mol,
             energies,
             mut target_map,
             ref_energy,
             pg,
-        ) = Cart.first_part(w, config, queue, Nderiv::Two, dir);
+            ..
+        } = Cart.first_part(w, config, queue, Nderiv::Two, dir).unwrap();
         let (fc2, _, _) = self.make_fcs(
             &mut target_map,
             &energies,
