@@ -1,7 +1,4 @@
-use std::{
-    collections::hash_map::Values, fmt::Display, num::ParseIntError,
-    str::FromStr,
-};
+use std::{fmt::Display, num::ParseIntError, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use symm::{Axis, Plane, PointGroup};
@@ -358,8 +355,8 @@ impl BigHash {
         self.map.insert(Self::to_keys(&key), value)
     }
 
-    pub fn values(&self) -> Values<KeyChain, Target> {
-        self.map.values()
+    pub fn values(self) -> Vec<Target> {
+        self.map.into_values().collect()
     }
 
     pub fn len(&self) -> usize {

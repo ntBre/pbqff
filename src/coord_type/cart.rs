@@ -15,7 +15,7 @@ use crate::{config::Config, optimize, ref_energy};
 
 use super::{
     findiff::bighash::BigHash,
-    findiff::{zip_atoms, FiniteDifference},
+    findiff::{bighash::Target, zip_atoms, FiniteDifference},
     CoordType, Load, SPECTRO_HEADER,
 };
 
@@ -79,7 +79,7 @@ where
             mut fcs,
             mol,
             energies,
-            mut target_map,
+            targets,
             ..
         } = Cart
             .first_part(
@@ -93,7 +93,7 @@ where
 
         time!(w, "freqs",
           let (fc2, f3, f4) = self.make_fcs(
-          &mut target_map,
+          targets,
           &energies,
           &mut fcs,
           n,
@@ -237,6 +237,7 @@ impl Cart {
            n,
                );
         );
+        let targets = target_map.values();
         let jobs: Vec<_> = geoms
             .into_iter()
             .enumerate()
@@ -270,7 +271,7 @@ impl Cart {
             fcs,
             mol,
             energies,
-            target_map,
+            targets,
             ref_energy,
             pg,
         })
@@ -284,7 +285,7 @@ pub struct FirstOutput {
     pub fcs: Vec<f64>,
     pub mol: Molecule,
     pub energies: Vec<f64>,
-    pub target_map: BigHash,
+    pub targets: Vec<Target>,
     pub ref_energy: f64,
     pub pg: PointGroup,
 }

@@ -32,8 +32,9 @@ use crate::{
 use super::{
     cart::FirstOutput,
     findiff::{
-        atom_parts, bighash::BigHash, proto, zip_atoms, FiniteDifference, Idx,
-        Proto,
+        atom_parts,
+        bighash::{BigHash, Target},
+        proto, zip_atoms, FiniteDifference, Idx, Proto,
     },
     fitted::{AtomicNumbers, Fitted},
     make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv,
@@ -223,6 +224,7 @@ impl Normal {
             &mut map,
             n,
         );
+        let targets = map.values();
         let dir = "pts";
         let jobs: Vec<_> = geoms
             .into_iter()
@@ -242,7 +244,7 @@ impl Normal {
             normal: self.clone(),
             njobs: jobs.len(),
             deriv: DerivType::Findiff {
-                map,
+                targets,
                 fcs,
                 n,
                 nfc2,
@@ -261,10 +263,10 @@ impl Normal {
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
-        let DerivType::Findiff{ map, mut fcs, .. } = resume.deriv  else  {
+        let DerivType::Findiff{ targets, mut fcs, .. } = resume.deriv  else  {
 	    unreachable!()
 	};
-        self.map_energies(&map, &energies, &mut fcs);
+        self.map_energies(targets, &energies, &mut fcs);
         let cubs = &fcs[nfc2..nfc2 + nfc3];
         let quarts = &fcs[nfc2 + nfc3..];
         to_qcm(&o.harms, n, cubs, quarts, intder::HART)
@@ -385,13 +387,13 @@ where
         eprintln!("total job time: {time:.1} sec");
         let (f3qcm, f4qcm) = match deriv {
             DerivType::Findiff {
-                map,
+                targets,
                 mut fcs,
                 n,
                 nfc2,
                 nfc3,
             } => {
-                self.map_energies(&map, &energies, &mut fcs);
+                self.map_energies(targets, &energies, &mut fcs);
                 let cubs = &fcs[nfc2..nfc2 + nfc3];
                 let quarts = &fcs[nfc2 + nfc3..];
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
@@ -458,7 +460,7 @@ where
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub enum DerivType {
     Findiff {
-        map: BigHash,
+        targets: Vec<Target>,
         fcs: Vec<f64>,
         n: usize,
         nfc2: usize,
@@ -760,13 +762,13 @@ impl Normal {
             mut fcs,
             mol,
             energies,
-            mut target_map,
+            targets: target_map,
             ref_energy,
             pg,
             ..
         } = Cart.first_part(w, config, queue, Nderiv::Two, dir)?;
         let (fc2, _, _) = self.make_fcs(
-            &mut target_map,
+            target_map,
             &energies,
             &mut fcs,
             n,

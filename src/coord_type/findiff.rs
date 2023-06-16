@@ -1,7 +1,7 @@
 //! Compute force constants using [finite
 //! differences](https://en.wikipedia.org/wiki/Finite_difference).
 
-use self::bighash::BigHash;
+use self::bighash::{BigHash, Target};
 
 use super::{cart::DEBUG, CartGeom, Derivative};
 use bighash::Index;
@@ -196,16 +196,20 @@ pub trait FiniteDifference {
     /// yield the force constants as one vector
     fn map_energies(
         &self,
-        target_map: &BigHash,
+        targets: Vec<Target>,
         energies: &[f64],
         fcs: &mut [f64],
     ) {
-        for target in target_map.values() {
+        for Target {
+            source_index,
+            indices,
+        } in targets
+        {
             if DEBUG == "fcs" {
-                eprintln!("source index: {}", target.source_index);
+                eprintln!("source index: {}", source_index);
             }
-            let energy = energies[target.source_index];
-            for idx in &target.indices {
+            let energy = energies[source_index];
+            for idx in &indices {
                 if DEBUG == "fcs" {
                     eprintln!(
                         "\tfcs[{}] += {:12.8} * {:12.8}",
@@ -221,14 +225,14 @@ pub trait FiniteDifference {
     /// the form wanted by spectro
     fn make_fcs<'a>(
         &self,
-        target_map: &mut BigHash,
+        targets: Vec<Target>,
         energies: &[f64],
         fcs: &'a mut [f64],
         n: usize,
         deriv: Derivative,
         dir: &str,
     ) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
-        self.map_energies(target_map, energies, fcs);
+        self.map_energies(targets, energies, fcs);
         // mirror symmetric quadratic fcs
         let mut fc2 = intder::DMat::zeros(n, n);
         for i in 0..n {

@@ -371,6 +371,7 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         &mut target_map,
         n,
     );
+    let targets = target_map.values();
     assert_eq!(geoms.len(), 11952);
 
     let resume = Resume::new(
@@ -379,7 +380,7 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         Output::default(),
         Spectro::default(),
         DerivType::Findiff {
-            map: target_map,
+            targets,
             fcs,
             n,
             nfc2,
@@ -395,27 +396,21 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         assert_eq!(got.spectro, resume.spectro);
         got.dump("/tmp/got.json");
         let DerivType::Findiff {
-	map: gmap, fcs: gfcs, n: gn, nfc2: gnfc2, nfc3: gnfc3
+	targets: mut gmap, fcs: gfcs, n: gn, nfc2: gnfc2, nfc3: gnfc3
     } = got.deriv else { unreachable!() };
         let DerivType::Findiff {
-	map: wmap, fcs: wfcs, n: wn, nfc2: wnfc2, nfc3: wnfc3
+	targets: mut wmap, fcs: wfcs, n: wn, nfc2: wnfc2, nfc3: wnfc3
     } = resume.deriv else { unreachable!() };
         assert_eq!(gn, wn);
         assert_eq!(gnfc2, wnfc2);
         assert_eq!(gnfc3, wnfc3);
         assert_eq!(gfcs, wfcs);
-        assert_eq!(gmap.pg, wmap.pg);
-        assert_eq!(gmap.buddy, wmap.buddy);
-        // asserting these as eq is very ugly when false, so check that the len
-        // is equal, that all of the keys in gmap are contained in wmap and vice
-        // versa, and then check that all of the values are the same to 6e-11
-        // tolerance since there is some deviation, surprisingly. 5e-11 fails,
-        // so this is pretty tight
-        assert_eq!(gmap.map.len(), wmap.map.len());
-        assert!(gmap.map.keys().all(|k| wmap.map.contains_key(k)));
-        assert!(wmap.map.keys().all(|k| gmap.map.contains_key(k)));
-        for (k, v) in gmap.map {
-            assert_abs_diff_eq!(wmap.map.get(&k).unwrap(), &v, epsilon = 6e-11);
+
+        gmap.sort_by(|a, b| a.source_index.cmp(&b.source_index));
+        wmap.sort_by(|a, b| a.source_index.cmp(&b.source_index));
+
+        for (g, w) in gmap.iter().zip(wmap) {
+            assert_abs_diff_eq!(g, &w, epsilon = 6e-11);
         }
     }
     fs::remove_file(chk).unwrap();
