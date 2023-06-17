@@ -172,7 +172,7 @@ impl Normal {
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
-            .anpass(freqs_dir.to_str(), &mut energies, &taylor, step_size, w)
+            .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
             .unwrap();
         // needed in case taylor eliminated some of the higher derivatives
         // by symmetry. this should give the maximum, full sizes without
@@ -426,13 +426,7 @@ where
                 let freqs_dir = dir.as_ref().join("freqs");
                 let _ = std::fs::create_dir(&freqs_dir);
                 let (fcs, _) = self
-                    .anpass(
-                        freqs_dir.to_str(),
-                        &mut energies,
-                        &taylor,
-                        step_size,
-                        w,
-                    )
+                    .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
                     .unwrap();
                 // needed in case taylor eliminated some of the higher
                 // derivatives by symmetry. this should give the maximum, full
@@ -616,7 +610,7 @@ impl Fitted for Normal {
     /// coordinates themselves and invalidate all of the force constants
     fn anpass<W: Write>(
         &self,
-        dir: Option<&str>,
+        dir: impl AsRef<Path>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,
@@ -625,12 +619,10 @@ impl Fitted for Normal {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), super::FreqError>>,
     > {
-        make_rel(energies);
+        make_rel(&dir, energies);
         let anpass =
             Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
-        if let Some(dir) = dir {
-            write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
-        }
+        write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
         let (fcs, f) = anpass.fit();
         writeln!(
             w,
