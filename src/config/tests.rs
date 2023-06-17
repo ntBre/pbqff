@@ -23,8 +23,7 @@ HCC =               147.81488230
         step_size: 0.005,
         coord_type: CoordType::Sic,
         template: String::from(
-            "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
-		 external=testfiles/params.dat",
+            "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
         program: Program::Mopac,
         sleep_int: 2,
@@ -35,8 +34,7 @@ HCC =               147.81488230
         check_int: 100,
         queue_template: None,
         hybrid_template: String::from(
-            "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1 \
-		 external=testfiles/params.dat",
+            "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
     };
     assert_eq!(got, want);
