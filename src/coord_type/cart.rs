@@ -56,7 +56,7 @@ pub fn freqs(
 
     // write input
     let input = dir.as_ref().join("spectro.in");
-    spectro.write(&input).unwrap();
+    spectro.write(input).unwrap();
 
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
@@ -197,6 +197,7 @@ impl Cart {
             let template = Template::from(&config.template);
             let (geom, ref_energy) = if config.optimize {
                 let res = optimize(
+            &dir,
                     queue,
                     config.geometry.clone(),
                     template.clone(),

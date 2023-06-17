@@ -2,9 +2,10 @@
 //! least-squares](https://en.wikipedia.org/wiki/Ordinary_least_squares)
 //! fitting.
 
+use std::{io::Write, path::Path};
+
 use psqs::geom::Geom;
 use spectro::{Output, Spectro};
-use std::io::Write;
 use symm::{Molecule, PointGroup};
 use taylor::Taylor;
 
@@ -24,6 +25,7 @@ pub trait Fitted {
     /// the atomic numbers needed to compute the frequencies.
     fn generate_pts<W: Write>(
         &mut self,
+        dir: impl AsRef<Path>,
         w: &mut W,
         mol: &Molecule,
         pg: &PointGroup,

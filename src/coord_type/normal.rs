@@ -6,7 +6,7 @@
 //! displacements, which can be fed back in to spectro at the end as f3qcm and
 //! f4qcm
 
-use std::{error::Error, io::Write, marker::Sync};
+use std::{error::Error, io::Write, marker::Sync, path::Path};
 
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
@@ -116,6 +116,7 @@ impl Normal {
         &mut self,
         o: &Output,
         s: &Spectro,
+        dir: impl AsRef<Path>,
         w: &mut W,
         pg: PointGroup,
         config: &Config,
@@ -128,9 +129,10 @@ impl Normal {
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         let (geoms, taylor, _atomic_numbers) = self
-            .generate_pts(w, &o.geom, &pg, config.step_size)
+            .generate_pts(&dir, w, &o.geom, &pg, config.step_size)
             .unwrap();
-        let dir = "pts";
+        let freqs_dir = dir.as_ref().join("freqs");
+        let dir = dir.as_ref().to_str().unwrap();
         let jobs =
             P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
         writeln!(
@@ -164,7 +166,7 @@ impl Normal {
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
-            .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
+            .anpass(freqs_dir.to_str(), &mut energies, &taylor, step_size, w)
             .unwrap();
         // needed in case taylor eliminated some of the higher derivatives
         // by symmetry. this should give the maximum, full sizes without
@@ -286,6 +288,7 @@ where
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
+        let pts_dir = dir.as_ref().join("pts");
         let CartPart {
             spectro: s,
             output: o,
@@ -293,17 +296,23 @@ where
             pg,
             fc2,
         } = self
-            .cart_part(&FirstPart::from(config.clone()), queue, w, "pts")
+            .cart_part(
+                &FirstPart::from(config.clone()),
+                queue,
+                w,
+                pts_dir.to_str().unwrap(),
+            )
             .unwrap();
-        cleanup(dir);
-        let _ = std::fs::create_dir("pts");
+        cleanup(&dir);
+        let _ = std::fs::create_dir(pts_dir);
         self.prep_qff(w, &o, pg);
 
         let tmpl = config.template.clone().into();
 
         // TODO have to split these run_* methods into a prep_* and run_* so I
         // can save the Resume between them
-        let _ = std::fs::create_dir("freqs");
+        let freqs_dir = dir.as_ref().join("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         let ref_energy = if config.template != config.hybrid_template {
             crate::ref_energy(
                 queue,
@@ -331,10 +340,10 @@ where
                     "hybrid_template not used for fitted normal coordinates"
                 );
             }
-            self.run_fitted(&o, &s, w, pg, config, tmpl, queue)
+            self.run_fitted(&o, &s, dir, w, pg, config, tmpl, queue)
         };
-        Intder::dump_fcs("freqs", &fc2, &f3qcm, &f4qcm);
-        s.write("freqs/spectro.in").unwrap();
+        Intder::dump_fcs(freqs_dir.to_str().unwrap(), &fc2, &f3qcm, &f4qcm);
+        s.write(freqs_dir.join("spectro.in")).unwrap();
         let fin = spectro::SpectroFinish::new(
             s,
             DVector::from(o.harms.clone()),
@@ -344,9 +353,10 @@ where
             self.lxm.unwrap(),
             self.lx.unwrap(),
         );
-        fin.dump("freqs/finish.spectro").unwrap_or_else(|e| {
-            eprintln!("failed to dump finish.spectro with `{e}`")
-        });
+        fin.dump(freqs_dir.join("finish.spectro").to_str().unwrap())
+            .unwrap_or_else(|e| {
+                eprintln!("failed to dump finish.spectro with `{e}`")
+            });
         let spectro::SpectroFinish {
             spectro,
             freq,
@@ -378,12 +388,12 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         self = normal;
-        let dir = dir.as_ref().join("pts");
+        let pts_dir = dir.as_ref().join("pts");
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(dir.to_str().unwrap(), "chk.json", &mut energies, config.check_int)
+              .resume(pts_dir.to_str().unwrap(), "chk.json", &mut energies, config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -401,9 +411,16 @@ where
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
             DerivType::Fitted { taylor, step_size } => {
-                let _ = std::fs::create_dir("freqs");
+                let freqs_dir = dir.as_ref().join("freqs");
+                let _ = std::fs::create_dir(&freqs_dir);
                 let (fcs, _) = self
-                    .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
+                    .anpass(
+                        freqs_dir.to_str(),
+                        &mut energies,
+                        &taylor,
+                        step_size,
+                        w,
+                    )
                     .unwrap();
                 // needed in case taylor eliminated some of the higher
                 // derivatives by symmetry. this should give the maximum, full
@@ -547,6 +564,7 @@ impl Fitted for Normal {
 
     fn generate_pts<W: Write>(
         &mut self,
+        _dir: impl AsRef<Path>,
         _w: &mut W,
         mol: &Molecule,
         pg: &PointGroup,

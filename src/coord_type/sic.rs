@@ -59,6 +59,7 @@ where
         // optimize the geometry
         let geom = if config.optimize {
             let res = optimize(
+                &dir,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -95,8 +96,9 @@ where
         writeln!(w, "Normalized Geometry:\n{mol:20.12}").unwrap();
         writeln!(w, "Point Group = {pg}").unwrap();
 
-        let (geoms, taylor, atomic_numbers) =
-            self.generate_pts(w, &mol, &pg, config.step_size).unwrap();
+        let (geoms, taylor, atomic_numbers) = self
+            .generate_pts(&dir, w, &mol, &pg, config.step_size)
+            .unwrap();
 
         let dir = dir.as_ref().join("pts").join("inp");
         let dir = dir.to_string_lossy().to_string();
@@ -150,10 +152,11 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         let mut energies = vec![0.0; njobs];
-        let dir = "pts/inp";
-        let _ = std::fs::create_dir_all(dir);
+        let dir = dir.as_ref().join("pts").join("inp");
+        let _ = std::fs::create_dir_all(&dir);
+        let dir = dir.to_str().unwrap().to_owned();
         let time = queue
-            .resume(dir, "chk.json", &mut energies, config.check_int)
+            .resume(&dir, "chk.json", &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -221,6 +224,7 @@ impl Fitted for Sic {
 
     fn generate_pts<W: Write>(
         &mut self,
+        dir: impl AsRef<Path>,
         w: &mut W,
         mol: &Molecule,
         pg: &PointGroup,
@@ -249,9 +253,9 @@ impl Fitted for Sic {
 
         // build and run the points using psqs
         // TODO handle error
-        let _ = std::fs::create_dir_all("pts/inp");
+        let _ = std::fs::create_dir_all(dir.as_ref().join("pts/inp"));
 
-        write_file("pts/intder.in", &self.intder).unwrap();
+        write_file(dir.as_ref().join("pts/intder.in"), &self.intder).unwrap();
 
         // these are the displacements that go in file07, but I'll use them from
         // memory to build the jobs
@@ -475,7 +479,7 @@ impl Sic {
         if DEBUG {
             writeln!(w, "Spectro Input:\n{spectro}").unwrap();
         }
-        spectro.write(&input).unwrap();
+        spectro.write(input).unwrap();
 
         let (output, _) =
             spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));

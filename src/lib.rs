@@ -30,16 +30,19 @@ pub fn optimize<
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 >(
+    dir: impl AsRef<Path>,
     queue: &Q,
     geom: Geom,
     template: Template,
     charge: isize,
 ) -> Result<ProgramResult, ProgramError> {
-    let _ = std::fs::create_dir("opt");
-    let opt =
-        Job::new(P::new("opt/opt".to_string(), template, charge, geom), 0);
+    let opt_dir = dir.as_ref().join("opt");
+    let _ = std::fs::create_dir(&opt_dir);
+    let opt_file = opt_dir.join("opt").to_str().unwrap().to_owned();
+    let opt = Job::new(P::new(opt_file, template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
-    let time = queue.energize("opt", vec![opt], &mut res)?;
+    let time =
+        queue.energize(opt_dir.to_str().unwrap(), vec![opt], &mut res)?;
     eprintln!("total optimize time: {time:.1} sec");
     Ok(res.pop().unwrap())
 }
