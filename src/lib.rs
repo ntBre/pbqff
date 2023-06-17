@@ -4,6 +4,8 @@ pub mod coord_type;
 #[cfg(test)]
 mod tests;
 
+use std::path::Path;
+
 pub use intder::Intder;
 use psqs::{
     geom::Geom,
@@ -14,10 +16,11 @@ use serde::{Deserialize, Serialize};
 pub use spectro::{Output, Spectro};
 
 /// clean up from a previous run, emitting warnings on failures
-pub fn cleanup() {
+pub fn cleanup(dir: impl AsRef<Path>) {
     for d in ["opt", "pts", "freqs"] {
-        std::fs::remove_dir_all(d)
-            .unwrap_or_else(|e| eprintln!("failed to remove '{d}' with {e}"));
+        let d = dir.as_ref().join(d);
+        std::fs::remove_dir_all(&d)
+            .unwrap_or_else(|e| eprintln!("failed to remove '{d:?}' with {e}"));
     }
 }
 

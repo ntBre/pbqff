@@ -1,3 +1,4 @@
+use std::env::temp_dir;
 use std::fs;
 use std::io::Stdout;
 use std::str::FromStr;
@@ -14,7 +15,6 @@ use spectro::Output;
 use spectro::Spectro;
 use symm::Molecule;
 
-use crate::cleanup;
 use crate::config::Config;
 use crate::coord_type::findiff::bighash::BigHash;
 use crate::coord_type::findiff::FiniteDifference;
@@ -30,8 +30,8 @@ use crate::coord_type::Sic;
 #[test]
 #[ignore]
 fn h2o_normal() {
-    cleanup();
-    init();
+    let dir = std::env::temp_dir();
+    init(&dir);
     let config = Config::load("testfiles/water.toml");
     let queue = Local {
         dir: "pts".to_string(),
@@ -40,6 +40,7 @@ fn h2o_normal() {
     };
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::default(),
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -78,8 +79,8 @@ macro_rules! check {
 #[test]
 #[ignore]
 fn c3h2_normal() {
-    cleanup();
-    init();
+    let dir = temp_dir();
+    init(&dir);
     let config = Config {
         check_int: 1,
         ..Config::load("testfiles/cart.toml")
@@ -91,6 +92,7 @@ fn c3h2_normal() {
     };
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::findiff(false),
+        &dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -113,6 +115,7 @@ fn c3h2_normal() {
 
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::resume(
         Normal::findiff(false),
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -138,8 +141,8 @@ fn c3h2_normal() {
 #[test]
 #[ignore]
 fn c3h2_normal_findiff() {
-    cleanup();
-    init();
+    let dir = &temp_dir();
+    init(dir);
     let config = Config {
         check_int: 1,
         ..Config::load("testfiles/cart.toml")
@@ -151,6 +154,7 @@ fn c3h2_normal_findiff() {
     };
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::findiff(true),
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -175,8 +179,8 @@ fn c3h2_normal_findiff() {
 #[test]
 #[ignore]
 fn h2o_cart() {
-    cleanup();
-    init();
+    let dir = &temp_dir();
+    init(dir);
     let config = Config::load("testfiles/water.toml");
     let queue = Local {
         dir: "pts".to_string(),
@@ -185,6 +189,7 @@ fn h2o_cart() {
     };
     let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -213,7 +218,7 @@ fn h2o_cart() {
 #[test]
 #[ignore]
 fn h2o_sic() {
-    cleanup();
+    let dir = temp_dir();
     let config = Config::load("testfiles/water.toml");
     let coord = Sic::new(Intder::load_file("testfiles/h2o.intder"));
     let queue = Local {
@@ -223,6 +228,7 @@ fn h2o_sic() {
     };
     let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -251,7 +257,8 @@ fn h2o_sic() {
 #[test]
 #[ignore]
 fn sic() {
-    cleanup();
+    let dir = &temp_dir();
+    init(dir);
     let config = Config::load("testfiles/test.toml");
     let coord = Sic::new(Intder::load_file("testfiles/intder.in"));
     let queue = Local {
@@ -261,6 +268,7 @@ fn sic() {
     };
     let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,
@@ -288,18 +296,19 @@ fn sic() {
     assert_abs_diff_eq!(got, want, epsilon = 2.6e-1);
 }
 
-fn init() {
+fn init(dir: impl AsRef<std::path::Path>) {
     psqs::max_threads(8);
-    let _ = std::fs::create_dir("opt");
-    let _ = std::fs::create_dir("pts");
-    let _ = std::fs::create_dir("freqs");
+    for d in ["opt", "pts", "freqs"] {
+        let dir = dir.as_ref().join(d);
+        let _ = std::fs::create_dir(dir);
+    }
 }
 
 #[test]
 #[ignore]
 fn cart() {
-    cleanup();
-    init();
+    let dir = &temp_dir();
+    init(dir);
     let config = Config::load("testfiles/cart.toml");
     let queue = Local {
         dir: "pts".to_string(),
@@ -308,6 +317,7 @@ fn cart() {
     };
     let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,

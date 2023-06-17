@@ -281,6 +281,7 @@ where
 {
     fn run(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -294,7 +295,7 @@ where
         } = self
             .cart_part(&FirstPart::from(config.clone()), queue, w, "pts")
             .unwrap();
-        cleanup();
+        cleanup(dir);
         let _ = std::fs::create_dir("pts");
         self.prep_qff(w, &o, pg);
 
@@ -364,6 +365,7 @@ where
 
     fn resume(
         #[allow(unused_assignments)] mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -376,12 +378,12 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         self = normal;
-        let dir = "pts";
+        let dir = dir.as_ref().join("pts");
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(dir, "chk.json", &mut energies, config.check_int)
+              .resume(dir.to_str().unwrap(), "chk.json", &mut energies, config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");

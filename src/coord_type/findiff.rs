@@ -8,7 +8,7 @@ use bighash::Index;
 use intder::ANGBOHR;
 use nalgebra as na;
 use psqs::geom::Geom;
-use std::cmp::min;
+use std::{cmp::min, path::Path};
 use symm::{Atom, Molecule};
 
 pub mod bighash;
@@ -230,7 +230,7 @@ pub trait FiniteDifference {
         fcs: &'a mut [f64],
         n: usize,
         deriv: Derivative,
-        dir: &str,
+        dir: impl AsRef<Path>,
     ) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
         self.map_energies(targets, energies, fcs);
         // mirror symmetric quadratic fcs
@@ -244,14 +244,14 @@ pub trait FiniteDifference {
             }
         }
 
-        let _ = std::fs::create_dir(dir);
+        let _ = std::fs::create_dir(&dir);
         let (nfc2, nfc3) = match deriv {
             Derivative::Harmonic(n) => (n, 0),
             Derivative::Cubic(n, m) => (n, m),
             Derivative::Quartic(n, m, _) => (n, m),
         };
         intder::Intder::dump_fcs(
-            dir,
+            dir.as_ref().to_str().unwrap(),
             &fc2,
             &fcs[nfc2..nfc2 + nfc3],
             &fcs[nfc2 + nfc3..],

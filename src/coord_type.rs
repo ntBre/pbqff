@@ -56,11 +56,18 @@ pub trait CoordType<
 
     /// Run a full QFF on `queue`, taking the configuration from `config`, and
     /// return the final [Spectro] and [Output] structs. Log any output to `w`.
-    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
+    fn run(
+        self,
+        dir: impl AsRef<Path>,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+    ) -> (Spectro, Output);
 
     /// Like [Self::run], but load a checkpoint from `resume`.
     fn resume(
         self,
+        dir: impl AsRef<Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,

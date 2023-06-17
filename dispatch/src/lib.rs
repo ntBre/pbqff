@@ -43,6 +43,7 @@ config::Queue::{queue},
 {val},
 ) => <{coord} as CoordType<_, _, {program}>>::{fun}(
 {},
+\".\",
 &mut std::io::stdout(),
 &queue!({queue}, config, args.no_del),
 {resume}

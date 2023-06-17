@@ -1,4 +1,4 @@
-use std::{io::Stdout, time::Instant};
+use std::{env::temp_dir, io::Stdout, time::Instant};
 
 use psqs::{program::mopac::Mopac, queue::local::Local};
 use rust_pbqff::{
@@ -25,9 +25,11 @@ fn main() -> Result<(), std::io::Error> {
         ..Default::default()
     };
 
+    let dir = temp_dir();
     let now = Instant::now();
     let (spectro, output) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
+        dir,
         &mut std::io::stdout(),
         &queue,
         &config,

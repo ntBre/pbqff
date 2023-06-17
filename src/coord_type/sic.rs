@@ -49,6 +49,7 @@ where
 {
     fn run(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -97,9 +98,10 @@ where
         let (geoms, taylor, atomic_numbers) =
             self.generate_pts(w, &mol, &pg, config.step_size).unwrap();
 
-        let dir = "pts/inp";
+        let dir = dir.as_ref().join("pts").join("inp");
+        let dir = dir.to_string_lossy().to_string();
         let jobs =
-            P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, &dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
@@ -115,7 +117,7 @@ where
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, config.check_int)
+            .drain(&dir, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -135,6 +137,7 @@ where
 
     fn resume(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
