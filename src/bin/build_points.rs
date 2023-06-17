@@ -24,6 +24,7 @@ fn main() {
     };
     let (geom, ref_energy) = if config.optimize {
         let res = optimize::<Local, Mopac>(
+            ".",
             &queue,
             config.geometry.clone(),
             template,
