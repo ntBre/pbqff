@@ -20,7 +20,7 @@ use super::{
     fitted::{AtomicNumbers, Fitted},
     CoordType, Load, SPECTRO_HEADER,
 };
-use crate::{config::Config, coord_type::CHK_NAME, optimize};
+use crate::{config::Config, coord_type::CHK_NAME, make_check, optimize};
 
 /// whether or not to print the input files used for intder, anpass, and spectro
 pub(crate) static DEBUG: bool = false;
@@ -121,7 +121,12 @@ where
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(&pts_dir, jobs, &mut energies, config.check_int)
+            .drain(
+                &pts_dir,
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -158,8 +163,14 @@ where
         let dir = dir.as_ref().join("pts").join("inp");
         let _ = std::fs::create_dir_all(&dir);
         let dir = dir.to_str().unwrap().to_owned();
+        let chk = format!("{dir}/chk.json");
         let time = queue
-            .resume(&dir, "chk.json", &mut energies, config.check_int)
+            .resume(
+                &dir,
+                &chk,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 

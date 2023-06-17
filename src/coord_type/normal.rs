@@ -27,6 +27,7 @@ use crate::{
     cleanup,
     config::Config,
     coord_type::{write_file, CHK_NAME},
+    make_check,
 };
 
 use super::{
@@ -162,7 +163,12 @@ impl Normal {
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir_str, jobs, &mut energies, config.check_int)
+            .drain(
+                dir_str,
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
@@ -264,7 +270,7 @@ impl Normal {
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
               .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
-                 config.check_int)
+                 make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -393,12 +399,13 @@ where
     ) -> (Spectro, Output) {
         self = normal;
         let pts_dir = dir.as_ref().join("pts");
+        let chk = dir.as_ref().join("chk.json");
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(pts_dir.to_str().unwrap(), "chk.json", &mut energies,
-                  config.check_int)
+              .resume(pts_dir.to_str().unwrap(), dbg!(chk.to_str().unwrap()), &mut energies,
+              make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");

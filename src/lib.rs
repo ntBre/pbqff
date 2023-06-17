@@ -10,7 +10,7 @@ pub use intder::Intder;
 use psqs::{
     geom::Geom,
     program::{Job, Program, ProgramError, ProgramResult, Template},
-    queue::Queue,
+    queue::{Check, Queue},
 };
 use serde::{Deserialize, Serialize};
 pub use spectro::{Output, Spectro};
@@ -21,6 +21,17 @@ pub fn cleanup(dir: impl AsRef<Path>) {
         let d = dir.as_ref().join(d);
         std::fs::remove_dir_all(&d)
             .unwrap_or_else(|e| eprintln!("failed to remove '{d:?}' with {e}"));
+    }
+}
+
+pub fn make_check(check_int: usize, dir: impl AsRef<Path>) -> Check {
+    if check_int == 0 {
+        Check::None
+    } else {
+        Check::Some {
+            check_int,
+            check_dir: dir.as_ref().to_str().unwrap().to_owned(),
+        }
     }
 }
 
@@ -63,7 +74,7 @@ pub fn ref_energy<
         Job::new(P::new("opt/ref".to_string(), template, charge, geom), 0);
     let mut res = vec![0.0; 1];
     let time = queue
-        .drain("opt", vec![opt], &mut res, 0)
+        .drain("opt", vec![opt], &mut res, Check::None)
         .expect("reference energy failed");
     eprintln!("total ref time: {time:.1} sec");
     res.pop().unwrap()
