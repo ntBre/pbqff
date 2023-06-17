@@ -6,7 +6,7 @@
 //! displacements, which can be fed back in to spectro at the end as f3qcm and
 //! f4qcm
 
-use std::{error::Error, io::Write, marker::Sync};
+use std::{error::Error, io::Write, marker::Sync, path::Path};
 
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
@@ -27,6 +27,7 @@ use crate::{
     cleanup,
     config::Config,
     coord_type::{write_file, CHK_NAME},
+    make_check,
 };
 
 use super::{
@@ -116,6 +117,7 @@ impl Normal {
         &mut self,
         o: &Output,
         s: &Spectro,
+        dir: impl AsRef<Path>,
         w: &mut W,
         pg: PointGroup,
         config: &Config,
@@ -128,11 +130,12 @@ impl Normal {
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         let (geoms, taylor, _atomic_numbers) = self
-            .generate_pts(w, &o.geom, &pg, config.step_size)
+            .generate_pts(&dir, w, &o.geom, &pg, config.step_size)
             .unwrap();
-        let dir = "pts";
+        let freqs_dir = dir.as_ref().join("freqs");
+        let dir_str = dir.as_ref().to_str().unwrap();
         let jobs =
-            P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, dir_str, 0, 1.0, 0, config.charge, template);
         writeln!(
             w,
             "{} normal coordinates require {} points",
@@ -151,7 +154,7 @@ impl Normal {
             output: o.clone(),
             spectro: s.clone(),
         };
-        resume.dump(CHK_NAME);
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         let DerivType::Fitted { taylor, step_size, ..} =
 	    resume.deriv else {
@@ -160,11 +163,16 @@ impl Normal {
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, config.check_int)
+            .drain(
+                dir_str,
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
-            .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
+            .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
             .unwrap();
         // needed in case taylor eliminated some of the higher derivatives
         // by symmetry. this should give the maximum, full sizes without
@@ -203,6 +211,7 @@ impl Normal {
         template: &Template,
         w: &mut W,
         queue: &Q,
+        dir: impl AsRef<Path>,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
@@ -225,12 +234,13 @@ impl Normal {
             n,
         );
         let targets = map.values();
-        let dir = "pts";
+        let pts_dir = dir.as_ref().join("pts");
         let jobs: Vec<_> = geoms
             .into_iter()
             .enumerate()
             .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{job_num:08}");
+                let filename =
+                    format!("{}/job.{job_num:08}", pts_dir.display());
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
@@ -253,13 +263,14 @@ impl Normal {
             output: o.clone(),
             spectro: s.clone(),
         };
-        resume.dump(CHK_NAME);
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies, config.check_int)
+              .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
+                 make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -281,10 +292,12 @@ where
 {
     fn run(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
+        let pts_dir = dir.as_ref().join("pts");
         let CartPart {
             spectro: s,
             output: o,
@@ -292,17 +305,23 @@ where
             pg,
             fc2,
         } = self
-            .cart_part(&FirstPart::from(config.clone()), queue, w, "pts")
+            .cart_part(
+                &FirstPart::from(config.clone()),
+                queue,
+                w,
+                pts_dir.to_str().unwrap(),
+            )
             .unwrap();
-        cleanup();
-        let _ = std::fs::create_dir("pts");
+        cleanup(&dir);
+        let _ = std::fs::create_dir(pts_dir);
         self.prep_qff(w, &o, pg);
 
         let tmpl = config.template.clone().into();
 
         // TODO have to split these run_* methods into a prep_* and run_* so I
         // can save the Resume between them
-        let _ = std::fs::create_dir("freqs");
+        let freqs_dir = dir.as_ref().join("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         let ref_energy = if config.template != config.hybrid_template {
             crate::ref_energy(
                 queue,
@@ -323,6 +342,7 @@ where
                 &config.hybrid_template.clone().into(),
                 w,
                 queue,
+                dir,
             )
         } else {
             if config.template != config.hybrid_template {
@@ -330,10 +350,10 @@ where
                     "hybrid_template not used for fitted normal coordinates"
                 );
             }
-            self.run_fitted(&o, &s, w, pg, config, tmpl, queue)
+            self.run_fitted(&o, &s, &dir, w, pg, config, tmpl, queue)
         };
-        Intder::dump_fcs("freqs", &fc2, &f3qcm, &f4qcm);
-        s.write("freqs/spectro.in").unwrap();
+        Intder::dump_fcs(freqs_dir.to_str().unwrap(), &fc2, &f3qcm, &f4qcm);
+        s.write(freqs_dir.join("spectro.in")).unwrap();
         let fin = spectro::SpectroFinish::new(
             s,
             DVector::from(o.harms.clone()),
@@ -343,9 +363,10 @@ where
             self.lxm.unwrap(),
             self.lx.unwrap(),
         );
-        fin.dump("freqs/finish.spectro").unwrap_or_else(|e| {
-            eprintln!("failed to dump finish.spectro with `{e}`")
-        });
+        fin.dump(freqs_dir.join("finish.spectro").to_str().unwrap())
+            .unwrap_or_else(|e| {
+                eprintln!("failed to dump finish.spectro with `{e}`")
+            });
         let spectro::SpectroFinish {
             spectro,
             freq,
@@ -364,6 +385,7 @@ where
 
     fn resume(
         #[allow(unused_assignments)] mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -376,12 +398,14 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         self = normal;
-        let dir = "pts";
+        let pts_dir = dir.as_ref().join("pts");
+        let chk = dir.as_ref().join("chk.json");
         time!(w, "draining points",
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(dir, "chk.json", &mut energies, config.check_int)
+              .resume(pts_dir.to_str().unwrap(), dbg!(chk.to_str().unwrap()), &mut energies,
+              make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -399,9 +423,10 @@ where
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
             DerivType::Fitted { taylor, step_size } => {
-                let _ = std::fs::create_dir("freqs");
+                let freqs_dir = dir.as_ref().join("freqs");
+                let _ = std::fs::create_dir(&freqs_dir);
                 let (fcs, _) = self
-                    .anpass(Some("freqs"), &mut energies, &taylor, step_size, w)
+                    .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
                     .unwrap();
                 // needed in case taylor eliminated some of the higher
                 // derivatives by symmetry. this should give the maximum, full
@@ -545,6 +570,7 @@ impl Fitted for Normal {
 
     fn generate_pts<W: Write>(
         &mut self,
+        _dir: impl AsRef<Path>,
         _w: &mut W,
         mol: &Molecule,
         pg: &PointGroup,
@@ -584,7 +610,7 @@ impl Fitted for Normal {
     /// coordinates themselves and invalidate all of the force constants
     fn anpass<W: Write>(
         &self,
-        dir: Option<&str>,
+        dir: impl AsRef<Path>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,
@@ -593,12 +619,10 @@ impl Fitted for Normal {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), super::FreqError>>,
     > {
-        make_rel(energies);
+        make_rel(&dir, energies);
         let anpass =
             Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
-        if let Some(dir) = dir {
-            write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
-        }
+        write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
         let (fcs, f) = anpass.fit();
         writeln!(
             w,
@@ -697,7 +721,7 @@ impl FiniteDifference for Normal {
                 proto!(self, names, coords, step, -4. * scale, -i, -i),
                 proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -i),
             ]
-        // 3 and 1
+            // 3 and 1
         } else if i == j && i == k {
             make4d_3_1(i, j, k, l)
         } else if i == j && i == l {
@@ -706,7 +730,7 @@ impl FiniteDifference for Normal {
             make4d_3_1(i, k, l, j) // unreachable
         } else if j == k && j == l {
             make4d_3_1(j, k, l, i)
-        // 2 and 2
+            // 2 and 2
         } else if i == j && k == l {
             make4d_2_2(i, j, k, l)
         } else if i == k && j == l {
@@ -773,7 +797,7 @@ impl Normal {
             &mut fcs,
             n,
             Derivative::Harmonic(nfc2),
-            ".",
+            dir,
         );
         let (spectro, output) = self.harm_freqs("freqs", &mol, fc2.clone());
 

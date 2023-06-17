@@ -9,9 +9,11 @@ use spectro::{Output, Spectro};
 use crate::config::Config;
 
 macro_rules! time {
-    ($w:expr, $label:expr, $($s:stmt;)*) => {
+    ($w:expr, $label:expr, $($s:tt)*) => {
         let now = ::std::time::Instant::now();
-	$($s)*
+	$(
+	    $s
+	)*
         writeln!(
             $w,
             "finished {} after {:.1} sec",
@@ -56,11 +58,18 @@ pub trait CoordType<
 
     /// Run a full QFF on `queue`, taking the configuration from `config`, and
     /// return the final [Spectro] and [Output] structs. Log any output to `w`.
-    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output);
+    fn run(
+        self,
+        dir: impl AsRef<Path>,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+    ) -> (Spectro, Output);
 
     /// Like [Self::run], but load a checkpoint from `resume`.
     fn resume(
         self,
+        dir: impl AsRef<Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,

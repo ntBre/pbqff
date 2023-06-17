@@ -267,6 +267,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fastrand"
+version = "1.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e51093e27b0797c359783294ca4f0a911c270184cb10f85783b118614a1501be"
+dependencies = [
+ "instant",
+]
+
+[[package]]
 name = "form_urlencoded"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -361,9 +370,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "instant"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a5bbe824c507c5da5956355e86a746d82e0e1464f65d862cc5e71da70e94b2c"
+dependencies = [
+ "cfg-if",
+]
+
+[[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#b4fb003032d4c093db52c00a6fa53170f07b3036"
+source = "git+https://github.com/ntBre/intder#0d959764ac2755ab31a4332e55c272bcf9741f4f"
 dependencies = [
  "approx",
  "nalgebra",
@@ -650,7 +668,7 @@ dependencies = [
 [[package]]
 name = "psqs"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/psqs#67ec36600eb71133d18fe28e3efb4ffef8778ab8"
+source = "git+https://github.com/ntBre/psqs#d51c552bcc1a5e6567840384bc4ecce1a070d2d6"
 dependencies = [
  "chrono",
  "libc",
@@ -700,6 +718,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_syscall"
+version = "0.3.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "567664f262709473930a4bf9e51bf2ebf3348f2e748ccc50dea20646858f8f29"
+dependencies = [
+ "bitflags",
+]
+
+[[package]]
 name = "regex"
 version = "1.8.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -745,6 +772,7 @@ dependencies = [
  "spectro",
  "symm",
  "taylor",
+ "tempfile",
  "toml",
 ]
 
@@ -845,7 +873,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#9247f697895a401558bd7bf20e214793d5fc5af5"
+source = "git+https://github.com/ntBre/spectro#e58863d1ec94a465218ba76a8bf4dc958174ece3"
 dependencies = [
  "nalgebra",
  "serde",
@@ -901,6 +929,20 @@ dependencies = [
  "rust-anpass",
  "serde",
  "symm",
+]
+
+[[package]]
+name = "tempfile"
+version = "3.6.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31c0432476357e58790aaa47a8efb0c5138f137343f3b5f23bd36a27e3b0a6d6"
+dependencies = [
+ "autocfg",
+ "cfg-if",
+ "fastrand",
+ "redox_syscall",
+ "rustix",
+ "windows-sys",
 ]
 
 [[package]]

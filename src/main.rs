@@ -94,7 +94,7 @@ fn main() -> Result<(), std::io::Error> {
     println!("PID: {}", std::process::id());
     println!("version: {}", version());
     psqs::max_threads(args.threads);
-    cleanup();
+    cleanup(".");
     let _ = std::fs::create_dir("pts");
 
     let (spectro, output) = dispatch(&config, args);

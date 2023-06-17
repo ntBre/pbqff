@@ -1,4 +1,4 @@
-TESTFLAGS = -- --nocapture --test-threads=1
+TESTFLAGS = -- --nocapture
 
 SHORT = 0
 

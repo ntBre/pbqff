@@ -1,6 +1,6 @@
 //! Cartesian coordinate QFFs.
 
-use std::{error::Error, io, marker::Sync};
+use std::{error::Error, io, marker::Sync, path::Path};
 
 use psqs::{
     geom::Geom,
@@ -43,7 +43,7 @@ pub enum Nderiv {
 }
 
 pub fn freqs(
-    dir: &str,
+    dir: impl AsRef<Path>,
     mol: &Molecule,
     fc2: nalgebra::DMatrix<f64>,
     f3: &[f64],
@@ -55,8 +55,8 @@ pub fn freqs(
     spectro.header = SPECTRO_HEADER.to_vec();
 
     // write input
-    let input = format!("{dir}/spectro.in");
-    spectro.write(&input).unwrap();
+    let input = dir.as_ref().join("spectro.in");
+    spectro.write(input).unwrap();
 
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
@@ -71,7 +71,13 @@ where
     Q: Queue<P> + Sync,
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
 {
-    fn run(self, w: &mut W, queue: &Q, config: &Config) -> (Spectro, Output) {
+    fn run(
+        self,
+        dir: impl AsRef<std::path::Path>,
+        w: &mut W,
+        queue: &Q,
+        config: &Config,
+    ) -> (Spectro, Output) {
         let FirstOutput {
             n,
             nfc2,
@@ -87,10 +93,11 @@ where
                 &FirstPart::from(config.clone()),
                 queue,
                 Nderiv::Four,
-                "pts",
+                dir.as_ref().join("pts"),
             )
             .unwrap();
 
+        let freq_dir = &dir.as_ref().join("freqs");
         time!(w, "freqs",
           let (fc2, f3, f4) = self.make_fcs(
           targets,
@@ -101,10 +108,10 @@ where
           nfc2,
           nfc3,
           0),
-          "freqs",
+          freq_dir,
           );
 
-          let r = freqs("freqs", &mol, fc2, f3, f4);
+          let r = freqs(freq_dir, &mol, fc2, f3, f4);
         );
         r
     }
@@ -113,6 +120,7 @@ where
 
     fn resume(
         self,
+        _dir: impl AsRef<std::path::Path>,
         _w: &mut W,
         _queue: &Q,
         _config: &Config,
@@ -178,7 +186,7 @@ impl Cart {
         config: &FirstPart,
         queue: &Q,
         nderiv: Nderiv,
-        dir: &str,
+        dir: impl AsRef<Path>,
     ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
@@ -189,6 +197,7 @@ impl Cart {
             let template = Template::from(&config.template);
             let (geom, ref_energy) = if config.optimize {
                 let res = optimize(
+            &dir,
                     queue,
                     config.geometry.clone(),
                     template.clone(),
@@ -242,7 +251,9 @@ impl Cart {
             .into_iter()
             .enumerate()
             .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{job_num:08}");
+                let filename = format!("job.{job_num:08}");
+                let filename =
+                    dir.as_ref().join(filename).to_string_lossy().to_string();
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
@@ -259,7 +270,7 @@ impl Cart {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies, 0)?;
+              .drain(dir.as_ref().to_str().unwrap(), jobs, &mut energies, psqs::queue::Check::None)?;
         );
 
         eprintln!("total job time: {time:.1} sec");

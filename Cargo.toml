@@ -28,6 +28,7 @@ dispatch = { path = "dispatch" }
 
 [dev-dependencies]
 approx = "0.5.1"
+tempfile = "3.6.0"
 
 [[bin]]
 name = "cart"

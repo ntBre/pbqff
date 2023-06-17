@@ -20,7 +20,7 @@ use super::{
     fitted::{AtomicNumbers, Fitted},
     CoordType, Load, SPECTRO_HEADER,
 };
-use crate::{config::Config, optimize};
+use crate::{config::Config, coord_type::CHK_NAME, make_check, optimize};
 
 /// whether or not to print the input files used for intder, anpass, and spectro
 pub(crate) static DEBUG: bool = false;
@@ -49,6 +49,7 @@ where
 {
     fn run(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -58,6 +59,7 @@ where
         // optimize the geometry
         let geom = if config.optimize {
             let res = optimize(
+                &dir,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -94,12 +96,16 @@ where
         writeln!(w, "Normalized Geometry:\n{mol:20.12}").unwrap();
         writeln!(w, "Point Group = {pg}").unwrap();
 
-        let (geoms, taylor, atomic_numbers) =
-            self.generate_pts(w, &mol, &pg, config.step_size).unwrap();
+        let (geoms, taylor, atomic_numbers) = self
+            .generate_pts(&dir, w, &mol, &pg, config.step_size)
+            .unwrap();
 
-        let dir = "pts/inp";
+        let freqs_dir = dir.as_ref().join("freqs");
+
+        let pts_dir = dir.as_ref().join("pts").join("inp");
+        let pts_dir = pts_dir.to_string_lossy().to_string();
         let jobs =
-            P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, &pts_dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
@@ -111,18 +117,23 @@ where
             config.step_size,
             jobs.len(),
         );
-        resume.dump("res.chk");
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, config.check_int)
+            .drain(
+                &pts_dir,
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
-        let _ = std::fs::create_dir("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         self.freqs(
             w,
-            "freqs",
+            freqs_dir,
             &mut energies,
             &resume.taylor,
             &resume.atomic_numbers,
@@ -135,6 +146,7 @@ where
 
     fn resume(
         mut self,
+        dir: impl AsRef<std::path::Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -147,18 +159,26 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         let mut energies = vec![0.0; njobs];
-        let dir = "pts/inp";
-        let _ = std::fs::create_dir_all(dir);
+        let freqs_dir = dir.as_ref().join("freqs");
+        let dir = dir.as_ref().join("pts").join("inp");
+        let _ = std::fs::create_dir_all(&dir);
+        let dir = dir.to_str().unwrap().to_owned();
+        let chk = format!("{dir}/chk.json");
         let time = queue
-            .resume(dir, "chk.json", &mut energies, config.check_int)
+            .resume(
+                &dir,
+                &chk,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
-        let _ = std::fs::create_dir("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         self.intder = intder;
         self.freqs(
             w,
-            "freqs",
+            freqs_dir,
             &mut energies,
             &taylor,
             &atomic_numbers,
@@ -218,6 +238,7 @@ impl Fitted for Sic {
 
     fn generate_pts<W: Write>(
         &mut self,
+        dir: impl AsRef<Path>,
         w: &mut W,
         mol: &Molecule,
         pg: &PointGroup,
@@ -246,9 +267,9 @@ impl Fitted for Sic {
 
         // build and run the points using psqs
         // TODO handle error
-        let _ = std::fs::create_dir_all("pts/inp");
+        let _ = std::fs::create_dir_all(dir.as_ref().join("pts/inp"));
 
-        write_file("pts/intder.in", &self.intder).unwrap();
+        write_file(dir.as_ref().join("pts/intder.in"), &self.intder).unwrap();
 
         // these are the displacements that go in file07, but I'll use them from
         // memory to build the jobs
@@ -270,7 +291,7 @@ impl Fitted for Sic {
 
     fn anpass<W: Write>(
         &self,
-        dir: Option<&str>,
+        dir: impl AsRef<Path>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,
@@ -279,12 +300,10 @@ impl Fitted for Sic {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), FreqError>>,
     > {
-        make_rel(energies);
+        make_rel(&dir, energies);
         let anpass =
             Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
-        if let Some(dir) = dir {
-            write_file(format!("{dir}/anpass.in"), &anpass).unwrap();
-        }
+        write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
         let (fcs, long_line, res) = if DEBUG {
             writeln!(w, "Anpass Input:\n{anpass}").unwrap();
             let (fcs, long_line, res) = match anpass.run_debug(w) {
@@ -307,9 +326,10 @@ impl Fitted for Sic {
 /// find the minimum energy in `energies` and make the others relative to it
 /// (subtract it from the others). also create `energy.dat` and `rel.dat` in the
 /// current directory
-pub(crate) fn make_rel(energies: &mut [f64]) {
-    let mut efile = std::fs::File::create("energy.dat").unwrap();
-    let mut rel = std::fs::File::create("rel.dat").unwrap();
+pub(crate) fn make_rel(dir: impl AsRef<Path>, energies: &mut [f64]) {
+    let dir = dir.as_ref();
+    let mut efile = std::fs::File::create(dir.join("energy.dat")).unwrap();
+    let mut rel = std::fs::File::create(dir.join("rel.dat")).unwrap();
     let min = energies.iter().cloned().reduce(f64::min).unwrap();
     for energy in energies.iter_mut() {
         writeln!(efile, "{energy:20.12}").unwrap();
@@ -408,21 +428,21 @@ impl Sic {
     pub fn freqs<W: Write>(
         &mut self,
         w: &mut W,
-        dir: &str,
+        dir: impl AsRef<Path>,
         energies: &mut [f64],
         taylor: &Taylor,
         atomic_numbers: &AtomicNumbers,
         step_size: f64,
     ) -> Result<(Spectro, Output), FreqError> {
         let (fcs, long_line) =
-            match self.anpass(Some(dir), energies, taylor, step_size, w) {
+            match self.anpass(&dir, energies, taylor, step_size, w) {
                 Ok(value) => value,
                 Err(value) => return *value,
             };
 
         // intder_geom
         self.intder.disps = vec![long_line.disp.as_slice().to_vec()];
-        write_file(format!("{dir}/intder_geom.in"), &self.intder).unwrap();
+        write_file(dir.as_ref().join("intder_geom.in"), &self.intder).unwrap();
         let refit_geom = self.intder.convert_disps().unwrap();
         let refit_geom = refit_geom[0].as_slice();
         let l = refit_geom.len() - 3 * self.intder.ndum();
@@ -456,10 +476,10 @@ impl Sic {
         self.intder.input_options[10] = 3;
         self.intder.input_options[13] = 0;
         self.intder.input_options[14] = 0;
-        write_file(format!("{dir}/self.intder.in"), &self.intder).unwrap();
+        write_file(dir.as_ref().join("self.intder.in"), &self.intder).unwrap();
 
         let (f2, f3, f4) = self.intder.convert_fcs();
-        Intder::dump_fcs(dir, &f2, &f3, &f4);
+        Intder::dump_fcs(dir.as_ref().to_str().unwrap(), &f2, &f3, &f4);
 
         // spectro
         let mut spectro = Spectro::from(mol);
@@ -468,11 +488,11 @@ impl Sic {
         let fc3 = spectro::new_fc3(spectro.n3n, &f3);
         let fc4 = spectro::new_fc4(spectro.n3n, &f4);
 
-        let input = format!("{dir}/spectro.in");
+        let input = dir.as_ref().join("spectro.in");
         if DEBUG {
             writeln!(w, "Spectro Input:\n{spectro}").unwrap();
         }
-        spectro.write(&input).unwrap();
+        spectro.write(input).unwrap();
 
         let (output, _) =
             spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));
