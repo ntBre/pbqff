@@ -132,9 +132,9 @@ impl Normal {
             .generate_pts(&dir, w, &o.geom, &pg, config.step_size)
             .unwrap();
         let freqs_dir = dir.as_ref().join("freqs");
-        let dir = dir.as_ref().to_str().unwrap();
+        let dir_str = dir.as_ref().to_str().unwrap();
         let jobs =
-            P::build_jobs(geoms, dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, dir_str, 0, 1.0, 0, config.charge, template);
         writeln!(
             w,
             "{} normal coordinates require {} points",
@@ -153,7 +153,7 @@ impl Normal {
             output: o.clone(),
             spectro: s.clone(),
         };
-        resume.dump(CHK_NAME);
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         let DerivType::Fitted { taylor, step_size, ..} =
 	    resume.deriv else {
@@ -162,7 +162,7 @@ impl Normal {
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(dir, jobs, &mut energies, config.check_int)
+            .drain(dir_str, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         let (fcs, _) = self
@@ -257,7 +257,7 @@ impl Normal {
             output: o.clone(),
             spectro: s.clone(),
         };
-        resume.dump(CHK_NAME);
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         time!(w, "draining points",
               // drain into energies

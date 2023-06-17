@@ -20,7 +20,7 @@ use super::{
     fitted::{AtomicNumbers, Fitted},
     CoordType, Load, SPECTRO_HEADER,
 };
-use crate::{config::Config, optimize};
+use crate::{config::Config, coord_type::CHK_NAME, optimize};
 
 /// whether or not to print the input files used for intder, anpass, and spectro
 pub(crate) static DEBUG: bool = false;
@@ -102,10 +102,10 @@ where
 
         let freqs_dir = dir.as_ref().join("freqs");
 
-        let dir = dir.as_ref().join("pts").join("inp");
-        let dir = dir.to_string_lossy().to_string();
+        let pts_dir = dir.as_ref().join("pts").join("inp");
+        let pts_dir = pts_dir.to_string_lossy().to_string();
         let jobs =
-            P::build_jobs(geoms, &dir, 0, 1.0, 0, config.charge, template);
+            P::build_jobs(geoms, &pts_dir, 0, 1.0, 0, config.charge, template);
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
@@ -117,11 +117,11 @@ where
             config.step_size,
             jobs.len(),
         );
-        resume.dump("res.chk");
+        resume.dump(dir.as_ref().join(CHK_NAME));
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
-            .drain(&dir, jobs, &mut energies, config.check_int)
+            .drain(&pts_dir, jobs, &mut energies, config.check_int)
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 

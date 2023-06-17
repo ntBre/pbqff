@@ -118,11 +118,11 @@ fn c3h2_normal() {
 
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::resume(
         Normal::findiff(false),
-        dir,
+        &dir,
         &mut std::io::stdout(),
         &queue,
         &config,
-        normal::Resume::load("res.chk"),
+        normal::Resume::load(dir.as_ref().join("res.chk")),
     );
     // harmonics
     let got = Dvec::from(summ.harms);
