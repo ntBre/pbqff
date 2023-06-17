@@ -1,4 +1,3 @@
-use std::env::temp_dir;
 use std::fs;
 use std::io::Stdout;
 use std::str::FromStr;
@@ -27,10 +26,14 @@ use crate::coord_type::CoordType;
 use crate::coord_type::Load;
 use crate::coord_type::Sic;
 
+fn tempdir() -> tempfile::TempDir {
+    tempfile::tempdir().unwrap()
+}
+
 #[test]
 #[ignore]
 fn h2o_normal() {
-    let dir = std::env::temp_dir();
+    let dir = tempdir();
     init(&dir);
     let config = Config::load("testfiles/water.toml");
     let queue = Local {
@@ -79,7 +82,7 @@ macro_rules! check {
 #[test]
 #[ignore]
 fn c3h2_normal() {
-    let dir = temp_dir();
+    let dir = tempdir();
     init(&dir);
     let config = Config {
         check_int: 1,
@@ -141,7 +144,7 @@ fn c3h2_normal() {
 #[test]
 #[ignore]
 fn c3h2_normal_findiff() {
-    let dir = &temp_dir();
+    let dir = &tempdir();
     init(dir);
     let config = Config {
         check_int: 1,
@@ -179,7 +182,7 @@ fn c3h2_normal_findiff() {
 #[test]
 #[ignore]
 fn h2o_cart() {
-    let dir = &temp_dir();
+    let dir = &tempdir();
     init(dir);
     let config = Config::load("testfiles/water.toml");
     let queue = Local {
@@ -218,7 +221,7 @@ fn h2o_cart() {
 #[test]
 #[ignore]
 fn h2o_sic() {
-    let dir = temp_dir();
+    let dir = tempdir();
     let config = Config::load("testfiles/water.toml");
     let coord = Sic::new(Intder::load_file("testfiles/h2o.intder"));
     let queue = Local {
@@ -257,7 +260,7 @@ fn h2o_sic() {
 #[test]
 #[ignore]
 fn sic() {
-    let dir = &temp_dir();
+    let dir = &tempdir();
     init(dir);
     let config = Config::load("testfiles/test.toml");
     let coord = Sic::new(Intder::load_file("testfiles/intder.in"));
@@ -307,8 +310,8 @@ fn init(dir: impl AsRef<std::path::Path>) {
 #[test]
 #[ignore]
 fn cart() {
-    let dir = &temp_dir();
-    init(dir);
+    let dir = tempdir();
+    init(&dir);
     let config = Config::load("testfiles/cart.toml");
     let queue = Local {
         dir: "pts".to_string(),
