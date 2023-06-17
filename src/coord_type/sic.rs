@@ -100,6 +100,8 @@ where
             .generate_pts(&dir, w, &mol, &pg, config.step_size)
             .unwrap();
 
+        let freqs_dir = dir.as_ref().join("freqs");
+
         let dir = dir.as_ref().join("pts").join("inp");
         let dir = dir.to_string_lossy().to_string();
         let jobs =
@@ -123,10 +125,10 @@ where
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
-        let _ = std::fs::create_dir("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         self.freqs(
             w,
-            "freqs",
+            freqs_dir,
             &mut energies,
             &resume.taylor,
             &resume.atomic_numbers,
@@ -152,6 +154,7 @@ where
         }: Resume,
     ) -> (Spectro, Output) {
         let mut energies = vec![0.0; njobs];
+        let freqs_dir = dir.as_ref().join("freqs");
         let dir = dir.as_ref().join("pts").join("inp");
         let _ = std::fs::create_dir_all(&dir);
         let dir = dir.to_str().unwrap().to_owned();
@@ -160,11 +163,11 @@ where
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
-        let _ = std::fs::create_dir("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         self.intder = intder;
         self.freqs(
             w,
-            "freqs",
+            freqs_dir,
             &mut energies,
             &taylor,
             &atomic_numbers,
@@ -415,17 +418,19 @@ impl Sic {
     pub fn freqs<W: Write>(
         &mut self,
         w: &mut W,
-        dir: &str,
+        dir: impl AsRef<Path>,
         energies: &mut [f64],
         taylor: &Taylor,
         atomic_numbers: &AtomicNumbers,
         step_size: f64,
     ) -> Result<(Spectro, Output), FreqError> {
+        let dir = dir.as_ref().to_str();
         let (fcs, long_line) =
-            match self.anpass(Some(dir), energies, taylor, step_size, w) {
+            match self.anpass(dir, energies, taylor, step_size, w) {
                 Ok(value) => value,
                 Err(value) => return *value,
             };
+        let dir = dir.unwrap();
 
         // intder_geom
         self.intder.disps = vec![long_line.disp.as_slice().to_vec()];

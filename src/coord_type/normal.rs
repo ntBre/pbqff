@@ -205,6 +205,7 @@ impl Normal {
         template: &Template,
         w: &mut W,
         queue: &Q,
+        dir: impl AsRef<Path>,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
@@ -227,12 +228,13 @@ impl Normal {
             n,
         );
         let targets = map.values();
-        let dir = "pts";
+        let pts_dir = dir.as_ref().join("pts");
         let jobs: Vec<_> = geoms
             .into_iter()
             .enumerate()
             .map(|(job_num, mol)| {
-                let filename = format!("{dir}/job.{job_num:08}");
+                let filename =
+                    format!("{}/job.{job_num:08}", pts_dir.display());
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
@@ -261,7 +263,8 @@ impl Normal {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir, jobs, &mut energies, config.check_int)
+              .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
+                 config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -333,6 +336,7 @@ where
                 &config.hybrid_template.clone().into(),
                 w,
                 queue,
+                dir,
             )
         } else {
             if config.template != config.hybrid_template {
@@ -340,7 +344,7 @@ where
                     "hybrid_template not used for fitted normal coordinates"
                 );
             }
-            self.run_fitted(&o, &s, dir, w, pg, config, tmpl, queue)
+            self.run_fitted(&o, &s, &dir, w, pg, config, tmpl, queue)
         };
         Intder::dump_fcs(freqs_dir.to_str().unwrap(), &fc2, &f3qcm, &f4qcm);
         s.write(freqs_dir.join("spectro.in")).unwrap();
@@ -393,7 +397,8 @@ where
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(pts_dir.to_str().unwrap(), "chk.json", &mut energies, config.check_int)
+              .resume(pts_dir.to_str().unwrap(), "chk.json", &mut energies,
+                  config.check_int)
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
@@ -717,7 +722,7 @@ impl FiniteDifference for Normal {
                 proto!(self, names, coords, step, -4. * scale, -i, -i),
                 proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -i),
             ]
-        // 3 and 1
+            // 3 and 1
         } else if i == j && i == k {
             make4d_3_1(i, j, k, l)
         } else if i == j && i == l {
@@ -726,7 +731,7 @@ impl FiniteDifference for Normal {
             make4d_3_1(i, k, l, j) // unreachable
         } else if j == k && j == l {
             make4d_3_1(j, k, l, i)
-        // 2 and 2
+            // 2 and 2
         } else if i == j && k == l {
             make4d_2_2(i, j, k, l)
         } else if i == k && j == l {

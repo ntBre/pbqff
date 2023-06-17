@@ -9,9 +9,11 @@ use spectro::{Output, Spectro};
 use crate::config::Config;
 
 macro_rules! time {
-    ($w:expr, $label:expr, $($s:stmt;)*) => {
+    ($w:expr, $label:expr, $($s:tt)*) => {
         let now = ::std::time::Instant::now();
-	$($s)*
+	$(
+	    $s
+	)*
         writeln!(
             $w,
             "finished {} after {:.1} sec",
