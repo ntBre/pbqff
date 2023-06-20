@@ -381,7 +381,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#0d959764ac2755ab31a4332e55c272bcf9741f4f"
+source = "git+https://github.com/ntBre/intder#956e8a14235f15a73d0a5799039b966a4ef6d3e4"
 dependencies = [
  "approx",
  "nalgebra",
@@ -923,7 +923,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#db1a3c20bce797a088eecf25abd2fe5ed87fcda9"
+source = "git+https://github.com/ntBre/taylor#0fe07886e7bc4b68c1e9197fe47ff5f1d8ba14be"
 dependencies = [
  "nalgebra",
  "rust-anpass",
