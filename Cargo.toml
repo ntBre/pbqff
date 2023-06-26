@@ -21,7 +21,7 @@ serde = { version = "1.0", features = ["derive"] }
 spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
-toml = "0.7.4"
+toml = "0.7.5"
 rustc-hash = "1.1.0"
 clap = { version = "4.3.8", features = ["derive"] }
 dispatch = { path = "dispatch" }
