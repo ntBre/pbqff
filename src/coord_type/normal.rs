@@ -171,7 +171,7 @@ impl Normal {
             )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
-        self.fit_freqs(freqs_dir, energies, taylor, step_size, w, o)
+        self.fit_freqs(freqs_dir, &mut energies, taylor, step_size, w, o)
     }
 
     /// returns `(f3qcm, f4qcm)`, the cubic and quartic force constants in
@@ -179,7 +179,7 @@ impl Normal {
     pub fn fit_freqs<P, W>(
         &mut self,
         freqs_dir: P,
-        mut energies: Vec<f64>,
+        energies: &mut [f64],
         taylor: Taylor,
         step_size: f64,
         w: &mut W,
@@ -190,7 +190,7 @@ impl Normal {
         W: Write,
     {
         let (fcs, _) = self
-            .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
+            .anpass(freqs_dir, energies, &taylor, step_size, w)
             .unwrap();
         // recalculating these sizes is needed in case taylor eliminated some of
         // the higher derivatives by symmetry. this should give the maximum,
