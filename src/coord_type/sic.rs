@@ -49,7 +49,7 @@ where
 {
     fn run(
         mut self,
-        dir: impl AsRef<std::path::Path>,
+        dir: impl AsRef<Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
@@ -146,7 +146,7 @@ where
 
     fn resume(
         mut self,
-        dir: impl AsRef<std::path::Path>,
+        dir: impl AsRef<Path>,
         w: &mut W,
         queue: &Q,
         config: &Config,
