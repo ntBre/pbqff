@@ -171,12 +171,30 @@ impl Normal {
             )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
+        self.fit_freqs(freqs_dir, energies, taylor, step_size, w, o)
+    }
+
+    /// returns `(f3qcm, f4qcm)`, the cubic and quartic force constants in
+    /// normal coordinates
+    pub fn fit_freqs<P, W>(
+        &mut self,
+        freqs_dir: P,
+        mut energies: Vec<f64>,
+        taylor: Taylor,
+        step_size: f64,
+        w: &mut W,
+        o: &Output,
+    ) -> (Vec<f64>, Vec<f64>)
+    where
+        P: AsRef<Path>,
+        W: Write,
+    {
         let (fcs, _) = self
             .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
             .unwrap();
-        // needed in case taylor eliminated some of the higher derivatives
-        // by symmetry. this should give the maximum, full sizes without
-        // resizing
+        // recalculating these sizes is needed in case taylor eliminated some of
+        // the higher derivatives by symmetry. this should give the maximum,
+        // full sizes without having to resize in the middle
         let n = self.ncoords;
         let mut f3qcm = vec![0.0; fc3_index(n, n, n) + 1];
         let mut f4qcm = vec![0.0; fc4_index(n, n, n, n) + 1];
