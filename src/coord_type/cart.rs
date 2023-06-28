@@ -43,7 +43,7 @@ pub enum Nderiv {
 }
 
 pub fn freqs(
-    dir: impl AsRef<Path>,
+    dir: Option<impl AsRef<Path>>,
     mol: &Molecule,
     fc2: nalgebra::DMatrix<f64>,
     f3: &[f64],
@@ -55,8 +55,10 @@ pub fn freqs(
     spectro.header = SPECTRO_HEADER.to_vec();
 
     // write input
-    let input = dir.as_ref().join("spectro.in");
-    spectro.write(input).unwrap();
+    if let Some(dir) = dir {
+        let input = dir.as_ref().join("spectro.in");
+        spectro.write(input).unwrap();
+    }
 
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
@@ -108,10 +110,10 @@ where
           nfc2,
           nfc3,
           0),
-          freq_dir,
+          Some(freq_dir),
           );
 
-          let r = freqs(freq_dir, &mol, fc2, f3, f4);
+          let r = freqs(Some(freq_dir), &mol, fc2, f3, f4);
         );
         r
     }

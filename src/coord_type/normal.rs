@@ -815,9 +815,10 @@ impl Normal {
             &mut fcs,
             n,
             Derivative::Harmonic(nfc2),
-            dir,
+            Some(dir),
         );
-        let (spectro, output) = self.harm_freqs("freqs", &mol, fc2.clone());
+        let (spectro, output) =
+            self.harm_freqs(Some("freqs"), &mol, fc2.clone());
 
         let pg = if pg.is_d2h() {
             writeln!(w, "warning: full point group is D2h, using C2v subgroup")
@@ -839,7 +840,7 @@ impl Normal {
     /// run the harmonic frequencies through spectro
     pub fn harm_freqs(
         &self,
-        dir: &str,
+        dir: Option<&str>,
         mol: &Molecule,
         fc2: nalgebra::DMatrix<f64>,
     ) -> (Spectro, Output) {
@@ -849,13 +850,15 @@ impl Normal {
         spectro.header = SPECTRO_HEADER.to_vec();
 
         // write input
-        let input = format!("{dir}/spectro.in");
-        match spectro.write(&input) {
-            Ok(_) => {}
-            Err(e) => {
-                eprintln!(
-                    "warning: failed to write spectro input to {input} for {e}"
-                )
+        if let Some(dir) = dir {
+            let input = format!("{dir}/spectro.in");
+            match spectro.write(&input) {
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!(
+                        "failed to write spectro input to {input} for {e}"
+                    )
+                }
             }
         }
 

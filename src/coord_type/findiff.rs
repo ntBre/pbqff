@@ -230,7 +230,7 @@ pub trait FiniteDifference {
         fcs: &'a mut [f64],
         n: usize,
         deriv: Derivative,
-        dir: impl AsRef<Path>,
+        dir: Option<impl AsRef<Path>>,
     ) -> (nalgebra::DMatrix<f64>, &'a [f64], &'a [f64]) {
         self.map_energies(targets, energies, fcs);
         // mirror symmetric quadratic fcs
@@ -244,18 +244,20 @@ pub trait FiniteDifference {
             }
         }
 
-        let _ = std::fs::create_dir(&dir);
         let (nfc2, nfc3) = match deriv {
             Derivative::Harmonic(n) => (n, 0),
             Derivative::Cubic(n, m) => (n, m),
             Derivative::Quartic(n, m, _) => (n, m),
         };
-        intder::Intder::dump_fcs(
-            dir.as_ref().to_str().unwrap(),
-            &fc2,
-            &fcs[nfc2..nfc2 + nfc3],
-            &fcs[nfc2 + nfc3..],
-        );
+        if let Some(dir) = dir {
+            let _ = std::fs::create_dir(&dir);
+            intder::Intder::dump_fcs(
+                dir.as_ref().to_str().unwrap(),
+                &fc2,
+                &fcs[nfc2..nfc2 + nfc3],
+                &fcs[nfc2 + nfc3..],
+            );
+        }
 
         (fc2, &fcs[nfc2..nfc2 + nfc3], &fcs[nfc2 + nfc3..])
     }
