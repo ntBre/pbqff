@@ -37,7 +37,7 @@ pub trait Fitted {
     /// [rust_anpass::Bias].
     fn anpass<W: Write>(
         &self,
-        dir: impl AsRef<Path>,
+        dir: Option<impl AsRef<Path>>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,

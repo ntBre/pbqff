@@ -1,6 +1,6 @@
 //! Symmetry-internal coordinate (SIC) QFFs.
 
-use std::{fmt::Display, io::Write, marker::Sync, path::Path};
+use std::{fmt::Display, io::Write, marker::Sync, option::Option, path::Path};
 
 pub use intder::IntderError;
 use intder::{Intder, Siic};
@@ -133,7 +133,7 @@ where
         let _ = std::fs::create_dir(&freqs_dir);
         self.freqs(
             w,
-            freqs_dir,
+            Some(freqs_dir),
             &mut energies,
             &resume.taylor,
             &resume.atomic_numbers,
@@ -178,7 +178,7 @@ where
         self.intder = intder;
         self.freqs(
             w,
-            freqs_dir,
+            Some(freqs_dir),
             &mut energies,
             &taylor,
             &atomic_numbers,
@@ -291,7 +291,7 @@ impl Fitted for Sic {
 
     fn anpass<W: Write>(
         &self,
-        dir: impl AsRef<Path>,
+        dir: Option<impl AsRef<Path>>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,
@@ -300,10 +300,12 @@ impl Fitted for Sic {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), FreqError>>,
     > {
-        make_rel(&dir, energies);
+        make_rel(dir.as_ref(), energies);
         let anpass =
             Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
-        write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
+        if let Some(dir) = dir.as_ref() {
+            write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
+        }
         let (fcs, long_line, res) = if DEBUG {
             writeln!(w, "Anpass Input:\n{anpass}").unwrap();
             let (fcs, long_line, res) = match anpass.run_debug(w) {
@@ -326,15 +328,23 @@ impl Fitted for Sic {
 /// find the minimum energy in `energies` and make the others relative to it
 /// (subtract it from the others). also create `energy.dat` and `rel.dat` in the
 /// current directory
-pub(crate) fn make_rel(dir: impl AsRef<Path>, energies: &mut [f64]) {
-    let dir = dir.as_ref();
-    let mut efile = std::fs::File::create(dir.join("energy.dat")).unwrap();
-    let mut rel = std::fs::File::create(dir.join("rel.dat")).unwrap();
-    let min = energies.iter().cloned().reduce(f64::min).unwrap();
+pub(crate) fn make_rel(dir: Option<impl AsRef<Path>>, energies: &mut [f64]) {
+    let min = energies
+        .iter()
+        .min_by(|a, b| a.total_cmp(b))
+        .cloned()
+        .unwrap();
+    if let Some(dir) = dir {
+        let dir = dir.as_ref();
+        let mut efile = std::fs::File::create(dir.join("energy.dat")).unwrap();
+        let mut rel = std::fs::File::create(dir.join("rel.dat")).unwrap();
+        for energy in energies.iter() {
+            writeln!(efile, "{energy:20.12}").unwrap();
+            writeln!(rel, "{:20.12}", *energy - min).unwrap();
+        }
+    }
     for energy in energies.iter_mut() {
-        writeln!(efile, "{energy:20.12}").unwrap();
         *energy -= min;
-        writeln!(rel, "{energy:20.12}").unwrap();
     }
 }
 
@@ -428,21 +438,24 @@ impl Sic {
     pub fn freqs<W: Write>(
         &mut self,
         w: &mut W,
-        dir: impl AsRef<Path>,
+        dir: Option<impl AsRef<Path>>,
         energies: &mut [f64],
         taylor: &Taylor,
         atomic_numbers: &AtomicNumbers,
         step_size: f64,
     ) -> Result<(Spectro, Output), FreqError> {
         let (fcs, long_line) =
-            match self.anpass(&dir, energies, taylor, step_size, w) {
+            match self.anpass(dir.as_ref(), energies, taylor, step_size, w) {
                 Ok(value) => value,
                 Err(value) => return *value,
             };
 
         // intder_geom
         self.intder.disps = vec![long_line.disp.as_slice().to_vec()];
-        write_file(dir.as_ref().join("intder_geom.in"), &self.intder).unwrap();
+        if let Some(dir) = &dir {
+            write_file(dir.as_ref().join("intder_geom.in"), &self.intder)
+                .unwrap();
+        }
         let refit_geom = self.intder.convert_disps().unwrap();
         let refit_geom = refit_geom[0].as_slice();
         let l = refit_geom.len() - 3 * self.intder.ndum();
@@ -476,10 +489,16 @@ impl Sic {
         self.intder.input_options[10] = 3;
         self.intder.input_options[13] = 0;
         self.intder.input_options[14] = 0;
-        write_file(dir.as_ref().join("self.intder.in"), &self.intder).unwrap();
+
+        if let Some(dir) = &dir {
+            write_file(dir.as_ref().join("self.intder.in"), &self.intder)
+                .unwrap();
+        }
 
         let (f2, f3, f4) = self.intder.convert_fcs();
-        Intder::dump_fcs(dir.as_ref().to_str().unwrap(), &f2, &f3, &f4);
+        if let Some(dir) = &dir {
+            Intder::dump_fcs(dir.as_ref().to_str().unwrap(), &f2, &f3, &f4);
+        }
 
         // spectro
         let mut spectro = Spectro::from(mol);
@@ -488,11 +507,14 @@ impl Sic {
         let fc3 = spectro::new_fc3(spectro.n3n, &f3);
         let fc4 = spectro::new_fc4(spectro.n3n, &f4);
 
-        let input = dir.as_ref().join("spectro.in");
         if DEBUG {
             writeln!(w, "Spectro Input:\n{spectro}").unwrap();
         }
-        spectro.write(input).unwrap();
+
+        if let Some(dir) = dir {
+            let input = dir.as_ref().join("spectro.in");
+            spectro.write(input).unwrap();
+        }
 
         let (output, _) =
             spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));

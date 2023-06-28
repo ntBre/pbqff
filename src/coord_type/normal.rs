@@ -6,7 +6,7 @@
 //! displacements, which can be fed back in to spectro at the end as f3qcm and
 //! f4qcm
 
-use std::{error::Error, io::Write, marker::Sync, path::Path};
+use std::{error::Error, io::Write, marker::Sync, option::Option, path::Path};
 
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
@@ -171,14 +171,14 @@ impl Normal {
             )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
-        self.fit_freqs(freqs_dir, &mut energies, taylor, step_size, w, o)
+        self.fit_freqs(Some(freqs_dir), &mut energies, taylor, step_size, w, o)
     }
 
     /// returns `(f3qcm, f4qcm)`, the cubic and quartic force constants in
     /// normal coordinates
     pub fn fit_freqs<P, W>(
         &self,
-        freqs_dir: P,
+        freqs_dir: Option<P>,
         energies: &mut [f64],
         taylor: Taylor,
         step_size: f64,
@@ -422,7 +422,7 @@ where
               // drain into energies
               let mut energies = vec![0.0; njobs];
               let time = queue
-              .resume(pts_dir.to_str().unwrap(), dbg!(chk.to_str().unwrap()), &mut energies,
+              .resume(pts_dir.to_str().unwrap(), chk.to_str().unwrap(), &mut energies,
               make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
@@ -444,7 +444,13 @@ where
                 let freqs_dir = dir.as_ref().join("freqs");
                 let _ = std::fs::create_dir(&freqs_dir);
                 let (fcs, _) = self
-                    .anpass(freqs_dir, &mut energies, &taylor, step_size, w)
+                    .anpass(
+                        Some(freqs_dir),
+                        &mut energies,
+                        &taylor,
+                        step_size,
+                        w,
+                    )
                     .unwrap();
                 // needed in case taylor eliminated some of the higher
                 // derivatives by symmetry. this should give the maximum, full
@@ -628,7 +634,7 @@ impl Fitted for Normal {
     /// coordinates themselves and invalidate all of the force constants
     fn anpass<W: Write>(
         &self,
-        dir: impl AsRef<Path>,
+        dir: Option<impl AsRef<Path>>,
         energies: &mut [f64],
         taylor: &Taylor,
         step_size: f64,
@@ -637,10 +643,12 @@ impl Fitted for Normal {
         (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
         Box<Result<(Spectro, Output), super::FreqError>>,
     > {
-        make_rel(&dir, energies);
+        make_rel(dir.as_ref(), energies);
         let anpass =
             Taylor::to_anpass(taylor, &taylor.disps(), energies, step_size);
-        write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
+        if let Some(dir) = dir.as_ref() {
+            write_file(dir.as_ref().join("anpass.in"), &anpass).unwrap();
+        }
         let (fcs, f) = anpass.fit();
         writeln!(
             w,
