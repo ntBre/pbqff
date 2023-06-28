@@ -177,7 +177,7 @@ impl Normal {
     /// returns `(f3qcm, f4qcm)`, the cubic and quartic force constants in
     /// normal coordinates
     pub fn fit_freqs<P, W>(
-        &mut self,
+        &self,
         freqs_dir: P,
         energies: &mut [f64],
         taylor: Taylor,
