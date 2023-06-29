@@ -266,29 +266,6 @@ impl BigHash {
             return Some(self.map.get_mut(mol).unwrap());
         }
 
-        /// helper macro for Cₙᵥ point groups
-        macro_rules! cnv {
-            ($self:expr, $orig:expr, $axis:expr, $order:expr, $planes:expr) => {
-                let buddies = $self.buddy.apply($orig);
-                let deg = 360.0 / $order as f64;
-                for buddy in Some($orig).into_iter().chain(buddies.iter()) {
-                    for d in 1..$order {
-                        let mol = &buddy.rotate(deg * d as f64, $axis);
-                        let key = Self::to_keys(mol);
-                        if self.map.contains_key(&key) {
-                            return Some(self.map.get_mut(&key).unwrap());
-                        }
-                    }
-                    for plane in $planes {
-                        let mol = Self::to_keys(&buddy.reflect(plane));
-                        if self.map.contains_key(&mol) {
-                            return Some(self.map.get_mut(&mol).unwrap());
-                        }
-                    }
-                }
-            };
-        }
-
         macro_rules! dnh {
             ($self:expr, $orig:expr, $pairs:expr, $planes:expr) => {
                 let buddies = $self.buddy.apply($orig);
@@ -311,6 +288,13 @@ impl BigHash {
                         }
                     }
                 }
+            };
+        }
+
+        /// helper macro for Cₙᵥ point groups
+        macro_rules! cnv {
+            ($self:expr, $orig:expr, $axis:expr, $order:expr, $planes:expr) => {
+                dnh!($self, $orig, [($axis, $order)], $planes);
             };
         }
 
