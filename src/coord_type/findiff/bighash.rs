@@ -230,6 +230,13 @@ impl BigHash {
                 axes: check_axes(&mol, [axis], 180.0, EPS),
                 planes: check_planes(&mol, [plane], EPS),
             },
+            PointGroup::C6h { c6, sh } => {
+                let mut axes = check_degs(&mol, c6, 6, EPS);
+                axes.extend(check_degs(&mol, c6, 2, EPS));
+                axes.extend(check_degs(&mol, c6, 3, EPS));
+                let planes = check_planes(&mol, [sh], EPS);
+                Buddy { axes, planes }
+            }
         };
         Self {
             map: FxHashMap::<KeyChain, Target>::default(),
@@ -342,6 +349,9 @@ impl BigHash {
             }
             PointGroup::C2h { axis, plane } => {
                 cnv!(self, orig, axis, 2, [plane]);
+            }
+            PointGroup::C6h { c6, sh } => {
+                dnh!(self, orig, [c6, c6, c6].iter().zip([6, 3, 2]), [sh]);
             }
         }
         None
