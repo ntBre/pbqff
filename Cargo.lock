@@ -869,7 +869,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#6a523fb717db5fc46621c09e6ade6bf15d57da04"
+source = "git+https://github.com/ntBre/spectro#3c4c6ae785e08ac0d78323425fa1f363b9209de7"
 dependencies = [
  "nalgebra",
  "serde",
