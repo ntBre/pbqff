@@ -156,10 +156,12 @@ impl Normal {
         };
         resume.dump(dir.as_ref().join(CHK_NAME));
 
-        let DerivType::Fitted { taylor, step_size, ..} =
-	    resume.deriv else {
-		unreachable!();
-	    };
+        let DerivType::Fitted {
+            taylor, step_size, ..
+        } = resume.deriv
+        else {
+            unreachable!();
+        };
 
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
@@ -292,9 +294,12 @@ impl Normal {
               .expect("single-point calculations failed");
         );
         eprintln!("total job time: {time:.1} sec");
-        let DerivType::Findiff{ targets, mut fcs, .. } = resume.deriv  else  {
-	    unreachable!()
-	};
+        let DerivType::Findiff {
+            targets, mut fcs, ..
+        } = resume.deriv
+        else {
+            unreachable!()
+        };
         self.map_energies(targets, &energies, &mut fcs);
         let cubs = &fcs[nfc2..nfc2 + nfc3];
         let quarts = &fcs[nfc2 + nfc3..];

@@ -409,11 +409,25 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         assert_eq!(got.spectro, resume.spectro);
         got.dump("/tmp/got.json");
         let DerivType::Findiff {
-	targets: mut gmap, fcs: gfcs, n: gn, nfc2: gnfc2, nfc3: gnfc3
-    } = got.deriv else { unreachable!() };
+            targets: mut gmap,
+            fcs: gfcs,
+            n: gn,
+            nfc2: gnfc2,
+            nfc3: gnfc3,
+        } = got.deriv
+        else {
+            unreachable!()
+        };
         let DerivType::Findiff {
-	targets: mut wmap, fcs: wfcs, n: wn, nfc2: wnfc2, nfc3: wnfc3
-    } = resume.deriv else { unreachable!() };
+            targets: mut wmap,
+            fcs: wfcs,
+            n: wn,
+            nfc2: wnfc2,
+            nfc3: wnfc3,
+        } = resume.deriv
+        else {
+            unreachable!()
+        };
         assert_eq!(gn, wn);
         assert_eq!(gnfc2, wnfc2);
         assert_eq!(gnfc3, wnfc3);
