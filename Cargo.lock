@@ -383,7 +383,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#72ad7058ad390a50bc176578a6dc9b9e59bfac7f"
+source = "git+https://github.com/ntBre/intder#999cc1b709067b22b81a94cbcbcd9859d1cf9c34"
 dependencies = [
  "approx",
  "nalgebra",
@@ -904,7 +904,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#d058b48f4a1ed5cfe3a755fabf3cdf74687c2589"
+source = "git+https://github.com/ntBre/spectro#03cca5ff43aea2ea8e5aa6976e01b515f2cea0ef"
 dependencies = [
  "nalgebra",
  "serde",
@@ -954,7 +954,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#216dde57636590b0c1a0528bf0713ce4126d151d"
+source = "git+https://github.com/ntBre/taylor#ced59c9e2ea8298cb149e432b61fe53c5111ebb8"
 dependencies = [
  "nalgebra",
  "rust-anpass",
@@ -1263,9 +1263,9 @@ checksum = "1a515f5799fe4961cb532f983ce2b23082366b898e52ffbce459c86f67c8378a"
 
 [[package]]
 name = "winnow"
-version = "0.4.7"
+version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca0ace3845f0d96209f0375e6d367e3eb87eb65d27d445bdc9f1843a26f39448"
+checksum = "a9482fe6ceabdf32f3966bfdd350ba69256a97c30253dc616fe0005af24f164e"
 dependencies = [
  "memchr",
 ]
