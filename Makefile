@@ -47,6 +47,7 @@ install:
 BASE = /home/brent/Projects/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
 WOODS_DEST = 'woods:bin/rpbqff'
+ALPHA = .alpha
 
 eland: build
 	scp -C ${BASE}/${TARGET} ${ELAND_DEST}
@@ -55,7 +56,7 @@ woods: build docs
 	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
 
 woods.alpha: build
-	scp -C ${BASE}/${TARGET} ${WOODS_DEST}.alpha
+	scp -C ${BASE}/${TARGET} ${WOODS_DEST}${ALPHA}
 
 docs: man/rpbqff.1
 	scp -C $? 'woods:man/man1/.'
