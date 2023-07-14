@@ -383,7 +383,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#859e45edf96c663ef372c29696b65b5f1852ca59"
+source = "git+https://github.com/ntBre/intder#de826456484eee4dcc447321c82f4246f964da05"
 dependencies = [
  "approx",
  "nalgebra",
@@ -675,7 +675,7 @@ dependencies = [
 [[package]]
 name = "psqs"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/psqs#3c092eff8a8f166a60c30d1d21776f73b2a15876"
+source = "git+https://github.com/ntBre/psqs#b48ba292053fd757b9315eca6f110bf6d24cb2d5"
 dependencies = [
  "chrono",
  "libc",
