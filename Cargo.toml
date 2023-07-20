@@ -23,7 +23,7 @@ symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
 toml = "0.7.6"
 rustc-hash = "1.1.0"
-clap = { version = "4.3.12", features = ["derive"] }
+clap = { version = "4.3.17", features = ["derive"] }
 dispatch = { path = "dispatch" }
 
 [dev-dependencies]
