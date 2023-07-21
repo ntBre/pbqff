@@ -1,0 +1,12 @@
+#!/bin/bash
+
+if ! [[ -f ~/.ssh/config ]] ; then
+    echo "failed to configure WOODS_DEST"
+    exit
+fi
+
+awk \
+'$1 ~ /^Host$/ { host = $2 }
+$1 ~ /^Hostname$/ && $2 ~ /hpcwoods/ { printf "WOODS=%s", host; exit }' \
+    ~/.ssh/config > .woods.mk
+

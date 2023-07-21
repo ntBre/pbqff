@@ -44,22 +44,26 @@ install:
 	sudo ln -s $(realpath target/release/rust-pbqff) /usr/bin/pbqff
 	sudo ln -s $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
 
-BASE = /home/brent/Projects/rust-pbqff
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
-WOODS_DEST = 'woods:bin/rpbqff'
+
+.woods.mk:
+	./configure
+
+include .woods.mk
+WOODS_DEST = ${WOODS}':bin/rpbqff'
 ALPHA = .alpha
 
 eland: build
-	scp -C ${BASE}/${TARGET} ${ELAND_DEST}
+	scp -C ${TARGET} ${ELAND_DEST}
 
 woods: build docs
-	scp -C ${BASE}/${TARGET} ${WOODS_DEST}
+	scp -C ${TARGET} ${WOODS_DEST}
 
 woods.alpha: build
-	scp -C ${BASE}/${TARGET} ${WOODS_DEST}${ALPHA}
+	scp -C ${TARGET} ${WOODS_DEST}${ALPHA}
 
 docs: man/rpbqff.1
-	scp -C $? 'woods:man/man1/.'
+	scp -C $? ${WOODS}':man/man1/.'
 	date > docs
 
 %.pdf: %.1
@@ -69,13 +73,13 @@ man/rpbqff.1: man/rpbqff.head testfiles/test.toml man/rpbqff.tail
 	cat $^ > $@
 
 scripts: qffbuddy/qffbuddy*
-	scp -C $? 'woods:bin/'
+	scp -C $? ${WOODS}':bin/'
 	date > scripts
 
 profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
 	valgrind --tool=callgrind --callgrind-out-file=callgrind.out	\
 		--collect-jumps=yes --simulate-cache=yes		\
-		${BASE}/target/release/$(1)
+		target/release/$(1)
 
 profile.cart:
 	$(call profile,cart)
@@ -84,7 +88,7 @@ profile.build_points:
 	$(call profile,build_points)
 
 memprofile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
-                heaptrack -o /tmp/heaptrack.pbqff.%p.zst ${BASE}/target/release/$(1)
+                heaptrack -o /tmp/heaptrack.pbqff.%p.zst target/release/$(1)
 
 memprofile.cart:
 	$(call memprofile,cart)
