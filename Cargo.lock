@@ -376,7 +376,7 @@ dependencies = [
  "approx",
  "nalgebra",
  "ndarray",
- "psqs",
+ "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
  "regex",
  "serde",
  "symm",
@@ -646,6 +646,20 @@ dependencies = [
 [[package]]
 name = "psqs"
 version = "0.1.0"
+dependencies = [
+ "chrono",
+ "libc",
+ "nalgebra",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_json",
+ "symm",
+]
+
+[[package]]
+name = "psqs"
+version = "0.1.0"
 source = "git+https://github.com/ntBre/psqs#bfc58f9c0c31f90891df3e1fd3de020ea659d10b"
 dependencies = [
  "chrono",
@@ -753,7 +767,7 @@ dependencies = [
  "intder",
  "libc",
  "nalgebra",
- "psqs",
+ "psqs 0.1.0",
  "rust-anpass",
  "rustc-hash",
  "serde",
