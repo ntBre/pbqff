@@ -136,17 +136,9 @@ impl Normal {
         let dir_str = dir.as_ref().to_str().unwrap();
         let jobs =
             P::build_jobs(geoms, dir_str, 0, 1.0, 0, config.charge, template);
-        writeln!(
-            w,
-            "{} normal coordinates require {} points",
-            self.ncoords,
-            jobs.len()
-        )
-        .unwrap();
 
         let resume = Resume {
             normal: self.clone(),
-            njobs: jobs.len(),
             deriv: DerivType::Fitted {
                 taylor,
                 step_size: config.step_size,
@@ -163,14 +155,8 @@ impl Normal {
             unreachable!();
         };
 
-        let mut energies = vec![0.0; jobs.len()];
-        let time = queue
-            .drain(
-                dir_str,
-                jobs,
-                &mut energies,
-                make_check(config.check_int, &dir),
-            )
+        let (mut energies, time) = queue
+            .drain(dir_str, jobs, make_check(config.check_int, &dir))
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
         self.fit_freqs(Some(freqs_dir), &mut energies, taylor, step_size, w, o)
@@ -272,7 +258,6 @@ impl Normal {
 
         let resume = Resume {
             normal: self.clone(),
-            njobs: jobs.len(),
             deriv: DerivType::Findiff {
                 targets,
                 fcs,
@@ -287,9 +272,8 @@ impl Normal {
 
         time!(w, "draining points",
               // drain into energies
-              let mut energies = vec![0.0; jobs.len()];
-              let time = queue
-              .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
+              let (energies, time) = queue
+              .drain(pts_dir.to_str().unwrap(), jobs,
                  make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
@@ -414,7 +398,6 @@ where
         config: &Config,
         Resume {
             normal,
-            njobs,
             deriv,
             output,
             spectro,
@@ -425,9 +408,8 @@ where
         let chk = dir.as_ref().join("chk.json");
         time!(w, "draining points",
               // drain into energies
-              let mut energies = vec![0.0; njobs];
-              let time = queue
-              .resume(pts_dir.to_str().unwrap(), chk.to_str().unwrap(), &mut energies,
+              let (mut energies, time) = queue
+              .resume(pts_dir.to_str().unwrap(), chk.to_str().unwrap(),
               make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );
@@ -529,7 +511,6 @@ pub enum DerivType {
 #[derive(Serialize, Deserialize, PartialEq, Debug)]
 pub struct Resume {
     pub(crate) normal: Normal,
-    pub(crate) njobs: usize,
     pub(crate) output: Output,
     pub(crate) spectro: Spectro,
     pub(crate) deriv: DerivType,
@@ -538,14 +519,12 @@ pub struct Resume {
 impl Resume {
     pub fn new(
         normal: Normal,
-        njobs: usize,
         output: Output,
         spectro: Spectro,
         deriv: DerivType,
     ) -> Self {
         Self {
             normal,
-            njobs,
             output,
             spectro,
             deriv,

@@ -107,26 +107,16 @@ where
         let jobs =
             P::build_jobs(geoms, &pts_dir, 0, 1.0, 0, config.charge, template);
 
-        writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
-            .unwrap();
-
         let resume = Resume::new(
             self.intder.clone(),
             taylor,
             atomic_numbers,
             config.step_size,
-            jobs.len(),
         );
         resume.dump(dir.as_ref().join(CHK_NAME));
 
-        let mut energies = vec![0.0; jobs.len()];
-        let time = queue
-            .drain(
-                &pts_dir,
-                jobs,
-                &mut energies,
-                make_check(config.check_int, &dir),
-            )
+        let (mut energies, time) = queue
+            .drain(&pts_dir, jobs, make_check(config.check_int, &dir))
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -155,22 +145,15 @@ where
             taylor,
             atomic_numbers,
             step_size,
-            njobs,
         }: Resume,
     ) -> (Spectro, Output) {
-        let mut energies = vec![0.0; njobs];
         let freqs_dir = dir.as_ref().join("freqs");
         let dir = dir.as_ref().join("pts").join("inp");
         let _ = std::fs::create_dir_all(&dir);
         let dir = dir.to_str().unwrap().to_owned();
         let chk = format!("{dir}/chk.json");
-        let time = queue
-            .resume(
-                &dir,
-                &chk,
-                &mut energies,
-                make_check(config.check_int, &dir),
-            )
+        let (mut energies, time) = queue
+            .resume(&dir, &chk, make_check(config.check_int, &dir))
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
 
@@ -194,9 +177,6 @@ pub struct Resume {
     taylor: Taylor,
     atomic_numbers: Vec<usize>,
     step_size: f64,
-
-    /// size of the vector to pass to drain
-    njobs: usize,
 }
 
 impl Resume {
@@ -205,14 +185,12 @@ impl Resume {
         taylor: Taylor,
         atomic_numbers: Vec<usize>,
         step_size: f64,
-        njobs: usize,
     ) -> Self {
         Self {
             intder,
             taylor,
             atomic_numbers,
             step_size,
-            njobs,
         }
     }
 }

@@ -389,7 +389,6 @@ H       0.8934572640   2.2429362586  -0.0000000000",
 
     let resume = Resume::new(
         Normal::findiff(true),
-        geoms.len(),
         Output::default(),
         Spectro::default(),
         DerivType::Findiff {
@@ -404,7 +403,6 @@ H       0.8934572640   2.2429362586  -0.0000000000",
     resume.dump(chk);
     let got = Resume::load(chk);
     if got != resume {
-        assert_eq!(got.njobs, resume.njobs);
         assert_eq!(got.output, resume.output);
         assert_eq!(got.spectro, resume.spectro);
         got.dump("/tmp/got.json");
