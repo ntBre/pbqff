@@ -7,15 +7,8 @@ use rust_pbqff::{
 };
 
 fn main() -> Result<(), std::io::Error> {
-    // inlined cleanup from main
-    let _ = std::fs::remove_dir("opt");
-    let _ = std::fs::remove_dir("pts");
-    let _ = std::fs::remove_dir("freqs");
-    // end inline
-    let _ = std::fs::create_dir("pts");
     let config = Config {
-        template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) \
-		   PM6 THREADS=1 external=testfiles/params.dat"
+        template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
             .to_owned(),
         ..Config::load("testfiles/cart.toml")
     };
@@ -26,6 +19,12 @@ fn main() -> Result<(), std::io::Error> {
     };
 
     let dir = temp_dir();
+    for d in ["opt", "pts", "freqs"] {
+        let dir = dir.join(d);
+        let _ = std::fs::remove_dir(&dir);
+        let _ = std::fs::create_dir(&dir);
+    }
+
     let now = Instant::now();
     let (spectro, output) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
