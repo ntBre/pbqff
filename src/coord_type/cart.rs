@@ -272,7 +272,7 @@ impl Cart {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(dir.as_ref().to_str().unwrap(), jobs, &mut energies, psqs::queue::Check::None)?;
+              .drain(dir.as_ref().to_str().unwrap(), jobs.into_iter(), &mut energies, psqs::queue::Check::None)?;
         );
 
         eprintln!("total job time: {time:.1} sec");

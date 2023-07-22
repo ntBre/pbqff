@@ -123,7 +123,7 @@ where
         let time = queue
             .drain(
                 &pts_dir,
-                jobs,
+                jobs.into_iter(),
                 &mut energies,
                 make_check(config.check_int, &dir),
             )
