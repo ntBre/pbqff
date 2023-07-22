@@ -7,7 +7,7 @@
 /freqs_noalign/
 /noalign.dat
 /noalign.out
-/callgrind.out
+/*callgrind.out
 /std_hash.out
 /qffbuddy/pbqff.toml
 /scripts
