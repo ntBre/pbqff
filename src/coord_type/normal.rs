@@ -167,7 +167,7 @@ impl Normal {
         let time = queue
             .drain(
                 dir_str,
-                jobs.into_iter(),
+                jobs,
                 &mut energies,
                 make_check(config.check_int, &dir),
             )
@@ -289,7 +289,7 @@ impl Normal {
               // drain into energies
               let mut energies = vec![0.0; jobs.len()];
               let time = queue
-              .drain(pts_dir.to_str().unwrap(), jobs.into_iter(), &mut energies,
+              .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
                  make_check(config.check_int, &dir))
               .expect("single-point calculations failed");
         );

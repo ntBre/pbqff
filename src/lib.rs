@@ -52,11 +52,7 @@ pub fn optimize<
     let opt_file = opt_dir.join("opt").to_str().unwrap().to_owned();
     let opt = Job::new(P::new(opt_file, template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
-    let time = queue.energize(
-        opt_dir.to_str().unwrap(),
-        [opt].into_iter(),
-        &mut res,
-    )?;
+    let time = queue.energize(opt_dir.to_str().unwrap(), [opt], &mut res)?;
     eprintln!("total optimize time: {time:.1} sec");
     Ok(res.pop().unwrap())
 }
@@ -77,7 +73,7 @@ pub fn ref_energy<
         Job::new(P::new("opt/ref".to_string(), template, charge, geom), 0);
     let mut res = vec![0.0; 1];
     let time = queue
-        .drain("opt", [opt].into_iter(), &mut res, Check::None)
+        .drain("opt", [opt], &mut res, Check::None)
         .expect("reference energy failed");
     eprintln!("total ref time: {time:.1} sec");
     res.pop().unwrap()
