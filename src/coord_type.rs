@@ -35,7 +35,7 @@ pub mod sic;
 
 /// default spectro header to write to the input files for use by the fortran
 /// version
-const SPECTRO_HEADER: [usize; 30] = [
+const SPECTRO_HEADER: [isize; 30] = [
     99, 1, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
 ];
