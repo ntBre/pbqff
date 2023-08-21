@@ -912,7 +912,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#9432c26f81afc60807a9c31a8ab789c0dcee6448"
+source = "git+https://github.com/ntBre/taylor#4cbaa70fdb5aae3cdc2b3d5da61fc59ddc22175f"
 dependencies = [
  "nalgebra",
  "rust-anpass",
