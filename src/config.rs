@@ -2,6 +2,7 @@
 
 use std::{
     fmt::{Debug, Display},
+    fs::read_to_string,
     path::Path,
 };
 
@@ -12,6 +13,28 @@ pub use coord_type::*;
 
 #[cfg(test)]
 mod tests;
+
+/// Templates can either be literal strings in the config file, or the name of a
+/// file to be loaded
+#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[serde(untagged)]
+enum TemplateSrc {
+    Literal(String),
+    File { file: String },
+}
+
+impl From<TemplateSrc> for String {
+    fn from(value: TemplateSrc) -> Self {
+        match value {
+            TemplateSrc::Literal(s) => s,
+            TemplateSrc::File { file } => {
+                read_to_string(&file).unwrap_or_else(|_| {
+                    panic!("failed to locate template file {file}")
+                })
+            }
+        }
+    }
+}
 
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
@@ -24,9 +47,9 @@ struct RawConfig {
     job_limit: usize,
     chunk_size: usize,
     coord_type: CoordType,
-    template: String,
-    hybrid_template: Option<String>,
-    queue_template: Option<String>,
+    template: TemplateSrc,
+    hybrid_template: Option<TemplateSrc>,
+    queue_template: Option<TemplateSrc>,
     program: Program,
     queue: Queue,
     findiff: Option<bool>,
@@ -145,8 +168,9 @@ impl From<RawConfig> for Config {
             coord_type: rc.coord_type,
             hybrid_template: rc
                 .hybrid_template
-                .unwrap_or_else(|| rc.template.clone()),
-            template: rc.template,
+                .unwrap_or_else(|| rc.template.clone())
+                .into(),
+            template: rc.template.into(),
             program: rc.program,
             sleep_int: rc.sleep_int,
             job_limit: rc.job_limit,
@@ -154,7 +178,7 @@ impl From<RawConfig> for Config {
             queue: rc.queue,
             findiff: rc.findiff.unwrap_or(false),
             check_int: rc.check_int,
-            queue_template: rc.queue_template,
+            queue_template: rc.queue_template.map(TemplateSrc::into),
         }
     }
 }
