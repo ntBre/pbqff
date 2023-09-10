@@ -516,8 +516,7 @@ impl Sic {
             spectro.write(input).unwrap();
         }
 
-        let (output, _) =
-            spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));
+        let output = spectro.run(spectro::Derivative::Quartic(f2, fc3, fc4));
 
         Ok((spectro, output))
     }

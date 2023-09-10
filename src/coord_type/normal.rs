@@ -399,7 +399,7 @@ where
             lxm,
             lx,
         } = fin;
-        let (o, _) = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
+        let o = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
 
         (spectro, o)
     }
@@ -505,7 +505,7 @@ where
             lxm,
             lx,
         } = fin;
-        let (o, _) = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
+        let o = spectro.finish(freq, f3qcm, f4qcm, irreps, lxm, lx);
 
         (spectro, o)
     }
@@ -875,7 +875,7 @@ impl Normal {
             }
         }
 
-        let (output, _) = spectro.run(spectro::Derivative::Harmonic(fc2));
+        let output = spectro.run(spectro::Derivative::Harmonic(fc2));
         (spectro, output)
     }
 }

@@ -63,7 +63,7 @@ pub fn freqs(
     let fc3 = spectro::new_fc3(spectro.n3n, f3);
     let fc4 = spectro::new_fc4(spectro.n3n, f4);
 
-    let (output, _) = spectro.run(spectro::Derivative::Quartic(fc2, fc3, fc4));
+    let output = spectro.run(spectro::Derivative::Quartic(fc2, fc3, fc4));
     (spectro, output)
 }
 
