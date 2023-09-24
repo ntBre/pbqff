@@ -4,8 +4,7 @@ use std::{fmt::Display, io::Write, marker::Sync, option::Option, path::Path};
 
 pub use intder::IntderError;
 use intder::{Intder, Siic};
-use na::vector;
-use nalgebra as na;
+use nalgebra::vector;
 use psqs::{
     geom::Geom,
     program::{Program, Template},
