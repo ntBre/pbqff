@@ -6,7 +6,6 @@ use self::bighash::{BigHash, Target};
 use super::{cart::DEBUG, CartGeom, Derivative};
 use bighash::Index;
 use intder::ANGBOHR;
-use nalgebra as na;
 use psqs::geom::Geom;
 use std::{cmp::min, path::Path};
 use symm::{Atom, Molecule};
@@ -21,7 +20,7 @@ pub struct Proto {
     pub coeff: f64,
 }
 
-pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
+pub(crate) fn zip_atoms(names: &[&str], coords: Vec<f64>) -> Vec<Atom> {
     // this makes sure they match and that coords is divisible by 3
     assert!(3 * names.len() == coords.len());
     names
@@ -35,7 +34,7 @@ pub(crate) fn zip_atoms(names: &[&str], coords: na::DVector<f64>) -> Vec<Atom> {
 
 macro_rules! geom {
     ($s:ident, $names:ident, $coords:ident, $step_size:ident, $($steps: expr),* ) => {
-	Some($s.new_geom($names.clone(), $coords.clone(), $step_size, vec![$($steps),*]))
+	Some($s.new_geom($names.clone(), $coords.to_vec(), $step_size, vec![$($steps),*]))
     };
 }
 
@@ -84,7 +83,7 @@ pub trait FiniteDifference {
     fn new_geom(
         &self,
         names: &[&str],
-        coords: na::DVector<f64>,
+        coords: Vec<f64>,
         step_size: f64,
         steps: Vec<isize>,
     ) -> Geom;
@@ -107,7 +106,6 @@ pub trait FiniteDifference {
     ) -> Vec<CartGeom> {
         let atoms = geom.xyz().unwrap();
         let (names, coords) = atom_parts(atoms);
-        let coords = nalgebra::DVector::from(coords);
 
         let (nfc2, nfc3, k_max, l_max) = match deriv {
             Derivative::Harmonic(x) => (x, 0, 0, 0),
@@ -280,7 +278,7 @@ pub trait FiniteDifference {
     fn make2d(
         &self,
         names: &[&str],
-        coords: &na::DVector<f64>,
+        coords: &[f64],
         step_size: f64,
         i: usize,
         j: usize,
@@ -307,7 +305,7 @@ pub trait FiniteDifference {
     fn make3d(
         &self,
         names: &[&str],
-        coords: &na::DVector<f64>,
+        coords: &[f64],
         step_size: f64,
         i: usize,
         j: usize,
@@ -358,7 +356,7 @@ pub trait FiniteDifference {
     fn make4d(
         &self,
         names: &[&str],
-        coords: &na::DVector<f64>,
+        coords: &[f64],
         step: f64,
         idx: Idx,
     ) -> Vec<Proto> {

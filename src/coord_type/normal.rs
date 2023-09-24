@@ -305,6 +305,22 @@ impl Normal {
         let quarts = &fcs[nfc2 + nfc3..];
         to_qcm(&o.harms, n, cubs, quarts, intder::HART)
     }
+
+    fn make_geom(
+        &self,
+        mut coords: Vec<f64>,
+        dq: Vec<f64>,
+        names: &[&str],
+    ) -> Geom {
+        let lxm = self.lxm.as_ref().unwrap();
+        let nc = coords.len();
+        for k in 0..nc {
+            for n in 0..self.ncoords {
+                coords[k] += self.m12[k / 3] * lxm[(k, n)] * dq[n];
+            }
+        }
+        Geom::Xyz(zip_atoms(names, coords))
+    }
 }
 
 impl<W, Q, P> CoordType<W, Q, P> for Normal
@@ -619,18 +635,10 @@ impl Fitted for Normal {
         let taylor_disps = taylor.disps();
         let disps = taylor_disps.to_intder(step_size);
         let (names, coords) = atom_parts(&mol.atoms);
-        let lxm = self.lxm.as_ref().unwrap();
-        let mut geoms = Vec::with_capacity(disps.len());
-        for dq in disps {
-            let mut coords = coords.clone();
-            let nc = coords.len();
-            for k in 0..nc {
-                for n in 0..self.ncoords {
-                    coords[k] += self.m12[k / 3] * lxm[(k, n)] * dq[n];
-                }
-            }
-            geoms.push(Geom::Xyz(zip_atoms(&names, coords.into())))
-        }
+        let geoms = disps
+            .into_iter()
+            .map(|dq| self.make_geom(coords.clone(), dq, &names))
+            .collect();
         Ok((geoms, taylor, mol.atomic_numbers()))
     }
 
@@ -678,7 +686,7 @@ impl FiniteDifference for Normal {
     fn new_geom(
         &self,
         names: &[&str],
-        coords: nalgebra::DVector<f64>,
+        coords: Vec<f64>,
         step_size: f64,
         steps: Vec<isize>,
     ) -> psqs::geom::Geom {
@@ -698,24 +706,13 @@ impl FiniteDifference for Normal {
             }
         }
 
-        let lxm = self.lxm.as_ref().unwrap();
-
-        let nc = coords.len();
-        let mut v = DVector::zeros(nc);
-        // TODO do this as a mat mul, but get it to work first
-        for k in 0..nc {
-            for n in 0..self.ncoords {
-                v[k] += self.m12[k / 3] * lxm[(k, n)] * dq[n];
-            }
-        }
-        let coords = coords + v;
-        Geom::Xyz(zip_atoms(names, coords))
+        self.make_geom(coords, dq, names)
     }
 
     fn make4d(
         &self,
         names: &[&str],
-        coords: &nalgebra::DVector<f64>,
+        coords: &[f64],
         step: f64,
         idx: Idx,
     ) -> Vec<Proto> {

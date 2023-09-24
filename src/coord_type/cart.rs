@@ -141,19 +141,17 @@ impl FiniteDifference for Cart {
     fn new_geom(
         &self,
         names: &[&str],
-        coords: nalgebra::DVector<f64>,
+        mut coords: Vec<f64>,
         step_size: f64,
         steps: Vec<isize>,
     ) -> Geom {
-        let mut v = vec![0.0; coords.len()];
         for step in steps {
             if step < 1 {
-                v[(-step - 1) as usize] -= step_size;
+                coords[(-step - 1) as usize] -= step_size;
             } else {
-                v[(step - 1) as usize] += step_size;
+                coords[(step - 1) as usize] += step_size;
             }
         }
-        let coords = coords + nalgebra::DVector::from(v);
         Geom::Xyz(zip_atoms(names, coords))
     }
 }
