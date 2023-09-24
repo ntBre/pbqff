@@ -1,6 +1,5 @@
 use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
-use dispatch::dispatch;
 use psqs::{
     program::{molpro::Molpro, mopac::Mopac},
     queue::{local::Local, pbs::Pbs, slurm::Slurm},
@@ -13,19 +12,7 @@ use rust_pbqff::{
 };
 
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
-
-macro_rules! queue {
-    ($q:ty, $config:ident, $no_del:expr) => {
-        <$q>::new(
-            $config.chunk_size,
-            $config.job_limit,
-            $config.sleep_int,
-            "pts",
-            $no_del,
-            $config.queue_template.clone(),
-        )
-    };
-}
+include!(concat!(env!("OUT_DIR"), "/dispatch.rs"));
 
 use clap::Parser;
 
@@ -64,7 +51,6 @@ struct Args {
 }
 
 use spectro::{Output, Spectro};
-dispatch!();
 
 fn main() -> Result<(), std::io::Error> {
     let args = Args::parse();

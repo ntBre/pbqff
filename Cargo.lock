@@ -240,10 +240,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dispatch"
-version = "0.1.0"
-
-[[package]]
 name = "either"
 version = "1.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -736,7 +732,6 @@ version = "0.1.0"
 dependencies = [
  "approx",
  "clap",
- "dispatch",
  "git2",
  "intder",
  "libc",
