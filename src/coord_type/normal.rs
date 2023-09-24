@@ -620,7 +620,7 @@ impl Fitted for Normal {
         let disps = taylor_disps.to_intder(step_size);
         let (names, coords) = atom_parts(&mol.atoms);
         let lxm = self.lxm.as_ref().unwrap();
-        let mut geoms = Vec::new();
+        let mut geoms = Vec::with_capacity(disps.len());
         for dq in disps {
             let mut coords = coords.clone();
             let nc = coords.len();
