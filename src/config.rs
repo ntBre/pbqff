@@ -58,6 +58,8 @@ struct RawConfig {
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Program {
+    #[serde(alias = "dftb+")]
+    DFTBPlus,
     #[serde(alias = "mopac")]
     Mopac,
     #[serde(alias = "molpro")]
@@ -69,6 +71,7 @@ impl Display for Program {
         match self {
             Program::Mopac => write!(f, "mopac"),
             Program::Molpro => write!(f, "molpro"),
+            Program::DFTBPlus => write!(f, "dftb+"),
         }
     }
 }

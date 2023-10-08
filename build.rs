@@ -38,7 +38,7 @@ pub fn dispatch(out_dir: &OsString) {
         "Cart",
         "Sic::new(Intder::load_file(\"intder.in\"))",
     ];
-    let programs = ["Mopac", "Molpro"];
+    let programs = ["Mopac", "Molpro", "DFTBPlus"];
     let queues = ["Pbs", "Slurm", "Local"];
     use std::fmt::Write;
     let mut s = String::from(

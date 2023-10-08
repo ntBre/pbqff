@@ -1,7 +1,7 @@
 use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
 use psqs::{
-    program::{molpro::Molpro, mopac::Mopac},
+    program::{dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},
     queue::{local::Local, pbs::Pbs, slurm::Slurm},
 };
 use rust_pbqff::{
