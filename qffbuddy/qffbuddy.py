@@ -1,18 +1,18 @@
 #!/usr/bin/python3
 
-import tkinter as tk
-from tkinter import ttk
 import argparse
-import tkinter.filedialog as fd
+import io
+import json
+import os
+import re
 import subprocess
 import sys
-import json
-import io
-import re
-import os
+import tkinter as tk
+import tkinter.filedialog as fd
 import tkinter.messagebox as msg
 import tkinter.scrolledtext as st
 from idlelib.tooltip import Hovertip
+from tkinter import ttk
 
 
 class MyHovertip(Hovertip):
@@ -24,9 +24,14 @@ parser = argparse.ArgumentParser(
     prog="qffbuddy",
     description="helper for generating pbqff input files",
 )
-parser.add_argument("-p", "--pbqff", help="path to pbqff executable", default="pbqff")
 parser.add_argument(
-    "infile", help="start the configuration based on infile", default=None, nargs="?"
+    "-p", "--pbqff", help="path to pbqff executable", default="pbqff"
+)
+parser.add_argument(
+    "infile",
+    help="start the configuration based on infile",
+    default=None,
+    nargs="?",
 )
 args = parser.parse_args()
 
@@ -88,7 +93,40 @@ pbqff=etz(2)+edkr-edk
 show[1,f20.12],pbqff
 """
 
-MOPAC_TEMPLATE = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 SINGLET THREADS=1"
+MOPAC_TEMPLATE = (
+    "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 SINGLET THREADS=1"
+)
+
+DFTB_TEMPLATE = """
+Geometry = xyzFormat {
+{{.geom}}
+}
+
+Hamiltonian = DFTB {
+  Scc = Yes
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/opt/dftb+/slako/mio/mio-1-1/"
+    Separator = "-"
+    Suffix = ".skf"
+  }
+  MaxAngularMomentum {
+    O = "p"
+    H = "s"
+  }
+Charge = {{.charge}}
+}
+
+Options {
+}
+
+Analysis {
+  CalculateForces = Yes
+}
+
+ParserOptions {
+  ParserVersion = 12
+}
+"""
 
 ###################
 # Queue templates #
@@ -167,9 +205,9 @@ def make_radio_buttons(pairs, var, parent, **kwargs):
     frame = tk.Frame(parent)
     col = 0
     for text, value in pairs:
-        ttk.Radiobutton(frame, text=text, variable=var, value=value, **kwargs).grid(
-            column=col, row=0, padx=5
-        )
+        ttk.Radiobutton(
+            frame, text=text, variable=var, value=value, **kwargs
+        ).grid(column=col, row=0, padx=5)
         col += 1
     return frame
 
@@ -253,9 +291,14 @@ class Application(ttk.Frame):
     def sleep_int_input(self):
         l = ttk.Label(self.main_panel, text="Sleep interval in sec")
         l.grid(column=1, row=9, sticky="E")
-        MyHovertip(l, "pbqff will wait this long before polling the running jobs again")
+        MyHovertip(
+            l,
+            "pbqff will wait this long before polling the running jobs again",
+        )
         self.sleep_int = tk.IntVar(value=2)
-        ttk.Entry(self.main_panel, textvariable=self.sleep_int).grid(column=2, row=9)
+        ttk.Entry(self.main_panel, textvariable=self.sleep_int).grid(
+            column=2, row=9
+        )
 
     def job_limit_input(self):
         l = ttk.Label(self.main_panel, text="Max jobs to submit at once")
@@ -267,13 +310,16 @@ jobs, not queue system jobs. The number of queued jobs will be job_limit
 (this value) divided by chunk_size (Jobs per chunk).""",
         )
         self.job_limit = tk.IntVar(value=1024)
-        ttk.Entry(self.main_panel, textvariable=self.job_limit).grid(column=2, row=11)
+        ttk.Entry(self.main_panel, textvariable=self.job_limit).grid(
+            column=2, row=11
+        )
 
     def chunk_size_input(self):
         l = ttk.Label(self.main_panel, text="Jobs per chunk")
         l.grid(column=1, row=13, sticky="E")
         MyHovertip(
-            l, "The number of pbqff jobs to group into a single queue submission"
+            l,
+            "The number of pbqff jobs to group into a single queue submission",
         )
         self.chunk_size = tk.IntVar(value=1)
         name = ttk.Entry(self.main_panel, textvariable=self.chunk_size).grid(
@@ -281,11 +327,15 @@ jobs, not queue system jobs. The number of queued jobs will be job_limit
         )
 
     def check_int_input(self):
-        l = ttk.Label(self.main_panel, text="Checkpoint interval (0 to disable)")
+        l = ttk.Label(
+            self.main_panel, text="Checkpoint interval (0 to disable)"
+        )
         l.grid(column=1, row=14, stick="E")
         MyHovertip(l, "The number of polling cycles between checkpoints")
         self.check_int = tk.IntVar(value=100)
-        ttk.Entry(self.main_panel, textvariable=self.check_int).grid(column=2, row=14)
+        ttk.Entry(self.main_panel, textvariable=self.check_int).grid(
+            column=2, row=14
+        )
 
     def charge_input(self):
         l = ttk.Label(self.main_panel, text="Charge")
@@ -320,7 +370,9 @@ program.""",
             """Input your molecular geometry in a format recognized by your quantum chemistry
 program of choice. pbqff recognizes Z-matrices and XYZ geometries in general.""",
         )
-        self.geometry = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
+        self.geometry = st.ScrolledText(
+            self.main_panel, width=80, height=10, undo=True
+        )
         self.geometry.grid(column=1, row=2, columnspan=2, sticky=tk.W)
 
     def coord_type_input(self):
@@ -387,7 +439,7 @@ computations""",
         )
         self.program = tk.StringVar(value="molpro")
         f = make_radio_buttons(
-            [("Molpro", "molpro"), ("Mopac", "mopac")],
+            [("Molpro", "molpro"), ("Mopac", "mopac"), ("DFTB+", "dftb+")],
             self.program,
             self.main_panel,
             command=self.default_template,
@@ -457,7 +509,9 @@ programs support special string substitutions. Molpro, for example, supports
 Mopac expects the full template to be given here, verbatim. See the Templates
 menu for some examples.""",
         )
-        self.template = st.ScrolledText(self.main_panel, width=80, height=10, undo=True)
+        self.template = st.ScrolledText(
+            self.main_panel, width=80, height=10, undo=True
+        )
         self.default_template()
         self.template.grid(column=1, columnspan=2, sticky="W")
 
@@ -479,6 +533,8 @@ menu for some examples.""",
             self.template.insert("1.0", MOLPRO_F12TZ)
         elif self.program.get() == "mopac":
             self.template.insert("1.0", MOPAC_TEMPLATE)
+        elif self.program.get() == "dftb+":
+            self.template.insert("1.0", DFTB_TEMPLATE)
         else:
             self.template.insert("1.0", "default template")
 
@@ -576,8 +632,12 @@ class MenuBar(tk.Menu):
 
         self.menu_file = tk.Menu(self)
         self.add_cascade(menu=self.menu_file, label="File")
-        self.menu_file.add_command(label="Open Input File", command=self.open_file)
-        self.menu_file.add_command(label="Import Geometry", command=self.import_geom)
+        self.menu_file.add_command(
+            label="Open Input File", command=self.open_file
+        )
+        self.menu_file.add_command(
+            label="Import Geometry", command=self.import_geom
+        )
 
         self.menu_templates = tk.Menu(self)
         self.add_cascade(menu=self.menu_templates, label="Templates")
@@ -587,11 +647,15 @@ class MenuBar(tk.Menu):
         self.build_template_menus(self.main_templates)
 
         self.hybrid_templates = tk.Menu(self.menu_templates)
-        self.menu_templates.add_cascade(menu=self.hybrid_templates, label="Hybrid")
+        self.menu_templates.add_cascade(
+            menu=self.hybrid_templates, label="Hybrid"
+        )
         self.build_template_menus(self.hybrid_templates, hybrid=True)
 
         self.queue_templates = tk.Menu(self.menu_templates)
-        self.menu_templates.add_cascade(menu=self.queue_templates, label="Queue")
+        self.menu_templates.add_cascade(
+            menu=self.queue_templates, label="Queue"
+        )
         self.build_queue_template_menus()
 
     def build_queue_template_menus(self):
@@ -609,10 +673,13 @@ class MenuBar(tk.Menu):
     def build_template_menus(self, menu_var, hybrid=False):
         menu_var.add_command(
             label="F12-DZ",
-            command=lambda: app.fill_template(MOLPRO_F12TZ.replace("TZ", "DZ"), hybrid),
+            command=lambda: app.fill_template(
+                MOLPRO_F12TZ.replace("TZ", "DZ"), hybrid
+            ),
         )
         menu_var.add_command(
-            label="F12-TZ", command=lambda: app.fill_template(MOLPRO_F12TZ, hybrid)
+            label="F12-TZ",
+            command=lambda: app.fill_template(MOLPRO_F12TZ, hybrid),
         )
         menu_var.add_command(
             label="F12-DZ-cCR",
@@ -675,7 +742,12 @@ class MenuBar(tk.Menu):
             for atom in geom["Xyz"]:
                 s.write(
                     "%2s%14.10f%14.10f%14.10f\n"
-                    % (ATOMS[atom["atomic_number"]], atom["x"], atom["y"], atom["z"])
+                    % (
+                        ATOMS[atom["atomic_number"]],
+                        atom["x"],
+                        atom["y"],
+                        atom["z"],
+                    )
                 )
             app.fill_geometry(s.getvalue())
 
@@ -721,7 +793,8 @@ if __name__ == "__main__":
     canvas.create_window((0, 0), window=app, anchor="nw")
 
     app.bind(
-        "<Configure>", lambda event: canvas.configure(scrollregion=canvas.bbox("all"))
+        "<Configure>",
+        lambda event: canvas.configure(scrollregion=canvas.bbox("all")),
     )
     canvas.bind("<Button-4>", lambda event: canvas.yview_scroll(-1, "units"))
     canvas.bind("<Button-5>", lambda event: canvas.yview_scroll(1, "units"))
