@@ -58,11 +58,6 @@ fn main() -> Result<(), std::io::Error> {
         println!("version: {}", version());
         return Ok(());
     }
-    let config = Config::load(&args.infile);
-    if args.json {
-        println!("{}", serde_json::to_string(&config).unwrap());
-        std::process::exit(0);
-    }
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
         eprintln!("existing pbqff output. overwrite with -o/--overwrite");
@@ -76,6 +71,11 @@ fn main() -> Result<(), std::io::Error> {
     unsafe {
         libc::dup2(out_fd, 1);
         libc::dup2(log_fd, 2);
+    }
+    let config = Config::load(&args.infile);
+    if args.json {
+        println!("{}", serde_json::to_string(&config).unwrap());
+        std::process::exit(0);
     }
     println!("PID: {}", std::process::id());
     println!("version: {}", version());

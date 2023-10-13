@@ -274,7 +274,8 @@ impl Config {
     fn validate(&self) {
         if self.job_limit < self.chunk_size {
             eprintln!(
-                "job_limit ({}) < chunk_size ({}), exiting",
+                "In pbqff.toml: Your job_limit ({}) is TOO LOW. \
+                 Must be greater than chunk_size ({}), exiting",
                 self.job_limit, self.chunk_size
             );
             std::process::exit(1);
