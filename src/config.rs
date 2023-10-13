@@ -260,9 +260,25 @@ impl Config {
     {
         let contents = std::fs::read_to_string(&filename)
             .expect("failed to load config file");
-        toml::from_str(&contents).unwrap_or_else(|e| {
+        let ret: Self = toml::from_str(&contents).unwrap_or_else(|e| {
             panic!("failed to deserialize config file '{filename:?}' with {e}")
-        })
+        });
+
+        ret.validate();
+
+        ret
+    }
+
+    /// check that the settings in `self` make any sense. currently only check
+    /// that job_limit is greater than chunk size
+    fn validate(&self) {
+        if self.job_limit < self.chunk_size {
+            eprintln!(
+                "job_limit ({}) < chunk_size ({}), exiting",
+                self.job_limit, self.chunk_size
+            );
+            std::process::exit(1);
+        }
     }
 }
 
