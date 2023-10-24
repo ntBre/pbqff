@@ -16,7 +16,7 @@ serde = { version = "1.0", features = ["derive"] }
 spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
-toml = "0.8.2"
+toml = "0.8.4"
 rustc-hash = "1.1.0"
 clap = { version = "4.4.2", features = ["derive"] }
 
