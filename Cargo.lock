@@ -680,7 +680,7 @@ checksum = "c08c74e62047bb2de4ff487b251e4a92e24f48745648451635cec7d591162d9f"
 [[package]]
 name = "rust-anpass"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/rust-anpass#7cc5106aeaa87394b49881a002aa486699d2b7b8"
+source = "git+https://github.com/ntBre/rust-anpass#665ce432f14cee809d55a244e6f916dbb3352121"
 dependencies = [
  "nalgebra",
  "regex",
@@ -854,7 +854,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#abcf1bdaf954c8ce293b02c88b5aa7e8df035929"
+source = "git+https://github.com/ntBre/taylor#1aa94bd50b8dd239360821f9314675ac887a96b6"
 dependencies = [
  "nalgebra",
  "rust-anpass",
