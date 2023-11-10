@@ -54,6 +54,7 @@ struct RawConfig {
     queue: Queue,
     findiff: Option<bool>,
     check_int: usize,
+    weights: Option<Vec<f64>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -159,6 +160,11 @@ pub struct Config {
 
     /// interval for dumping checkpoint files. 0 means no checkpoints
     pub check_int: usize,
+
+    /// atomic masses to use for the QFF. really only matters for normal
+    /// coordinates. must have the same length as the number of atoms, but this
+    /// is not currently validated
+    pub weights: Option<Vec<f64>>,
 }
 
 impl From<RawConfig> for Config {
@@ -182,6 +188,7 @@ impl From<RawConfig> for Config {
             findiff: rc.findiff.unwrap_or(false),
             check_int: rc.check_int,
             queue_template: rc.queue_template.map(TemplateSrc::into),
+            weights: rc.weights,
         }
     }
 }
@@ -225,6 +232,7 @@ impl Config {
             chunk_size: 1,
             findiff: true,
             check_int: 0,
+            weights: None,
         }
     }
 
@@ -301,6 +309,7 @@ impl std::fmt::Display for Config {
             chunk_size,
             findiff,
             check_int,
+            weights,
         } = self;
         write!(
             f,
@@ -325,6 +334,14 @@ findiff = {findiff}
 check_int = {check_int}
 ",
             queue_template.as_ref().unwrap_or(&String::new()),
-        )
+        )?;
+        if let Some(ws) = weights {
+            write!(f, "weights = [ ")?;
+            for w in ws {
+                write!(f, "{w}, ")?;
+            }
+            writeln!(f, "]")?;
+        }
+        Ok(())
     }
 }

@@ -36,6 +36,7 @@ HCC =               147.81488230
         hybrid_template: String::from(
             "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
+        weights: None,
     };
     assert_eq!(got, want);
 }
@@ -76,6 +77,7 @@ HCC =               147.81488230
         hybrid_template: String::from(
             "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
+        weights: None,
     };
     assert_eq!(got, want);
 }

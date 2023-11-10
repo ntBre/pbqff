@@ -163,6 +163,7 @@ pub struct FirstPart {
     pub geometry: Geom,
     pub charge: isize,
     pub step_size: f64,
+    pub weights: Option<Vec<f64>>,
 }
 
 impl From<Config> for FirstPart {
@@ -173,6 +174,7 @@ impl From<Config> for FirstPart {
             geometry: config.geometry,
             charge: config.charge,
             step_size: config.step_size,
+            weights: config.weights,
         }
     }
 }
@@ -230,6 +232,11 @@ impl Cart {
         };
         let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
         let mut mol = Molecule::new(geom.to_vec());
+        if let Some(ws) = &config.weights {
+            for (i, w) in ws.iter().enumerate() {
+                mol.atoms[i].weight = Some(*w);
+            }
+        }
         mol.normalize();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{mol}").unwrap();
