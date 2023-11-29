@@ -24,28 +24,30 @@ struct Args {
     #[arg(value_parser, default_value_t = String::from("pbqff.toml"))]
     infile: String,
 
-    /// resume from the checkpoint files in the current directory (chk.json and
-    /// res.chk)
+    /// Resume from the checkpoint files in the current directory (chk.json and
+    /// res.chk). Defaults to false.
     #[arg(short, long, default_value_t = false)]
     checkpoint: bool,
 
-    /// whether or not to overwrite existing output
+    /// Overwrite existing output from a previous run. Defaults to false.
     #[arg(short, long, default_value_t = false)]
     overwrite: bool,
 
-    /// print the git commit hash and exit
+    /// Print the git commit hash and exit. Defaults to false.
     #[arg(short, long, default_value_t = false)]
     version: bool,
 
-    /// the maximum number of threads to use by rayon
+    /// Set the maximum number of threads to use. Defaults to 0, which means to
+    /// use as many threads as there are CPUS.
     #[arg(short, long, default_value_t = 0)]
     threads: usize,
 
-    /// serialize the input file to JSON and exit. For use by qffbuddy
+    /// Serialize the input file to JSON and exit. For use by qffbuddy.
     #[arg(short, default_value_t = false, hide = true)]
     json: bool,
 
-    /// don't delete any files while running the points
+    /// Don't delete any files when running the single-point energies. Defaults
+    /// to false.
     #[arg(short, long, default_value_t = false)]
     no_del: bool,
 }
