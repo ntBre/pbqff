@@ -1,6 +1,5 @@
 /target
 /anpass.in
-/scripts/
 /align.dat
 /align.out
 /freqs_align/
@@ -10,6 +9,5 @@
 /*callgrind.out
 /std_hash.out
 /qffbuddy/pbqff.toml
-/scripts
 /docs
 /.woods.mk
