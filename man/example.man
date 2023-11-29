@@ -1,0 +1,7 @@
+
+.SH EXAMPLE
+The following is an example input file for c-C3H2 in SICs in Mopac on the Slurm
+queuing system:
+.nf
+.rs
+

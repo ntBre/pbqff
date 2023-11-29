@@ -39,21 +39,85 @@ impl From<TemplateSrc> for String {
 #[derive(Deserialize, Debug, PartialEq)]
 #[serde(deny_unknown_fields)]
 struct RawConfig {
+    /// The initial geometry to use for the computation. Both XYZ and Z-matrix
+    /// geometries are accepted.
     geometry: String,
+
+    /// Whether or not to perform a geometry optimization on the input
     optimize: bool,
+
+    /// The molecular charge. This value can be spliced into the template using
+    /// the {{.charge}} directive.
     charge: isize,
+
+    /// The size of the displacement to take in the QFF coordinates.
     step_size: f64,
+
+    /// The interval in seconds to wait between loops checking if any jobs have
+    /// finished.
     sleep_int: usize,
+
+    /// The maximum number of jobs to submit at once, as determined by the
+    /// number of individual input files. This distinction is important when
+    /// chunk_size is greater than 1 because the maximum number of jobs
+    /// submitted to the queue will be job_limit / chunk_size .
     job_limit: usize,
+
+    /// The number of individual calculations to bundle into a single queue
+    /// submission.
     chunk_size: usize,
+
+    /// The type of coordinate to use in the QFF. Currently-supported values are
+    /// "sic", "cart", and "normal". Note that SIC QFFs require an additional
+    /// input file called intder.in to define the internal coordinates.
     coord_type: CoordType,
+
+    /// The template input file for the quantum chemistry program. Supported
+    /// formatting directives depend on the program in question. Molpro supports
+    /// {{.geom}} for the geometry and {{.charge}} for the molecular charge,
+    /// while Mopac expects a static template.
     template: TemplateSrc,
+
+    /// An optional template file for the cubic and quartic portion of the QFF.
+    /// If this is provided, the regular template is used only for the harmonic
+    /// portion of the QFF, and this is used for the rest of the points.
     hybrid_template: Option<TemplateSrc>,
+
+    /// The template input file for the queuing system. Supported formatting
+    /// directives include {{.basename}} for the base name of the submit script,
+    /// which is useful for naming the job in the queue, and {{.filename}} for
+    /// the name of the quantum chemistry program input file. Not all program
+    /// and queue combinations expand these, however.
     queue_template: Option<TemplateSrc>,
+
+    /// The quantum chemistry program to use in running the QFF.
+    /// Currently-supported values are "cfour", "dftb+", "molpro", "mopac".
     program: Program,
+
+    /// The queuing system to use in running the QFF. Currently-supported values
+    /// are "local", which uses bash to run computations directly, "pbs", and
+    /// "slurm".
     queue: Queue,
+
+    /// Whether to use finite differences or least-squares fitting for the
+    /// potential energy surface. Currently normal coordinates are the only
+    /// coord_type to use this option, so it has a default value of false,
+    /// meaning use the fitted version of normal coordinates. Setting this
+    /// option to true forces the use of finite differences for the normal
+    /// coordinate QFF.
     findiff: Option<bool>,
+
+    /// The interval at which to write checkpoint files. Every coordinate type
+    /// will write an initial checkpoint (res.chk), but this interval determines
+    /// whether or not checkpoints are written while the single-point energies
+    /// are being run. A value of 0 will disable checkpoints entirely. This
+    /// interval refers to the number of polling iterations that have occurred,
+    /// not the number of jobs that have completed. The iteration count is shown
+    /// in the log file when the number of jobs remaining is printed.
     check_int: usize,
+
+    /// An optional vector of atomic masses to use for normal coordinate
+    /// generation and Spectro.
     weights: Option<Vec<f64>>,
 }
 
