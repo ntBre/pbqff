@@ -65,6 +65,8 @@ pub enum Program {
     Mopac,
     #[serde(alias = "molpro")]
     Molpro,
+    #[serde(alias = "cfour", alias = "CFOUR")]
+    Cfour,
 }
 
 impl Display for Program {
@@ -73,6 +75,7 @@ impl Display for Program {
             Program::Mopac => write!(f, "mopac"),
             Program::Molpro => write!(f, "molpro"),
             Program::DFTBPlus => write!(f, "dftb+"),
+            Program::Cfour => write!(f, "cfour"),
         }
     }
 }
