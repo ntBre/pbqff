@@ -770,9 +770,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.108"
+version = "1.0.109"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d1c7e3eac408d115102c4c24ad393e0821bb3a5df4d506a80f85f7a742a526b"
+checksum = "cb0652c533506ad7a2e353cce269330d6afd8bdfb6d75e0ace5b35aacbd7b9e9"
 dependencies = [
  "itoa",
  "ryu",
@@ -804,7 +804,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#3da06b3e720d075e269c35445ab039a3200f89ed"
+source = "git+https://github.com/ntBre/spectro#7f9a8729c071cda40c9d9a0a5c86a979d11ea9c6"
 dependencies = [
  "nalgebra",
  "serde",
