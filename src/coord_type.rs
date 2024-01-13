@@ -8,22 +8,6 @@ use spectro::{Output, Spectro};
 
 use crate::config::Config;
 
-macro_rules! time {
-    ($w:expr, $label:expr, $($s:tt)*) => {
-        let now = ::std::time::Instant::now();
-	$(
-	    $s
-	)*
-        writeln!(
-            $w,
-            "finished {} after {:.1} sec",
-            $label,
-            now.elapsed().as_millis() as f64 / 1000.0
-        )
-        .unwrap();
-    };
-}
-
 pub use cart::{Cart, CartGeom, Derivative, FirstPart, Nderiv};
 pub use sic::Sic;
 pub(crate) use sic::{make_rel, write_file, FreqError};

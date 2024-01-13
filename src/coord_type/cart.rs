@@ -100,22 +100,16 @@ where
             .unwrap();
 
         let freq_dir = &dir.as_ref().join("freqs");
-        time!(w, "freqs",
-          let (fc2, f3, f4) = self.make_fcs(
-          targets,
-          &energies,
-          &mut fcs,
-          n,
-          Derivative::Quartic(
-          nfc2,
-          nfc3,
-          0),
-          Some(freq_dir),
-          );
-
-          let r = freqs(Some(freq_dir), &mol, fc2, f3, f4);
+        let (fc2, f3, f4) = self.make_fcs(
+            targets,
+            &energies,
+            &mut fcs,
+            n,
+            Derivative::Quartic(nfc2, nfc3, 0),
+            Some(freq_dir),
         );
-        r
+
+        freqs(Some(freq_dir), &mol, fc2, f3, f4)
     }
 
     type Resume = Resume;
@@ -195,31 +189,29 @@ impl Cart {
         Q: Queue<P> + Sync,
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
-        time!(w, "opt",
-            let template = Template::from(&config.template);
-            let (geom, ref_energy) = if config.optimize {
-                let res = optimize(
-            &dir,
-                    queue,
-                    config.geometry.clone(),
-                    template.clone(),
-                    config.charge,
-                )
-                .expect("optimization failed");
-                let Some(cart) = res.cart_geom else {
-                    panic!("failed to extract cart geom from {res:?}");
-                };
-                (Geom::Xyz(cart), res.energy)
-            } else {
-                let ref_energy = ref_energy(
-                    queue,
-                    config.geometry.clone(),
-                    template.clone(),
-                    config.charge,
-                );
-                (config.geometry.clone(), ref_energy)
+        let template = Template::from(&config.template);
+        let (geom, ref_energy) = if config.optimize {
+            let res = optimize(
+                &dir,
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            )
+            .expect("optimization failed");
+            let Some(cart) = res.cart_geom else {
+                panic!("failed to extract cart geom from {res:?}");
             };
-        );
+            (Geom::Xyz(cart), res.energy)
+        } else {
+            let ref_energy = ref_energy(
+                queue,
+                config.geometry.clone(),
+                template.clone(),
+                config.charge,
+            );
+            (config.geometry.clone(), ref_energy)
+        };
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
         // 3 * #atoms
         let n = 3 * geom.len();
@@ -242,16 +234,14 @@ impl Cart {
         writeln!(w, "normalized geometry:\n{mol}").unwrap();
         writeln!(w, "point group:{pg}").unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
-        time! (w, "building points",
-               let geoms = self.build_points(
-               Geom::Xyz(mol.atoms.clone()),
-               config.step_size,
-           ref_energy,
-               deriv,
-               &mut fcs,
-               &mut target_map,
-           n,
-               );
+        let geoms = self.build_points(
+            Geom::Xyz(mol.atoms.clone()),
+            config.step_size,
+            ref_energy,
+            deriv,
+            &mut fcs,
+            &mut target_map,
+            n,
         );
         let targets = target_map.values();
         let jobs: Vec<_> = geoms
@@ -273,12 +263,14 @@ impl Cart {
             jobs.len()
         )
         .unwrap();
-        time!(w, "draining points",
-              // drain into energies
-              let mut energies = vec![0.0; jobs.len()];
-              let time = queue
-              .drain(dir.as_ref().to_str().unwrap(), jobs, &mut energies, psqs::queue::Check::None)?;
-        );
+        // drain into energies
+        let mut energies = vec![0.0; jobs.len()];
+        let time = queue.drain(
+            dir.as_ref().to_str().unwrap(),
+            jobs,
+            &mut energies,
+            psqs::queue::Check::None,
+        )?;
 
         eprintln!("total job time: {time:.1} sec");
 

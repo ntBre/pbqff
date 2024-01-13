@@ -285,14 +285,16 @@ impl Normal {
         };
         resume.dump(dir.as_ref().join(CHK_NAME));
 
-        time!(w, "draining points",
-              // drain into energies
-              let mut energies = vec![0.0; jobs.len()];
-              let time = queue
-              .drain(pts_dir.to_str().unwrap(), jobs, &mut energies,
-                 make_check(config.check_int, &dir))
-              .expect("single-point calculations failed");
-        );
+        // drain into energies
+        let mut energies = vec![0.0; jobs.len()];
+        let time = queue
+            .drain(
+                pts_dir.to_str().unwrap(),
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
+            .expect("single-point calculations failed");
         eprintln!("total job time: {time:.1} sec");
         let DerivType::Findiff {
             targets, mut fcs, ..
@@ -439,14 +441,16 @@ where
         self = normal;
         let pts_dir = dir.as_ref().join("pts");
         let chk = dir.as_ref().join("chk.json");
-        time!(w, "draining points",
-              // drain into energies
-              let mut energies = vec![0.0; njobs];
-              let time = queue
-              .resume(pts_dir.to_str().unwrap(), chk.to_str().unwrap(), &mut energies,
-              make_check(config.check_int, &dir))
-              .expect("single-point calculations failed");
-        );
+        // drain into energies
+        let mut energies = vec![0.0; njobs];
+        let time = queue
+            .resume(
+                pts_dir.to_str().unwrap(),
+                chk.to_str().unwrap(),
+                &mut energies,
+                make_check(config.check_int, &dir),
+            )
+            .expect("single-point calculations failed");
         eprintln!("total job time: {time:.1} sec");
         let (f3qcm, f4qcm) = match deriv {
             DerivType::Findiff {
