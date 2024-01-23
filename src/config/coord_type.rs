@@ -7,7 +7,7 @@ pub enum CoordType {
     Cart,
     #[serde(alias = "sic")]
     Sic,
-    #[serde(alias = "normal")]
+    #[serde(alias = "normal", alias = "norm")]
     Normal,
 }
 
