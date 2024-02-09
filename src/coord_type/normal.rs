@@ -469,6 +469,8 @@ where
             )
             .expect("single-point calculations failed");
         eprintln!("total job time: {time:.1} sec");
+        let freqs_dir = dir.as_ref().join("freqs");
+        let _ = std::fs::create_dir(&freqs_dir);
         let (f3qcm, f4qcm) = match deriv {
             DerivType::Findiff {
                 targets,
@@ -483,8 +485,6 @@ where
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
             }
             DerivType::Fitted { taylor, step_size } => {
-                let freqs_dir = dir.as_ref().join("freqs");
-                let _ = std::fs::create_dir(&freqs_dir);
                 let (fcs, _) = self
                     .anpass(
                         Some(freqs_dir),
