@@ -24,7 +24,6 @@ use symm::{Irrep, Molecule, Pg, PointGroup};
 use taylor::Taylor;
 
 use crate::{
-    cleanup,
     config::Config,
     coord_type::{write_file, CHK_NAME},
     make_check,
@@ -322,6 +321,24 @@ impl Normal {
             }
         }
         Geom::Xyz(zip_atoms(names, coords))
+    }
+}
+
+/// Like [crate::cleanup] but instead of removing the directories, rename them
+/// to dir/hff/{opt,pts,freqs}
+fn cleanup(dir: impl AsRef<Path>) {
+    let dir = dir.as_ref();
+    let hff = dir.join("hff");
+
+    std::fs::create_dir_all(&hff)
+        .unwrap_or_else(|e| eprintln!("failed to create {hff:?} with {e}"));
+
+    for d in ["opt", "pts", "freqs"] {
+        let from = dir.join(d);
+        let to = hff.join(d);
+        std::fs::rename(&from, &to).unwrap_or_else(|e| {
+            eprintln!("failed to move {from:?} to {to:?} with {e}")
+        });
     }
 }
 
