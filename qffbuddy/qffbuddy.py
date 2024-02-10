@@ -128,6 +128,14 @@ ParserOptions {
 }
 """
 
+CFOUR_TEMPLATE = """comment line
+{{.geom}}
+
+*CFOUR(CALC=CCSD,BASIS=PVTZ,MEMORY_SIZE=8,MEM_UNIT=GB,REF=RHF,MULT=1
+{{.charge}}
+{{.keywords}})
+"""
+
 ###################
 # Queue templates #
 ###################
@@ -439,7 +447,12 @@ computations""",
         )
         self.program = tk.StringVar(value="molpro")
         f = make_radio_buttons(
-            [("Molpro", "molpro"), ("Mopac", "mopac"), ("DFTB+", "dftb+")],
+            [
+                ("Molpro", "molpro"),
+                ("Mopac", "mopac"),
+                ("DFTB+", "dftb+"),
+                ("CFOUR", "cfour"),
+            ],
             self.program,
             self.main_panel,
             command=self.default_template,
@@ -535,6 +548,8 @@ menu for some examples.""",
             self.template.insert("1.0", MOPAC_TEMPLATE)
         elif self.program.get() == "dftb+":
             self.template.insert("1.0", DFTB_TEMPLATE)
+        elif self.program.get() == "cfour":
+            self.template.insert("1.0", CFOUR_TEMPLATE)
         else:
             self.template.insert("1.0", "default template")
 
