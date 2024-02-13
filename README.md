@@ -142,6 +142,21 @@ And for the original VPT2 code in `SPECTRO`, you can cite
 }
 ```
 
+# Disclaimer
+
+I still need to pick a license for this project, but for now here's an important
+disclaimer from the MIT License:
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+I am happy to look at issues and want to fix them, but my responses may be
+delayed.
+
 # TODOs
 - [ ] factor out commonality in first part of `CoordType::run`
 - [ ] use or delete `Fitted` trait
