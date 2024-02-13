@@ -18,11 +18,16 @@ As you can see in the Makefile, this simply runs
 
 ```bash
 cargo build --features vers --bin rust-pbqff --release
-sudo ln -s target/release/rust-pbqff /usr/bin/pbqff
+sudo ln -sf $(realpath target/release/rust-pbqff) /usr/bin/pbqff
+sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
+sudo cp $< $(MANDIR)/pbqff.1
 ```
 
 to build the binary in release mode, and link it into your `$PATH` under the
-name `pbqff`.
+name `pbqff`. It also links `qffbuddy` into `/usr/bin` and builds the `man` page
+and installs that in `MANDIR`, which defaults to `/usr/local/share/man/man1`.
+
+You can also build a PDF copy of the manual with `make man/rpbqff.pdf`.
 
 ## Dependencies
 
