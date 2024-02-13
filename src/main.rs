@@ -60,6 +60,20 @@ fn main() -> Result<(), std::io::Error> {
         println!("version: {}", version());
         return Ok(());
     }
+    if args.json {
+        let config = Config::load(&args.infile);
+        match serde_json::to_string(&config) {
+            Ok(s) => println!("{}", s),
+            Err(e) => {
+                eprintln!(
+                    "failed to deserialize {infile} with {e}",
+                    infile = args.infile
+                );
+                std::process::exit(1);
+            }
+        };
+        return Ok(());
+    }
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
         eprintln!("existing pbqff output. overwrite with -o/--overwrite");
@@ -75,10 +89,6 @@ fn main() -> Result<(), std::io::Error> {
         libc::dup2(log_fd, 2);
     }
     let config = Config::load(&args.infile);
-    if args.json {
-        println!("{}", serde_json::to_string(&config).unwrap());
-        std::process::exit(0);
-    }
     println!("PID: {}", std::process::id());
     println!("version: {}", version());
     psqs::max_threads(args.threads);
