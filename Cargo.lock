@@ -330,7 +330,7 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#1f36696a4d2fd8500849bdee625493fd62a29f44"
+source = "git+https://github.com/ntBre/intder#47e907aa5cf60da3bae213fdb1a324c0da9fb616"
 dependencies = [
  "approx",
  "nalgebra",
@@ -781,7 +781,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#4d65163c19acc8a707ee18a4096aeea7c4f4d9e2"
+source = "git+https://github.com/ntBre/spectro#97f90403016ea38737968ed585a65a59707aaa16"
 dependencies = [
  "nalgebra",
  "serde",
@@ -831,7 +831,7 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#67ef3be6d9f06678c1957aeb1c2fb5ecae8bdb86"
+source = "git+https://github.com/ntBre/taylor#0fdb6c838cb171a718fc142e6e92d951862acca6"
 dependencies = [
  "nalgebra",
  "rust-anpass",
