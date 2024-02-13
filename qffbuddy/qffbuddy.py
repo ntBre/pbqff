@@ -746,7 +746,9 @@ class MenuBar(tk.Menu):
     def parse_infile(self, infile):
         s = subprocess.run([args.pbqff, "-j", infile], capture_output=True)
         if s.returncode != 0:
-            sys.exit(f"pbqff failed to parse {infile}: {s.stderr}")
+            sys.exit(
+                f"pbqff failed to parse {infile}: {s.stderr.decode('utf-8')}"
+            )
         d = json.loads(s.stdout)
 
         geom = d["geometry"]
