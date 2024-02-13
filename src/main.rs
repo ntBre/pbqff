@@ -63,7 +63,7 @@ fn main() -> Result<(), std::io::Error> {
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
         eprintln!("existing pbqff output. overwrite with -o/--overwrite");
-        return Ok(());
+        std::process::exit(1);
     }
     let outfile = File::create(path).expect("failed to create outfile");
     let logfile = File::create("pbqff.log").expect("failed to create log file");
