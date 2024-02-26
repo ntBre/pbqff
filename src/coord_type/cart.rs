@@ -1,6 +1,6 @@
 //! Cartesian coordinate QFFs.
 
-use std::{error::Error, io, marker::Sync, path::Path};
+use std::{error::Error, io, path::Path};
 
 use psqs::{
     geom::Geom,

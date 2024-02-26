@@ -6,7 +6,7 @@
 //! displacements, which can be fed back in to spectro at the end as f3qcm and
 //! f4qcm
 
-use std::{error::Error, io::Write, marker::Sync, option::Option, path::Path};
+use std::{error::Error, io::Write, path::Path};
 
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};

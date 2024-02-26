@@ -1,6 +1,6 @@
 //! Symmetry-internal coordinate (SIC) QFFs.
 
-use std::{fmt::Display, io::Write, marker::Sync, option::Option, path::Path};
+use std::{fmt::Display, io::Write, path::Path};
 
 pub use intder::IntderError;
 use intder::{Intder, Siic};
