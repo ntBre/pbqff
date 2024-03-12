@@ -119,6 +119,10 @@ struct RawConfig {
     /// An optional vector of atomic masses to use for normal coordinate
     /// generation and Spectro.
     weights: Option<Vec<f64>>,
+
+    /// An optional vector of 0-based atomic indices to hold constant in the QFF
+    /// displacements. Experimental
+    dummy_atoms: Option<Vec<usize>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -232,6 +236,8 @@ pub struct Config {
     /// coordinates. must have the same length as the number of atoms, but this
     /// is not currently validated
     pub weights: Option<Vec<f64>>,
+
+    pub dummy_atoms: Option<Vec<usize>>,
 }
 
 impl From<RawConfig> for Config {
@@ -256,6 +262,7 @@ impl From<RawConfig> for Config {
             check_int: rc.check_int,
             queue_template: rc.queue_template.map(TemplateSrc::into),
             weights: rc.weights,
+            dummy_atoms: rc.dummy_atoms,
         }
     }
 }
@@ -300,6 +307,7 @@ impl Config {
             findiff: true,
             check_int: 0,
             weights: None,
+            dummy_atoms: None,
         }
     }
 
@@ -377,6 +385,7 @@ impl std::fmt::Display for Config {
             findiff,
             check_int,
             weights,
+            dummy_atoms,
         } = self;
         write!(
             f,
@@ -399,6 +408,7 @@ job_limit = {job_limit}
 chunk_size = {chunk_size}
 findiff = {findiff}
 check_int = {check_int}
+dummy_atoms = {dummy_atoms:?}
 ",
             queue_template.as_ref().unwrap_or(&String::new()),
         )?;

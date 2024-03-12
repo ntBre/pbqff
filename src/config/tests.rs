@@ -37,6 +37,7 @@ HCC =               147.81488230
             "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
         weights: None,
+        dummy_atoms: None,
     };
     assert_eq!(got, want);
 }
@@ -78,6 +79,7 @@ HCC =               147.81488230
             "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
         ),
         weights: None,
+        dummy_atoms: None,
     };
     assert_eq!(got, want);
 }
