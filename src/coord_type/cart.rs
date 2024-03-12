@@ -85,7 +85,7 @@ where
             nfc2,
             nfc3,
             mut fcs,
-            mol,
+            mut mol,
             energies,
             targets,
             ..
@@ -108,6 +108,13 @@ where
             Derivative::Quartic(nfc2, nfc3, 0),
             Some(freq_dir),
         );
+
+        // simply truncate the molecule before handing it off to spectro, again
+        // assuming the dummy atoms are at the end. the force constants should
+        // already be handled
+        if let Some(d) = &config.dummy_atoms {
+            mol.atoms.truncate(mol.atoms.len() - d.len());
+        }
 
         freqs(Some(freq_dir), &mol, fc2, f3, f4)
     }
@@ -158,6 +165,7 @@ pub struct FirstPart {
     pub charge: isize,
     pub step_size: f64,
     pub weights: Option<Vec<f64>>,
+    pub dummy_atoms: Option<Vec<usize>>,
 }
 
 impl From<Config> for FirstPart {
@@ -169,6 +177,7 @@ impl From<Config> for FirstPart {
             charge: config.charge,
             step_size: config.step_size,
             weights: config.weights,
+            dummy_atoms: config.dummy_atoms,
         }
     }
 }
@@ -213,8 +222,13 @@ impl Cart {
             (config.geometry.clone(), ref_energy)
         };
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
-        // 3 * #atoms
-        let n = 3 * geom.len();
+        let ndummies = if let Some(d) = &config.dummy_atoms {
+            d.len()
+        } else {
+            0
+        };
+        // 3 * (#atoms - #dummy_atoms)
+        let n = 3 * (geom.len() - ndummies);
         let nfc2 = n * n;
         let nfc3 = n * (n + 1) * (n + 2) / 6;
         let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
@@ -229,11 +243,17 @@ impl Cart {
                 mol.atoms[i].weight = Some(*w);
             }
         }
+        // TODO can we normalize here with dummy atoms? I think you do want to
+        // move the dummy atoms with the rest of the molecule, but it might make
+        // things tricky in some respects
         mol.normalize();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{mol}").unwrap();
         writeln!(w, "point group:{pg}").unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
+        // this part should *just work* for dummy atoms as long as they are at
+        // the end of the geometry because it iterates up to n, where we already
+        // subtracted off the dummy atom indices
         let geoms = self.build_points(
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
