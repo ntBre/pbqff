@@ -120,9 +120,9 @@ struct RawConfig {
     /// generation and Spectro.
     weights: Option<Vec<f64>>,
 
-    /// An optional vector of 0-based atomic indices to hold constant in the QFF
-    /// displacements. Experimental
-    dummy_atoms: Option<Vec<usize>>,
+    /// An optional number of atoms to hold constant in the QFF displacements.
+    /// These must come at the end of the geometry. Experimental
+    dummy_atoms: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
@@ -237,7 +237,7 @@ pub struct Config {
     /// is not currently validated
     pub weights: Option<Vec<f64>>,
 
-    pub dummy_atoms: Option<Vec<usize>>,
+    pub dummy_atoms: Option<usize>,
 }
 
 impl From<RawConfig> for Config {

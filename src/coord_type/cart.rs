@@ -113,7 +113,7 @@ where
         // assuming the dummy atoms are at the end. the force constants should
         // already be handled
         if let Some(d) = &config.dummy_atoms {
-            mol.atoms.truncate(mol.atoms.len() - d.len());
+            mol.atoms.truncate(mol.atoms.len() - d);
         }
 
         freqs(Some(freq_dir), &mol, fc2, f3, f4)
@@ -165,7 +165,7 @@ pub struct FirstPart {
     pub charge: isize,
     pub step_size: f64,
     pub weights: Option<Vec<f64>>,
-    pub dummy_atoms: Option<Vec<usize>>,
+    pub dummy_atoms: Option<usize>,
 }
 
 impl From<Config> for FirstPart {
@@ -222,11 +222,7 @@ impl Cart {
             (config.geometry.clone(), ref_energy)
         };
         let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
-        let ndummies = if let Some(d) = &config.dummy_atoms {
-            d.len()
-        } else {
-            0
-        };
+        let ndummies = config.dummy_atoms.unwrap_or(0);
         // 3 * (#atoms - #dummy_atoms)
         let n = 3 * (geom.len() - ndummies);
         let nfc2 = n * n;
