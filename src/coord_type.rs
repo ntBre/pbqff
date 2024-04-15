@@ -6,7 +6,7 @@ use psqs::{program::Program, queue::Queue};
 use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 
-use crate::config::Config;
+use crate::{config::Config, die};
 
 pub use cart::{Cart, CartGeom, Derivative, FirstPart, Nderiv};
 pub use sic::Sic;
@@ -64,7 +64,9 @@ pub trait CoordType<
 /// Read and write checkpoints for [CoordType::resume].
 pub trait Load: Sized + Serialize + for<'a> Deserialize<'a> {
     fn load(p: impl AsRef<Path>) -> Self {
-        let f = std::fs::File::open(p).unwrap();
+        let Ok(f) = std::fs::File::open(&p) else {
+            die!("failed to load checkpoint from `{}`", p.as_ref().display());
+        };
         serde_json::from_reader(f).unwrap()
     }
 
