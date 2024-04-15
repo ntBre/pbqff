@@ -275,14 +275,11 @@ impl Cart {
                 )
             })
             .collect();
-        writeln!(
-            w,
-            "{n} Cartesian coordinates requires {} points",
-            jobs.len()
-        )
-        .unwrap();
+        let njobs = jobs.len();
+        writeln!(w, "{n} Cartesian coordinates requires {njobs} points")
+            .unwrap();
         // drain into energies
-        let mut energies = vec![0.0; jobs.len()];
+        let mut energies = vec![0.0; njobs];
         let time = queue.drain(
             dir.as_ref().to_str().unwrap(),
             jobs,
