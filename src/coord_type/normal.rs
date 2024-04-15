@@ -822,7 +822,7 @@ impl Normal {
         config: &FirstPart,
         queue: &Q,
         w: &mut W,
-        dir: &str,
+        pts_dir: &str,
     ) -> Result<CartPart, Box<dyn Error>>
     where
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
@@ -840,14 +840,21 @@ impl Normal {
             pg,
             ..
         } = if config.norm_resume_hff {
-            let dir_path = Path::new(dir);
+            let dir_path = Path::new(pts_dir);
             let resume =
                 <Cart as crate::coord_type::CoordType<W, Q, P>>::Resume::load(
                     dir_path.join(CHK_NAME),
                 );
-            Cart.resume_first_part(resume, w, config, queue, Nderiv::Two, dir)?
+            Cart.resume_first_part(
+                resume,
+                w,
+                config,
+                queue,
+                Nderiv::Two,
+                pts_dir,
+            )?
         } else {
-            Cart.first_part(w, config, queue, Nderiv::Two, dir)?
+            Cart.first_part(w, config, queue, Nderiv::Two, pts_dir)?
         };
         let (fc2, _, _) = self.make_fcs(
             target_map,
@@ -855,7 +862,7 @@ impl Normal {
             &mut fcs,
             n,
             Derivative::Harmonic(nfc2),
-            Some(dir),
+            Some(pts_dir),
         );
         let (spectro, output) =
             self.harm_freqs(Some("freqs"), &mol, fc2.clone());
