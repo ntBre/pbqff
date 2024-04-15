@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 use symm::{Molecule, PointGroup};
 
-use crate::{config::Config, optimize, ref_energy};
+use crate::{config::Config, make_check, optimize, ref_energy};
 
 use super::{
     findiff::bighash::BigHash,
@@ -166,6 +166,7 @@ pub struct FirstPart {
     pub step_size: f64,
     pub weights: Option<Vec<f64>>,
     pub dummy_atoms: Option<usize>,
+    pub check_int: usize,
 }
 
 impl From<Config> for FirstPart {
@@ -178,6 +179,7 @@ impl From<Config> for FirstPart {
             step_size: config.step_size,
             weights: config.weights,
             dummy_atoms: config.dummy_atoms,
+            check_int: config.check_int,
         }
     }
 }
@@ -285,7 +287,7 @@ impl Cart {
             dir.as_ref().to_str().unwrap(),
             jobs,
             &mut energies,
-            psqs::queue::Check::None,
+            make_check(config.check_int, &dir),
         )?;
 
         eprintln!("total job time: {time:.1} sec");
