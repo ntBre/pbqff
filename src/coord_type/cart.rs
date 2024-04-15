@@ -241,17 +241,11 @@ impl Cart {
                 mol.atoms[i].weight = Some(*w);
             }
         }
-        // TODO can we normalize here with dummy atoms? I think you do want to
-        // move the dummy atoms with the rest of the molecule, but it might make
-        // things tricky in some respects
         mol.normalize();
         let pg = mol.point_group();
         writeln!(w, "normalized geometry:\n{mol}").unwrap();
         writeln!(w, "point group:{pg}").unwrap();
         let mut target_map = BigHash::new(mol.clone(), pg);
-        // this part should *just work* for dummy atoms as long as they are at
-        // the end of the geometry because it iterates up to n, where we already
-        // subtracted off the dummy atom indices
         let geoms = self.build_points(
             Geom::Xyz(mol.atoms.clone()),
             config.step_size,
