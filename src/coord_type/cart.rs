@@ -11,7 +11,9 @@ use serde::{Deserialize, Serialize};
 use spectro::{Output, Spectro};
 use symm::{Molecule, PointGroup};
 
-use crate::{config::Config, make_check, optimize, ref_energy};
+use crate::{
+    config::Config, coord_type::CHK_NAME, make_check, optimize, ref_energy,
+};
 
 use super::{
     findiff::bighash::BigHash,
@@ -134,7 +136,17 @@ where
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Resume;
+pub struct Resume {
+    njobs: usize,
+    n: usize,
+    nfc2: usize,
+    nfc3: usize,
+    fcs: Vec<f64>,
+    mol: Molecule,
+    targets: Vec<Target>,
+    ref_energy: f64,
+    pg: PointGroup,
+}
 
 impl Load for Resume {}
 
@@ -272,6 +284,20 @@ impl Cart {
         let njobs = jobs.len();
         writeln!(w, "{n} Cartesian coordinates requires {njobs} points")
             .unwrap();
+
+        let resume = Resume {
+            njobs,
+            n,
+            nfc2,
+            nfc3,
+            fcs,
+            mol,
+            targets,
+            ref_energy,
+            pg,
+        };
+        resume.dump(dir.as_ref().join(CHK_NAME));
+
         // drain into energies
         let mut energies = vec![0.0; njobs];
         let time = queue.drain(
@@ -284,15 +310,56 @@ impl Cart {
         eprintln!("total job time: {time:.1} sec");
 
         Ok(FirstOutput {
-            n,
-            nfc2,
-            nfc3,
-            fcs,
-            mol,
+            n: resume.n,
+            nfc2: resume.nfc2,
+            nfc3: resume.nfc3,
+            fcs: resume.fcs,
+            mol: resume.mol,
             energies,
-            targets,
-            ref_energy,
-            pg,
+            targets: resume.targets,
+            ref_energy: resume.ref_energy,
+            pg: resume.pg,
+        })
+    }
+
+    pub fn resume_first_part<W, Q, P>(
+        &self,
+        resume: Resume,
+        _w: &mut W,
+        config: &FirstPart,
+        queue: &Q,
+        _nderiv: Nderiv,
+        dir: impl AsRef<Path>,
+    ) -> Result<FirstOutput, Box<dyn Error>>
+    where
+        W: io::Write,
+        Q: Queue<P> + Sync,
+        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    {
+        let pts_dir = dir.as_ref().join("pts");
+        let chk = dir.as_ref().join("chk.json");
+
+        // drain into energies
+        let mut energies = vec![0.0; resume.njobs];
+        let time = queue.resume(
+            pts_dir.to_str().unwrap(),
+            chk.to_str().unwrap(),
+            &mut energies,
+            make_check(config.check_int, &dir),
+        )?;
+
+        eprintln!("total job time: {time:.1} sec");
+
+        Ok(FirstOutput {
+            n: resume.n,
+            nfc2: resume.nfc2,
+            nfc3: resume.nfc3,
+            fcs: resume.fcs,
+            mol: resume.mol,
+            energies,
+            targets: resume.targets,
+            ref_energy: resume.ref_energy,
+            pg: resume.pg,
         })
     }
 }
