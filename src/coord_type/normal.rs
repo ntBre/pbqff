@@ -37,7 +37,7 @@ use super::{
         proto, zip_atoms, FiniteDifference, Idx, Proto,
     },
     fitted::{AtomicNumbers, Fitted},
-    make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv,
+    make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv, PTS_DIR,
     SPECTRO_HEADER,
 };
 
@@ -367,7 +367,7 @@ where
                 &FirstPart::from(config.clone()),
                 queue,
                 w,
-                pts_dir.to_str().unwrap(),
+                dir.as_ref().to_str().unwrap(),
             )
             .unwrap();
         cleanup(&dir);
@@ -822,13 +822,14 @@ impl Normal {
         config: &FirstPart,
         queue: &Q,
         w: &mut W,
-        pts_dir: &str,
+        root_dir: impl AsRef<Path>,
     ) -> Result<CartPart, Box<dyn Error>>
     where
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Q: Queue<P> + Sync,
         W: Write,
     {
+        let pts_dir = root_dir.as_ref().join(PTS_DIR);
         let FirstOutput {
             n,
             nfc2,
@@ -840,10 +841,9 @@ impl Normal {
             pg,
             ..
         } = if config.norm_resume_hff {
-            let dir_path = Path::new(pts_dir);
             let resume =
                 <Cart as crate::coord_type::CoordType<W, Q, P>>::Resume::load(
-                    dir_path.join(CHK_NAME),
+                    root_dir.as_ref().join(CHK_NAME),
                 );
             Cart.resume_first_part(
                 resume,
@@ -851,10 +851,10 @@ impl Normal {
                 config,
                 queue,
                 Nderiv::Two,
-                pts_dir,
+                &pts_dir,
             )?
         } else {
-            Cart.first_part(w, config, queue, Nderiv::Two, pts_dir)?
+            Cart.first_part(w, config, queue, Nderiv::Two, &pts_dir)?
         };
         let (fc2, _, _) = self.make_fcs(
             target_map,

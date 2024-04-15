@@ -27,6 +27,8 @@ const SPECTRO_HEADER: [isize; 30] = [
 /// the name for the checkpoint file written here
 const CHK_NAME: &str = "res.chk";
 
+const PTS_DIR: &str = "pts";
+
 /// The very high-level description of a coordinate type for running QFFs.
 ///
 /// Given a [Queue], an output destination, and a [Config], return the final
