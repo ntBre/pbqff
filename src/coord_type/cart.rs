@@ -179,6 +179,7 @@ pub struct FirstPart {
     pub weights: Option<Vec<f64>>,
     pub dummy_atoms: Option<usize>,
     pub check_int: usize,
+    pub norm_resume_hff: bool,
 }
 
 impl From<Config> for FirstPart {
@@ -192,6 +193,7 @@ impl From<Config> for FirstPart {
             weights: config.weights,
             dummy_atoms: config.dummy_atoms,
             check_int: config.check_int,
+            norm_resume_hff: config.norm_resume_hff,
         }
     }
 }

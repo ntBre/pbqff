@@ -1,12 +1,17 @@
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(
+    Default, Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy,
+)]
 pub enum CoordType {
     #[serde(alias = "cart")]
     Cart,
+
     #[serde(alias = "sic")]
     Sic,
+
+    #[default]
     #[serde(alias = "normal", alias = "norm")]
     Normal,
 }

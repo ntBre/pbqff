@@ -123,16 +123,26 @@ struct RawConfig {
     /// An optional number of atoms to hold constant in the QFF displacements.
     /// These must come at the end of the geometry. Experimental
     dummy_atoms: Option<usize>,
+
+    /// Resume a normal coordinate QFF from the initial HFF phase.
+    #[serde(default)]
+    norm_resume_hff: bool,
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(
+    Default, Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy,
+)]
 pub enum Program {
     #[serde(alias = "dftb+")]
     DFTBPlus,
+
+    #[default]
     #[serde(alias = "mopac")]
     Mopac,
+
     #[serde(alias = "molpro")]
     Molpro,
+
     #[serde(alias = "cfour", alias = "CFOUR")]
     Cfour,
 }
@@ -148,12 +158,17 @@ impl Display for Program {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(
+    Default, Serialize, Deserialize, Debug, PartialEq, Eq, Clone, Copy,
+)]
 pub enum Queue {
     #[serde(alias = "pbs")]
     Pbs,
+
     #[serde(alias = "slurm")]
     Slurm,
+
+    #[default]
     #[serde(alias = "local")]
     Local,
 }
@@ -174,7 +189,7 @@ impl Display for Queue {
 
 /// Construct a full `Config` using [Config::load] on a TOML file or use
 /// [Config::new] and the Builder pattern
-#[derive(Clone, Serialize, Deserialize, PartialEq, Debug)]
+#[derive(Clone, Default, Serialize, Deserialize, PartialEq, Debug)]
 #[serde(from = "RawConfig")]
 pub struct Config {
     /// the geometry to start with. Parsed from a string using
@@ -238,6 +253,8 @@ pub struct Config {
     pub weights: Option<Vec<f64>>,
 
     pub dummy_atoms: Option<usize>,
+
+    pub norm_resume_hff: bool,
 }
 
 impl From<RawConfig> for Config {
@@ -263,6 +280,7 @@ impl From<RawConfig> for Config {
             queue_template: rc.queue_template.map(TemplateSrc::into),
             weights: rc.weights,
             dummy_atoms: rc.dummy_atoms,
+            norm_resume_hff: rc.norm_resume_hff,
         }
     }
 }
@@ -308,6 +326,7 @@ impl Config {
             check_int: 0,
             weights: None,
             dummy_atoms: None,
+            norm_resume_hff: false,
         }
     }
 
@@ -386,6 +405,7 @@ impl std::fmt::Display for Config {
             check_int,
             weights,
             dummy_atoms,
+            norm_resume_hff,
         } = self;
         write!(
             f,
@@ -409,6 +429,7 @@ chunk_size = {chunk_size}
 findiff = {findiff}
 check_int = {check_int}
 dummy_atoms = {dummy_atoms:?}
+norm_resume_hff = {norm_resume_hff}
 ",
             queue_template.as_ref().unwrap_or(&String::new()),
         )?;

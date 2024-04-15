@@ -839,7 +839,16 @@ impl Normal {
             ref_energy,
             pg,
             ..
-        } = Cart.first_part(w, config, queue, Nderiv::Two, dir)?;
+        } = if config.norm_resume_hff {
+            let dir_path = Path::new(dir);
+            let resume =
+                <Cart as crate::coord_type::CoordType<W, Q, P>>::Resume::load(
+                    dir_path.join(CHK_NAME),
+                );
+            Cart.resume_first_part(resume, w, config, queue, Nderiv::Two, dir)?
+        } else {
+            Cart.first_part(w, config, queue, Nderiv::Two, dir)?
+        };
         let (fc2, _, _) = self.make_fcs(
             target_map,
             &energies,

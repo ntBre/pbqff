@@ -38,6 +38,7 @@ HCC =               147.81488230
         ),
         weights: None,
         dummy_atoms: None,
+        norm_resume_hff: false,
     };
     assert_eq!(got, want);
 }
@@ -80,6 +81,38 @@ HCC =               147.81488230
         ),
         weights: None,
         dummy_atoms: None,
+        norm_resume_hff: false,
+    };
+    assert_eq!(got, want);
+}
+
+#[test]
+fn normal() {
+    let got = Config::load("testfiles/normal.toml");
+    let want = Config {
+        geometry: psqs::geom::Geom::Zmat(
+            "O\nH 1 OH\nH 1 OH 2 HOH\n\nOH = 1.0\nHOH = 109.5\n".to_string(),
+        ),
+        optimize: true,
+        charge: 0,
+        step_size: 0.005,
+        coord_type: CoordType::Normal,
+        template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+            .to_string(),
+        hybrid_template:
+            "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+                .to_string(),
+        queue_template: None,
+        program: Program::Mopac,
+        queue: Queue::Slurm,
+        sleep_int: 2,
+        job_limit: 2048,
+        chunk_size: 1,
+        findiff: false,
+        check_int: 0,
+        weights: None,
+        dummy_atoms: None,
+        norm_resume_hff: true,
     };
     assert_eq!(got, want);
 }
