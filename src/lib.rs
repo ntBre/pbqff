@@ -15,6 +15,14 @@ use psqs::{
 use serde::{Deserialize, Serialize};
 pub use spectro::{Output, Spectro};
 
+#[macro_export]
+macro_rules! die {
+    ($($t:tt)+) => {
+        eprintln!($($t)+);
+        std::process::exit(1);
+    }
+}
+
 /// clean up from a previous run, emitting warnings on failures
 pub fn cleanup(dir: impl AsRef<Path>) {
     for d in ["opt", "pts", "freqs"] {
