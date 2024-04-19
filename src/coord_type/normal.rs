@@ -851,10 +851,10 @@ impl Normal {
                 config,
                 queue,
                 Nderiv::Two,
-                &pts_dir,
+                &root_dir,
             )?
         } else {
-            Cart.first_part(w, config, queue, Nderiv::Two, &pts_dir)?
+            Cart.first_part(w, config, queue, Nderiv::Two, &root_dir, &pts_dir)?
         };
         let (fc2, _, _) = self.make_fcs(
             target_map,

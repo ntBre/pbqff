@@ -97,6 +97,7 @@ where
                 &FirstPart::from(config.clone()),
                 queue,
                 Nderiv::Four,
+                &dir,
                 dir.as_ref().join("pts"),
             )
             .unwrap();
@@ -207,7 +208,8 @@ impl Cart {
         config: &FirstPart,
         queue: &Q,
         nderiv: Nderiv,
-        dir: impl AsRef<Path>,
+        root_dir: impl AsRef<Path>,
+        pts_dir: impl AsRef<Path>,
     ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
@@ -217,7 +219,7 @@ impl Cart {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(
-                &dir,
+                &root_dir,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -275,8 +277,11 @@ impl Cart {
             .enumerate()
             .map(|(job_num, mol)| {
                 let filename = format!("job.{job_num:08}");
-                let filename =
-                    dir.as_ref().join(filename).to_string_lossy().to_string();
+                let filename = pts_dir
+                    .as_ref()
+                    .join(filename)
+                    .to_string_lossy()
+                    .to_string();
                 Job::new(
                     P::new(filename, template.clone(), config.charge, mol.geom),
                     mol.index,
@@ -298,15 +303,15 @@ impl Cart {
             ref_energy,
             pg,
         };
-        resume.dump(dir.as_ref().join(CHK_NAME));
+        resume.dump(root_dir.as_ref().join(CHK_NAME));
 
         // drain into energies
         let mut energies = vec![0.0; njobs];
         let time = queue.drain(
-            dir.as_ref().to_str().unwrap(),
+            pts_dir.as_ref().to_str().unwrap(),
             jobs,
             &mut energies,
-            make_check(config.check_int, &dir),
+            make_check(config.check_int, &root_dir),
         )?;
 
         eprintln!("total job time: {time:.1} sec");
@@ -331,15 +336,15 @@ impl Cart {
         config: &FirstPart,
         queue: &Q,
         _nderiv: Nderiv,
-        dir: impl AsRef<Path>,
+        root_dir: impl AsRef<Path>,
     ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
         Q: Queue<P> + Sync,
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
-        let pts_dir = dir.as_ref().join("pts");
-        let chk = dir.as_ref().join("chk.json");
+        let pts_dir = root_dir.as_ref().join("pts");
+        let chk = root_dir.as_ref().join("chk.json");
 
         // drain into energies
         let mut energies = vec![0.0; resume.njobs];
@@ -347,7 +352,7 @@ impl Cart {
             pts_dir.to_str().unwrap(),
             chk.to_str().unwrap(),
             &mut energies,
-            make_check(config.check_int, &dir),
+            make_check(config.check_int, &root_dir),
         )?;
 
         eprintln!("total job time: {time:.1} sec");
