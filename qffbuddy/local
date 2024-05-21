@@ -1,6 +1,6 @@
 #!/bin/bash
 
 script=/home/brent/Projects/rust-pbqff/qffbuddy/qffbuddy.py
-bin=/home/brent/Projects/rust-pbqff/target/x86_64-unknown-linux-gnu/release/rust-pbqff
+bin=/home/brent/Projects/rust-pbqff/target/x86_64-unknown-linux-gnu/release/pbqff
 
 python $script --pbqff $bin "$@"

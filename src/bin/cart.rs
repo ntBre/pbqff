@@ -1,10 +1,10 @@
 use std::{env::temp_dir, io::Stdout, time::Instant};
 
-use psqs::{program::mopac::Mopac, queue::local::Local};
-use rust_pbqff::{
+use pbqff::{
     config::Config,
     coord_type::{Cart, CoordType},
 };
+use psqs::{program::mopac::Mopac, queue::local::Local};
 
 fn main() -> Result<(), std::io::Error> {
     let config = Config {

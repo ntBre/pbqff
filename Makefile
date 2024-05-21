@@ -23,27 +23,27 @@ doc:
 
 TARGET =
 ifeq (${DEBUG}, 1)
-	TARGET += target/x86_64-unknown-linux-gnu/debug/rust-pbqff
+	TARGET += target/x86_64-unknown-linux-gnu/debug/pbqff
 else
-	TARGET += target/x86_64-unknown-linux-gnu/release/rust-pbqff
+	TARGET += target/x86_64-unknown-linux-gnu/release/pbqff
 endif
 
 build:
 ifeq (${DEBUG}, 1)
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --features vers --bin rust-pbqff --target x86_64-unknown-linux-gnu
+	cargo build --features vers --target x86_64-unknown-linux-gnu
 else
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --features vers --bin rust-pbqff --release --target x86_64-unknown-linux-gnu
+	cargo build --features vers --release --target x86_64-unknown-linux-gnu
 endif
 
 MANDIR := /usr/local/share/man/man1
 
-install: man/rpbqff.1 target/release/rust-pbqff qffbuddy/qffbuddy.py
-	cargo build --features vers --bin rust-pbqff --release
-	sudo ln -sf $(realpath target/release/rust-pbqff) /usr/bin/pbqff
+install: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
+	cargo build --features vers --release
+	sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
 	sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
 	sudo cp $< $(MANDIR)/pbqff.1
 

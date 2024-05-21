@@ -1,14 +1,14 @@
 use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
-use psqs::{
-    program::{cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},
-    queue::{local::Local, pbs::Pbs, slurm::Slurm},
-};
-use rust_pbqff::{
+use pbqff::{
     cleanup,
     config::{self, Config},
     coord_type::{normal::Normal, Cart, CoordType, Load, Sic},
     Intder,
+};
+use psqs::{
+    program::{cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},
+    queue::{local::Local, pbs::Pbs, slurm::Slurm},
 };
 
 include!(concat!(env!("OUT_DIR"), "/version.rs"));

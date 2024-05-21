@@ -17,8 +17,8 @@ make install
 As you can see in the Makefile, this simply runs
 
 ```bash
-cargo build --features vers --bin rust-pbqff --release
-sudo ln -sf $(realpath target/release/rust-pbqff) /usr/bin/pbqff
+cargo build --features vers --release
+sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
 sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
 sudo cp $< $(MANDIR)/pbqff.1
 ```

@@ -546,6 +546,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
+name = "pbqff"
+version = "0.1.0"
+dependencies = [
+ "approx",
+ "clap",
+ "git2",
+ "intder",
+ "libc",
+ "nalgebra",
+ "psqs",
+ "rust-anpass",
+ "rustc-hash",
+ "serde",
+ "serde_json",
+ "spectro",
+ "symm",
+ "taylor",
+ "tempfile",
+ "toml",
+]
+
+[[package]]
 name = "percent-encoding"
 version = "2.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -652,28 +674,6 @@ source = "git+https://github.com/ntBre/rust-anpass#36be273b045d13914db93bb898733
 dependencies = [
  "nalgebra",
  "regex",
-]
-
-[[package]]
-name = "rust-pbqff"
-version = "0.1.0"
-dependencies = [
- "approx",
- "clap",
- "git2",
- "intder",
- "libc",
- "nalgebra",
- "psqs",
- "rust-anpass",
- "rustc-hash",
- "serde",
- "serde_json",
- "spectro",
- "symm",
- "taylor",
- "tempfile",
- "toml",
 ]
 
 [[package]]

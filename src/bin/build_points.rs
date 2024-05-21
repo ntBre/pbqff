@@ -1,15 +1,15 @@
-use psqs::{
-    geom::Geom,
-    program::{mopac::Mopac, Template},
-    queue::local::Local,
-};
-use rust_pbqff::{
+use pbqff::{
     config::Config,
     coord_type::{
         findiff::{bighash::BigHash, FiniteDifference},
         Cart, Derivative,
     },
     optimize,
+};
+use psqs::{
+    geom::Geom,
+    program::{mopac::Mopac, Template},
+    queue::local::Local,
 };
 use symm::Molecule;
 
