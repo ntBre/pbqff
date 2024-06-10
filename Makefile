@@ -52,9 +52,11 @@ ELAND_DEST = 'eland:programs/rust-pbqff/.'
 .woods.mk:
 	./configure
 
+hash := $(shell git rev-parse HEAD | cut -c 1-7)
+
 include .woods.mk
 WOODS_DEST = ${WOODS}':bin/rpbqff'
-ALPHA = .alpha
+ALPHA = .$(hash)
 
 eland: build
 	scp -C ${TARGET} ${ELAND_DEST}
