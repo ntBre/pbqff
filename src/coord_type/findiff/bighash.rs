@@ -193,6 +193,10 @@ impl BigHash {
                 axes: check_axes(&mol, Some(axis), 180.0, EPS),
                 planes: vec![],
             },
+            PointGroup::C3 { axis } => Buddy {
+                axes: check_axes(&mol, Some(axis), 120.0, EPS),
+                planes: vec![],
+            },
             PointGroup::Cs { plane } => Buddy {
                 axes: vec![],
                 planes: check_planes(&mol, Some(plane), EPS),
@@ -302,6 +306,9 @@ impl BigHash {
             C1 => (),
             C2 { axis } => {
                 cnv!(self, orig, axis, 2, []);
+            }
+            PointGroup::C3 { axis } => {
+                cnv!(self, orig, axis, 3, []);
             }
             Cs { plane } => {
                 let buddies = self.buddy.apply(orig);
