@@ -55,6 +55,7 @@ struct Args {
 use spectro::{Output, Spectro};
 
 fn main() -> Result<(), std::io::Error> {
+    env_logger::init();
     let args = Args::parse();
     if args.version {
         println!("version: {}", version());
