@@ -307,12 +307,14 @@ impl Cart {
 
         // drain into energies
         let mut energies = vec![0.0; njobs];
-        let time = queue.drain(
-            pts_dir.as_ref().to_str().unwrap(),
-            jobs,
-            &mut energies,
-            make_check(config.check_int, &root_dir),
-        )?;
+        let time = queue
+            .drain(
+                pts_dir.as_ref().to_str().unwrap(),
+                jobs,
+                &mut energies,
+                make_check(config.check_int, &root_dir),
+            )
+            .map_err(|e| format!("{} jobs failed", e.len()))?;
 
         eprintln!("total job time: {time:.1} sec");
 
@@ -348,12 +350,14 @@ impl Cart {
 
         // drain into energies
         let mut energies = vec![0.0; resume.njobs];
-        let time = queue.resume(
-            pts_dir.to_str().unwrap(),
-            chk.to_str().unwrap(),
-            &mut energies,
-            make_check(config.check_int, &root_dir),
-        )?;
+        let time = queue
+            .resume(
+                pts_dir.to_str().unwrap(),
+                chk.to_str().unwrap(),
+                &mut energies,
+                make_check(config.check_int, &root_dir),
+            )
+            .map_err(|e| format!("{} jobs failed", e.len()))?;
 
         eprintln!("total job time: {time:.1} sec");
 

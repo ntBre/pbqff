@@ -60,8 +60,11 @@ pub fn optimize<
     let opt_file = opt_dir.join("opt").to_str().unwrap().to_owned();
     let opt = Job::new(P::new(opt_file, template, charge, geom), 0);
     let mut res = vec![Default::default(); 1];
-    let time =
-        queue.energize(opt_dir.to_str().unwrap(), vec![opt], &mut res)?;
+    let time = queue
+        .energize(opt_dir.to_str().unwrap(), vec![opt], &mut res)
+        .map_err(|e| {
+            ProgramError::ErrorInOutput(format!("{} jobs failed", e.len()))
+        })?;
     eprintln!("total optimize time: {time:.1} sec");
     Ok(res.pop().unwrap())
 }
