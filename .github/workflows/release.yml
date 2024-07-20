@@ -19,7 +19,7 @@ jobs:
         include:
           - os: ubuntu-latest
             rust: nightly
-            target: x86_64-unknown-linux-gnu
+            target: x86_64-unknown-linux-musl
             bin: pbqff
             name: pbqff-linux-x86_64.tar.gz
           - os: macos-latest
