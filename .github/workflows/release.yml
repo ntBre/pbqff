@@ -14,7 +14,7 @@ jobs:
   release:
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest]
+        os: [ubuntu-latest, macos-latest, macos-13]
         toolchain: [nightly]
         include:
           - os: ubuntu-latest
@@ -22,7 +22,12 @@ jobs:
             target: x86_64-unknown-linux-gnu
             bin: pbqff
             name: pbqff-linux-x86_64.tar.gz
-          - os: macOS-latest
+          - os: macos-latest
+            rust: nightly
+            target: aarch64-apple-darwin
+            bin: pbqff
+            name: pbqff-darwin-aarch64.tar.gz
+          - os: macos-13
             rust: nightly
             target: x86_64-apple-darwin
             bin: pbqff
