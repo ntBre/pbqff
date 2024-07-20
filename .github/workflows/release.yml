@@ -2,6 +2,9 @@
 # https://github.com/softprops/rust-bin-test/blob/master/.github/workflows/main.yml
 name: release
 
+permissions:
+  contents: write
+
 on:
   push:
     tags:
