@@ -27,8 +27,9 @@ macro_rules! die {
 pub fn cleanup(dir: impl AsRef<Path>) {
     for d in ["opt", "pts", "freqs"] {
         let d = dir.as_ref().join(d);
-        std::fs::remove_dir_all(&d)
-            .unwrap_or_else(|e| eprintln!("failed to remove '{d:?}' with {e}"));
+        if let Err(e) = std::fs::remove_dir_all(&d) {
+            log::warn!("failed to remove '{d:?}' with {e}");
+        }
     }
 }
 

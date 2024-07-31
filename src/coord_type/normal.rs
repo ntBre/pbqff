@@ -330,15 +330,16 @@ fn cleanup(dir: impl AsRef<Path>) {
     let dir = dir.as_ref();
     let hff = dir.join("hff");
 
-    std::fs::create_dir_all(&hff)
-        .unwrap_or_else(|e| eprintln!("failed to create {hff:?} with {e}"));
+    if let Err(e) = std::fs::create_dir_all(&hff) {
+        log::warn!("failed to create {hff:?} with {e}");
+    }
 
     for d in ["opt", "pts", "freqs"] {
         let from = dir.join(d);
         let to = hff.join(d);
-        std::fs::rename(&from, &to).unwrap_or_else(|e| {
-            eprintln!("failed to move {from:?} to {to:?} with {e}")
-        });
+        if let Err(e) = std::fs::rename(&from, &to) {
+            log::warn!("failed to move {from:?} to {to:?} with {e}");
+        }
     }
 }
 
@@ -423,7 +424,7 @@ where
         );
         fin.dump(freqs_dir.join("finish.spectro").to_str().unwrap())
             .unwrap_or_else(|e| {
-                eprintln!("failed to dump finish.spectro with `{e}`")
+                log::warn!("failed to dump finish.spectro with `{e}`")
             });
         let spectro::SpectroFinish {
             spectro,
@@ -530,9 +531,10 @@ where
             self.lx.unwrap(),
         );
 
-        fin.dump("freqs/finish.spectro").unwrap_or_else(|e| {
-            eprintln!("failed to dump finish.spectro with `{e}`")
-        });
+        if let Err(e) = fin.dump("freqs/finish.spectro") {
+            log::warn!("failed to dump finish.spectro with `{e}`");
+        }
+
         let spectro::SpectroFinish {
             spectro,
             freq,
