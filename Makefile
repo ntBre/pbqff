@@ -41,7 +41,10 @@ endif
 
 MANDIR := /usr/local/share/man/man1
 
-install: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
+install:
+	cargo install --features vers --path . --bin pbqff
+
+install.full: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
 	cargo build --features vers --release
 	sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
 	sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
