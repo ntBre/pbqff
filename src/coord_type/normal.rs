@@ -328,7 +328,14 @@ impl Normal {
 /// to dir/hff/{opt,pts,freqs}
 fn cleanup(dir: impl AsRef<Path>) {
     let dir = dir.as_ref();
-    let hff = dir.join("hff");
+    let mut hff = dir.join("hff");
+
+    let mut i = 0;
+    while hff.exists() {
+        log::trace!("hff dir found, incrementing counter");
+        hff = dir.join(format!("hff{i}"));
+        i += 1;
+    }
 
     if let Err(e) = std::fs::create_dir_all(&hff) {
         log::warn!("failed to create {hff:?} with {e}");
