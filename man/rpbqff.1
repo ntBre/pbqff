@@ -106,6 +106,15 @@ The interval at which to write checkpoint files. Every coordinate type will writ
 .TP
 .B weights \fIOption<Vec<f64>>\fR
 An optional vector of atomic masses to use for normal coordinate generation and Spectro.
+.TP
+.B dummy_atoms \fIOption<usize>\fR
+An optional number of atoms to hold constant in the QFF displacements. These must come at the end of the geometry. Experimental
+.TP
+.B #[serde(default) \fI\fR
+Resume a normal coordinate QFF from the initial HFF phase.
+.TP
+.B norm_resume_hff \fIbool\fR
+
 
 .SH EXAMPLE
 The following is an example input file for c-C3H2 in SICs in Mopac on the Slurm
@@ -138,6 +147,48 @@ template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
 check_int = 100
 .RE
 .fi
+
+.SH PROGRAM-SPECIFIC DETAILS
+The following sections contain program-specific details about the config file.
+.SS DFTB+
+Thanks to DFTB+'s strange input format,
+.BR pbqff
+has a relatively harder time automatically removing geometry optimization
+directives from the input template. As such, it expects a template like the one
+shown below:
+
+.nf
+.rs
+Driver = GeometryOptimization {
+  Optimizer = Rational {}
+  MovedAtoms = 1:-1
+  MaxSteps = 100
+  OutputPrefix = "geom.out"
+  Convergence {
+    Energy = 1e-8
+    GradElem = 1e-8
+    GradNorm = 1e-7
+    DispElem = 1e-7
+    DispNorm = 1e-7
+  }
+}
+.RE
+.fi
+
+In particular,
+.BR pbqff
+will only recognize the exact pattern
+.BR Driver
+.BR =
+.BR GeometryOptimization
+for identifying optimization input (though it ignores case). For single-point
+energy calculations, it will strip this out, and for geometry optimizations, it
+will refrain from adding the default optimization commands.
+
+.nf
+.rs
+
+
 
 .SH SEE ALSO
 .BR qffbuddy (1)

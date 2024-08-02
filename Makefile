@@ -80,7 +80,7 @@ docs: man/rpbqff.1
 man/config.man: src/config.rs scripts/config.awk
 	scripts/config.awk $< > $@
 
-man/rpbqff.1: man/rpbqff.head man/config.man man/example.man testfiles/test.toml man/rpbqff.tail
+man/rpbqff.1: man/rpbqff.head man/config.man man/example.man testfiles/test.toml man/programs.man man/rpbqff.tail
 	cat $^ > $@
 
 scripts: qffbuddy/qffbuddy*
