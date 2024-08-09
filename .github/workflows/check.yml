@@ -72,4 +72,7 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
       - name: make install.full
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: make install.full PREFIX=/usr/local/bin
+        if: ${{ ! matrix.os == 'macos-latest' }}
         run: make install.full

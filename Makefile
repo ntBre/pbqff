@@ -39,7 +39,6 @@ else
 	cargo build --features vers --release --target x86_64-unknown-linux-gnu
 endif
 
-MANDIR := /usr/local/share/man/man1
 
 install:
 	cargo install --features vers --path . --bin pbqff
@@ -49,9 +48,11 @@ src := build.rs $(shell find src -name '*.rs')
 target/release/pbqff: $(src)
 	cargo build --features vers --release
 
+PREFIX := /usr/bin
+MANDIR := /usr/local/share/man/man1
 install.full: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
-	sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
-	sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
+	sudo ln -sf $(realpath target/release/pbqff) $(PREFIX)/pbqff
+	sudo ln -sf $(realpath qffbuddy/qffbuddy.py) $(PREFIX)/qffbuddy
 	sudo cp $< $(MANDIR)/pbqff.1
 	touch $@
 
