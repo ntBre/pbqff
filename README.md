@@ -11,21 +11,34 @@ Assuming you have the [Rust toolchain](https://www.rust-lang.org/tools/install)
 installed, run
 
 ```bash
-make install
+make install.full
 ```
 
 As you can see in the Makefile, this simply runs
 
 ```bash
-cargo build --features vers --release
-sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
-sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
+cargo build --features vers --release  # indirectly through target/release/pbqff
+sudo ln -sf $(realpath target/release/pbqff) $(PREFIX)/pbqff
+sudo ln -sf $(realpath qffbuddy/qffbuddy.py) $(PREFIX)/qffbuddy
 sudo cp $< $(MANDIR)/pbqff.1
 ```
 
-to build the binary in release mode, and link it into your `$PATH` under the
-name `pbqff`. It also links `qffbuddy` into `/usr/bin` and builds the `man` page
-and installs that in `MANDIR`, which defaults to `/usr/local/share/man/man1`.
+to build the binary in release mode, and link it into the `PREFIX` directory,
+which is presumably on your `$PATH`, under the name `pbqff`. It also links
+`qffbuddy` into this directory and builds the `man` page and installs that in
+`MANDIR`. `PREFIX` defaults to `/usr/bin`, which should work fine on Linux, but
+on macOS, you will likely need to use `/usr/local/bin`. `MANDIR` defaults to
+`/usr/local/share/man/man1`, but you can override this as well. For example,
+fully specifying the defaults would look something like this:
+
+``` shell
+make install.full PREFIX=/usr/bin MANDIR=/usr/local/share/man/man1
+```
+
+If you don't care about `qffbuddy` or the manual, you can use the plain
+`install` recipe, which defers to `cargo install`. Depending on your Rust
+installation, this will likely put the binary in `$HOME/.cargo/bin`, which you
+may need to add to your `PATH`.
 
 You can also build a PDF copy of the manual with `make man/rpbqff.pdf`.
 
