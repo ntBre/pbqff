@@ -44,11 +44,16 @@ MANDIR := /usr/local/share/man/man1
 install:
 	cargo install --features vers --path . --bin pbqff
 
-install.full: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
+src := build.rs $(shell find src -name '*.rs')
+
+target/release/pbqff: $(src)
 	cargo build --features vers --release
+
+install.full: man/rpbqff.1 target/release/pbqff qffbuddy/qffbuddy.py
 	sudo ln -sf $(realpath target/release/pbqff) /usr/bin/pbqff
 	sudo ln -sf $(realpath qffbuddy/qffbuddy.py) /usr/bin/qffbuddy
 	sudo cp $< $(MANDIR)/pbqff.1
+	touch $@
 
 ELAND_DEST = 'eland:programs/rust-pbqff/.'
 
