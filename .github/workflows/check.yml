@@ -57,3 +57,24 @@ jobs:
         run: cargo doc --no-deps --all-features
         env:
           RUSTDOCFLAGS: --cfg docsrs
+  install:
+    strategy:
+      matrix:
+        toolchain: [nightly]
+        os: [ubuntu-latest, macos-latest]
+        include:
+          - os: macos-latest
+            prefix: /usr/local/bin
+          - os: ubuntu-latest
+            prefix: /usr/bin
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install ${{ matrix.toolchain }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - name: make install.full
+        run: make install.full PREFIX=${{ matrix.prefix }}
