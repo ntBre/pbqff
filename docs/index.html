@@ -4,8 +4,264 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>pbqff: push-button quartic force fields</title>
+	<style>
+	  body {
+		  width:60%;
+		  margin-left: auto;
+		  margin-right: auto;
+	  }
+	  pre {
+		  word-wrap: normal;
+		  overflow-x: auto;
+	  }
+	  table {
+		  border-collapse: collapse;
+		  border: 2px solid rgb(140 140 140);
+		  font-family: sans-serif;
+		  font-size: 0.8rem;
+		  letter-spacing: 1px;
+	  }
+	  caption {
+		  caption-side: bottom;
+		  padding: 10px;
+		  font-weight: bold;
+	  }
+	  th, td {
+		  padding: 8px 10px;
+		  text-align: left;
+	  }
+	</style>
   </head>
   <body>
-	hello, world
+	<h1>pbqff</h1>
+
+	<p>
+	  This page contains the complete documentation for pbqff as a single HTML
+	  page. For a quick reference see
+	  the <a href="https://github.com/ntBre/pbqff/tree/master/man">man</a>
+	  directory in the main repository, where you can find a manual page in both
+	  Unix <code>man</code> and PDF formats.
+	</p>
+
+	<h2>Introduction</h2>
+
+	<p>
+	  pbqff is a package (really a collection of packages) for computing
+	  anharmonic vibrational and rotational spectroscopic constants for small
+	  molecules. It does this through the use of quartic force fields (QFFs) to
+	  approximate the molecular potential energy function and second-order
+	  vibrational and rotational perturbation theory, which utilize the
+	  derivative information from the function approximation to compute the
+	  actual spectroscopic constants.
+	</p>
+
+	<p>
+	  Because this is a complex task, pbqff is broken into several reusable
+	  components, only the final piece of which is included in this repository.
+	  Other major components include:
+	</p>
+
+	<ul>
+	  <li>
+		<a href="https://github.com/ntBre/symm">symm</a> for the
+		main <code>Molecule</code> data structure and symmetry operations
+	  </li>
+	  <li>
+		<a href="https://github.com/ntBre/psqs">psqs</a> for interfaces to
+		quantum chemistry programs and distributed queuing systems
+	  </li>
+	  <li>
+		<a href="https://github.com/ntBre/spectro">spectro</a> for the final
+		spectroscopic calculations
+	  </li>
+	</ul>
+
+	<p>
+	  pbqff itself is a relatively thin wrapper around these packages that
+	  primarily handles tasks like generating the grid of displaced geometries
+	  to map out the QFF in various coordinate systems. This fact isn't really
+	  important directly, but it may help to explain some of the potential error
+	  messages you encounter, if they reference source code
+	  in <code>psqs</code>, for example.
+	</p>
+
+	<h2>Program Input</h2>
+
+	<p>
+	  The primary input for pbqff is a <a href="https://toml.io/en/">TOML</a>
+	  file. TOML as a format is widely used in the Rust community and is pretty
+	  easy for humans to write, although you will end up having to type a lot of
+	  quotes compared to something like YAML. To start, here's an example input
+	  file for a <a href="https://github.com/openmopac/mopac">MOPAC</a> QFF on a
+	  PBS queue:
+	</p>
+
+	<pre>
+	  <code>
+geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+optimize = true
+charge = 0
+step_size = 0.005
+sleep_int = 2
+job_limit = 2048
+chunk_size = 1
+coord_type = "norm"
+template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+queue_template = """
+#!/bin/sh
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o pts/{{.basename}}.out
+#PBS -W umask=022
+#PBS -l walltime=100:00:00
+#PBS -l cput=100:00:00
+#PBS -l ncpus=1
+#PBS -l mem=16gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+export MOPAC_PATH=/ddnlus/r2518/Packages/mopac/build/mopac
+export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
+cd $WORKDIR
+mkdir -p $TMPDIR
+"""
+program = "mopac"
+queue = "slurm"
+findiff = true
+check_int = 0
+	  </code>
+	</pre>
+
+	<p>
+	  In addition to the options specified here, there are a few other optional
+	  values like <code>hybrid_template</code> for specifying a separate quantum
+	  chemistry program template for the cubic and quartic force
+	  constants, <code>weights</code> for specifying atomic
+	  weights, <code>dummy_atoms</code> for specifying a number of trailing
+	  dummy atoms, and the very specialized <code>norm_resume_hff</code> for
+	  resuming a normal coordinate QFF from the finished Cartesian harmonic
+	  force field (HFF). A summary of all the possible input options is given in
+	  the table below.
+	</p>
+
+	<table>
+	  <caption>Summary of input options</caption>
+	  <tr>
+		<th>Option</th>
+		<th>Type</th>
+		<th>Description</th>
+	  </tr>
+	  <tr>
+		<td><code>geometry</code></td>
+		<td>String</td>
+		<td>The initial molecular geometry as XYZ or Z-matrix</td>
+	  </tr>
+	  <tr>
+		<td><code>optimize</code></td>
+		<td>bool</td>
+		<td>Whether or not to optimize the geometry before running the QFF</td>
+	  </tr>
+	  <tr>
+		<td><code>charge</code></td>
+		<td>isize</td>
+		<td>The molecular charge</td>
+	  </tr>
+	  <tr>
+		<td><code>step_size</code></td>
+		<td>f64</td>
+		<td>The displacement size for the QFF</td>
+	  </tr>
+	  <tr>
+		<td><code>sleep_int</code></td>
+		<td>usize</td>
+		<td>Interval in seconds to sleep between job polling iterations</td>
+	  </tr>
+	  <tr>
+		<td><code>job_limit</code></td>
+		<td>usize</td>
+		<td>Maximum number of jobs to submit to the queue at once</td>
+	  </tr>
+	  <tr>
+		<td><code>chunk_size</code></td>
+		<td>usize</td>
+		<td>Number of jobs to combine into a single queue submission</td>
+	  </tr>
+	  <tr>
+		<td><code>coord_type</code></td>
+		<td>CoordType</td>
+		<td>Displacement type for the QFF. Supported values are sic, cart, and
+		norm</td>
+	  </tr>
+	  <tr>
+		<td><code>template</code></td>
+		<td>TemplateSrc</td>
+		<td>Quantum chemistry program template. Can either be a literal String
+		or a map with the key <code>file</code></td>
+	  </tr>
+	  <tr>
+		<td><code>hybrid_template</code></td>
+		<td> Option&lt;TemplateSrc&gt;</td>
+		<td>Separate quantum chemistry program template for cubic and quartic
+		force constants</td>
+	  </tr>
+	  <tr>
+		<td><code>queue_template</code></td>
+		<td> Option&lt;TemplateSrc&gt;</td>
+		<td>Queuing system template</td>
+	  </tr>
+	  <tr>
+		<td><code>program</code></td>
+		<td>Program</td>
+		<td>A quantum chemistry program name. Supported values are dftb+, mopac,
+		molpro, and cfour</td>
+	  </tr>
+	  <tr>
+		<td><code>queue</code></td>
+		<td> Queue</td>
+		<td>A queuing system. Supported values are pbs, slurm, and local</td>
+	  </tr>
+	  <tr>
+		<td><code>findiff</code></td>
+		<td> Option&lt;bool&gt;</td>
+		<td>Whether to use finite differences for derivative evaluations. Not
+		all coordinate types support this</td>
+	  </tr>
+	  <tr>
+		<td><code>check_int</code></td>
+		<td>usize</td>
+		<td>Interval in polling iterations to write checkpoints. A value of 0
+		disables checkpoints</td>
+	  </tr>
+	  <tr>
+		<td><code>weights</code></td>
+		<td> Option&lt;Vec&lt;f64&gt;&gt;</td>
+		<td>An optional sequence of atomic masses for use in normal coordinate
+		QFFs and spectroscopic calculations</td>
+	  </tr>
+	  <tr>
+		<td><code>dummy_atoms</code></td>
+		<td> Option&lt;usize&gt;</td>
+		<td>An optional number of trailing dummy atoms</td>
+	  </tr>
+	  <tr>
+		<td><code>norm_resume_hff</code></td>
+		<td>Option&lt;bool&gt;</td>
+		<td>Resume a normal coordinate QFF from a previously-finished HFF
+		checkpoint</td>
+	  </tr>
+	</table>
+
+
   </body>
 </html>
