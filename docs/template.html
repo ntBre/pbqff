@@ -6,6 +6,7 @@ define({{make_id}}, {{translit(tolower($1), {{ }}, {{-}})}})
 
 define({{head2}}, {{<h2 id=make_id($1)><a href="#make_id($1)">$1</a></h2>}})
 define({{head3}}, {{<h3 id=make_id($1)><a href="#make_id($1)">$1</a></h3>}})
+define({{head4}}, {{<h4 id=make_id($1)><a href="#make_id($1)">$1</a></h4>}})
 define({{code_block}}, {{<pre><code>include($1)</code></pre>}})
 define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 
@@ -43,11 +44,11 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 		  padding: 8px 10px;
 		  text-align: left;
 	  }
-	  h2 a, h3 a {
+	  h2 a, h3 a, h4 a {
 		  text-decoration: none;
 		  color: inherit;
 	  }
-	  h2 a:hover, h3 a:hover {
+	  h2 a:hover, h3 a:hover, h4 a:hover {
 		  text-decoration: underline;
 	  }
 	</style>
@@ -119,6 +120,8 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	  PBS queue:
 	</p>
 
+	head4(Example Input File)
+
 	code_block({{examples/mopac_pbs.toml}})
 
 	<p>
@@ -133,8 +136,9 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	  the table below, followed by a more detailed description of each option.
 	</p>
 
+	head4(Summary of Input Options)
+
 	<table>
-	  <caption>Summary of input options</caption>
 	  <tr>
 		<th>Option</th>
 		<th>Type</th>
@@ -158,7 +162,7 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	  <tr>
 		<td><code>step_size</code></td>
 		<td>f64</td>
-		<td>The displacement size for the QFF</td>
+		<td>The displacement size for the QFF in Å</td>
 	  </tr>
 	  <tr>
 		<td><code>sleep_int</code></td>
@@ -286,17 +290,112 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	head3(Step Size)
 
 	<p>
+	  <code>step_size</code> sets the displacement size for the QFF in units of
+	  Ångstroms. 0.005 is a reasonable default, with larger values like 0.010 or
+	  even 0.020 helping occasionally with floppy systems.
 	</p>
 
 	head3(Sleep Interval)
 
 	<p>
+	  pbqff uses a polling model for running jobs in parallel. On each iteration
+	  of a big loop that runs until all jobs have finished, pbqff checks each
+	  output file for the currently-running jobs to see if any have finished.
+	  For very short single-point energy calculations (like PM6 or HF/STO-3G)
+	  this makes a lot of sense because many jobs are likely to finish
+	  constantly and each iteration will make some progress. On the other hand,
+	  for long-running individual jobs (like CCSD(T)-F12/cc-pCVTZ-F12 on a large
+	  molecule), pbqff will waste a lot of CPU time constantly checking the same
+	  output files that may not have changed meaningfully since the last polling
+	  interval. Thus, <code>sleep_int</code> is an interval in seconds for pbqff
+	  to sleep between such polling attempts. Higher values should cause pbqff
+	  to spend less CPU time reading the same files over and over, but extremely
+	  high values could potentially lead to periods of no jobs running because
+	  submitting more jobs as old ones finish is also part of the polling loop.
+	  In practice, I usually use a minimum of 60 seconds for this and go up to
+	  ~600 seconds for what I consider really long jobs. The options in the next
+	  section also have some effect on what to choose here.
 	</p>
 
 	head3(Job Limit and Chunk Size)
 
 	<p>
+	  These two options, <code>job_limit</code> and <code>chunk_size</code> are
+	  in the same section because they are very closely related. Early versions
+	  of pbqff submitted each single-point energy calculation as a separate
+	  queue submission limited by the <code>job_limit</code> setting. However,
+	  this was inefficient enough to attract the attention of the HPC
+	  administrators who recommended combining multiple program invocations into
+	  a single submission script. This led to the addition of
+	  the <code>chunk_size</code> option, which sets the number of invocations
+	  per submission script (chunk). Hopefully this is already clear, but below
+	  is an illustration of a chunk of MOPAC jobs for a local queue, where "job
+	  submission" is handled by a very simple bash script. This would correspond
+	  to a <code>chunk_size</code> of 5.
 	</p>
+
+	code_block(examples/local.sh)
+
+	<p>
+	  Because of this legacy, <code>job_limit</code> still corresponds to
+	  individual calculations, despite the fact that they are now grouped into
+	  chunks. As a result, if you want to restrict the number of jobs as
+	  reported by your queue manager you should consider the
+	  ratio <code>job_limit / chunk_size</code> rather
+	  than <code>job_limit</code> alone. For example, to target a maximum number
+	  of queued jobs of 500 with a chunk size of 25, you could set
+	  a <code>job_limit</code> of <code>500 * 25 = 12_500</code>. Note the use
+	  of the underscore as a digit separator. This is not required in TOML but
+	  can be handy for large numbers.
+	</p>
+
+	<p>
+	  The main consideration when choosing a <code>chunk_size</code> is the
+	  amount of time spent submitting jobs versus actually running jobs.
+	  According to our system administrators, the cutoff (likely pretty
+	  conservative) is around 5 minutes of job time. This can lead to pretty
+	  crazy chunk sizes, especially for PM6 calculations on small molecules,
+	  where single-point energy computations can take on the order of 0.01
+	  seconds (<code>5 minutes = 300 seconds | 1 job / 0.01 seconds => 30_000
+	  jobs per chunk</code>!). However, more expensive calculations can easily
+	  take five minutes or more each, allowing you to use a chunk size of 1.
+	  Individual jobs give pbqff the greatest freedom to queue new jobs as old
+	  ones finish, but, again, it's possible to spend more time writing and
+	  submitting separate jobs (and taxing the queue system) than actually
+	  running calculations.
+	</p>
+
+	<p>
+	  Of course, the preceding paragraphs all assume that you're running pbqff
+	  on a large molecule with many single-point calculations <i>and</i> that
+	  you're on some kind of distributed compute cluster. If, on the other hand,
+	  you're running pbqff on a personal computer or a single node on a cluster
+	  using the local queue option, you will only be able to run a very small
+	  number of chunks at once anyway (roughly one per CPU or thread you allowed
+	  pbqff to use). In this case, there's no real incentive to shrink
+	  your <code>chunk_size</code> to allow more flexible submission. As long as
+	  your chunk size is small enough to send one chunk to each core you
+	  requested, all of your compute will be saturated already. For example, you
+	  wouldn't want to request a chunk size of 250 for a 1000-job QFF and
+	  request 8 cores because only 4 cores would get chunks to work on, but
+	  there's no real reason to set a chunk size of 25 either. It will just lead
+	  to a lot more shell scripts being written. The logic is similar for a
+	  small molecule like a diatomic where the total number of points may be
+	  smaller than a reasonable chunk size for other calculations.
+	</p>
+
+	head4(Rules of Thumb)
+
+	<p>
+	  This table contains my general heuristics for <code>job_limit</code>
+	  and <code>chunk_size</code> requests on our compute cluster, where the
+	  hard limit on queued jobs is around 1000, but most of the time I can only
+	  get ~50 jobs to run at once anyway.
+	</p>
+
+	<table>
+	csv_table(tables/job_limit.csv)
+	</table>
 
 	head3(Coordinate Types)
 

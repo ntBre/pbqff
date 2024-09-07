@@ -1,0 +1,4 @@
+Level of Theory,Time Per Job (s),Job Limit,Chunk Size
+PM6 (5 atoms),0.01,1_500_000,30_000
+F12-DZ (5 atoms), 1, 15_000, 300
+TZ-cCR (8 atoms), 300, 50, 1

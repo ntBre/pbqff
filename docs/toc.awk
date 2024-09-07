@@ -3,7 +3,7 @@
 BEGIN { print "<ul>" }
 END { print "</ul>" }
 
-/head[23]\(/ {
+/head[234]\(/ {
 	printf "\t"
 }
 
@@ -24,6 +24,14 @@ END { print "</ul>" }
 	printf "\t"
 	match($0, /head3\(([^)]+)\)/, arr)
 	printf "<li><a href=\"#%s\">%s</a></li>\n", make_id(arr[1]), arr[1]
+}
+
+/head4\(/ {
+	print "<ul>" # always add a list level for this, assume it's alone
+	printf "\t\t"
+	match($0, /head4\(([^)]+)\)/, arr)
+	printf "<li><a href=\"#%s\">%s</a></li>\n", make_id(arr[1]), arr[1]
+	print "</ul>"
 }
 
 function make_id(s,   ret) {
