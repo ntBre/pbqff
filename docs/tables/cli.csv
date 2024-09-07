@@ -1,0 +1,7 @@
+Option,Type,Description
+<nobr><code>-c/--checkpoint</nobr></code>,bool,Resume from the checkpoint files in the current directory (chk.json and res.chk). Defaults to false.
+<nobr><code>-o/--overwrite</nobr></code>,bool,Overwrite existing output from a previous run. Defaults to false.
+<nobr><code>-v/--version</nobr></code>,bool,Print the git commit hash and exit. Defaults to false.
+<nobr><code>-t/--threads</nobr></code>,usize,"Set the maximum number of threads to use. Defaults to 0, which means to use as many threads as there are CPUS."
+<nobr><code>-j/--json</nobr></code>,bool,Serialize the input file to JSON and exit. For use by qffbuddy.
+<nobr><code>-n/--no_del</nobr></code>,bool,Don't delete any files when running the single-point energies. Defaults to false.

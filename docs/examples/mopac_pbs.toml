@@ -1,0 +1,42 @@
+geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+optimize = true
+charge = 0
+step_size = 0.005
+sleep_int = 2
+job_limit = 2048
+chunk_size = 1
+coord_type = "norm"
+template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+queue_template = """
+#!/bin/sh
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o pts/{{.basename}}.out
+#PBS -W umask=022
+#PBS -l walltime=100:00:00
+#PBS -l cput=100:00:00
+#PBS -l ncpus=1
+#PBS -l mem=16gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+export MOPAC_PATH=/ddnlus/r2518/Packages/mopac/build/mopac
+export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
+cd $WORKDIR
+mkdir -p $TMPDIR
+"""
+program = "mopac"
+queue = "slurm"
+findiff = true
+check_int = 0

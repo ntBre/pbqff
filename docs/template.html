@@ -1,11 +1,13 @@
+changequote(`{{', `}}')dnl
+changecom()dnl
 
+define({{tolower}}, {{translit($1, {{A-Z}}, {{a-z}})}})
+define({{make_id}}, {{translit(tolower($1), {{ }}, {{-}})}})
 
-
-
-
-
-
-
+define({{head2}}, {{<h2 id=make_id($1)><a href="#make_id($1)">$1</a></h2>}})
+define({{head3}}, {{<h3 id=make_id($1)><a href="#make_id($1)">$1</a></h3>}})
+define({{code_block}}, {{<pre><code>include($1)</code></pre>}})
+define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 
 <!DOCTYPE html>
 <html lang="en">
@@ -62,31 +64,9 @@
 	</p>
 
 	<h2>Table of Contents</h2>
-	<ul>
-	<li><a href="#introduction">Introduction</a></li>
-	<li><a href="#program-input">Program Input</a></li>
-	<ul>
-	<li><a href="#geometry-specification-and-optimization">Geometry Specification and Optimization</a></li>
-		<li><a href="#charge">Charge</a></li>
-		<li><a href="#step-size">Step Size</a></li>
-		<li><a href="#sleep-interval">Sleep Interval</a></li>
-		<li><a href="#job-limit-and-chunk-size">Job Limit and Chunk Size</a></li>
-		<li><a href="#coordinate-types">Coordinate Types</a></li>
-		<li><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></li>
-		<li><a href="#queue-types">Queue Types</a></li>
-		<li><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></li>
-		<li><a href="#queue-templates">Queue Templates</a></li>
-		<li><a href="#derivative-types">Derivative Types</a></li>
-		<li><a href="#checkpoints">Checkpoints</a></li>
-		<li><a href="#atomic-masses">Atomic Masses</a></li>
-		<li><a href="#dummy-atoms">Dummy Atoms</a></li>
-		<li><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></li>
-	</ul>
-<li><a href="#command-line-options">Command Line Options</a></li>
-</ul>
+	include(toc.html)
 
-
-	<h2 id=introduction><a href="#introduction">Introduction</a></h2>
+	head2(Introduction)
 
 	<p>
 	  pbqff is a package (really a collection of packages) for computing
@@ -128,7 +108,7 @@
 	  in <code>psqs</code>, for example.
 	</p>
 
-	<h2 id=program-input><a href="#program-input">Program Input</a></h2>
+	head2(Program Input)
 
 	<p>
 	  The primary input for pbqff is a <a href="https://toml.io/en/">TOML</a>
@@ -139,48 +119,7 @@
 	  PBS queue:
 	</p>
 
-	<pre><code>geometry = """
-O
-H 1 OH
-H 1 OH 2 HOH
-
-OH = 1.0
-HOH = 109.5
-"""
-optimize = true
-charge = 0
-step_size = 0.005
-sleep_int = 2
-job_limit = 2048
-chunk_size = 1
-coord_type = "norm"
-template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
-queue_template = """
-#!/bin/sh
-#PBS -N .basename
-#PBS -S /bin/bash
-#PBS -j oe
-#PBS -o pts/.basename.out
-#PBS -W umask=022
-#PBS -l walltime=100:00:00
-#PBS -l cput=100:00:00
-#PBS -l ncpus=1
-#PBS -l mem=16gb
-#PBS -q workq
-
-module load openpbs
-
-export WORKDIR=$PBS_O_WORKDIR
-export TMPDIR=/tmp/$USER/$PBS_JOBID
-export MOPAC_PATH=/ddnlus/r2518/Packages/mopac/build/mopac
-export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
-cd $WORKDIR
-mkdir -p $TMPDIR
-"""
-program = "mopac"
-queue = "slurm"
-findiff = true
-check_int = 0</code></pre>
+	code_block({{examples/mopac_pbs.toml}})
 
 	<p>
 	  In addition to the options specified here, there are a few other optional
@@ -301,7 +240,7 @@ check_int = 0</code></pre>
 	  </tr>
 	</table>
 
-	<h3 id=geometry-specification-and-optimization><a href="#geometry-specification-and-optimization">Geometry Specification and Optimization</a></h3>
+	head3(Geometry Specification and Optimization)
 
 	<p>
 	  The <code>geometry</code> can be specified as either an XYZ geometry with
@@ -314,27 +253,14 @@ check_int = 0</code></pre>
 	  cyclopropenylidene:
 	</p>
 
-	<pre><code>5
-c3h2 geometry
-C          0.0000000000        0.0000000000       -0.8887390447
-C          0.0000000000       -0.6627588746        0.3682596138
-C          0.0000000000        0.6627588746        0.3682596138
-H          0.0000000000       -1.5952720351        0.9069548903
-H          0.0000000000        1.5952720351        0.9069548903
-</code></pre>
+	code_block(examples/c3h2.xyz)
 
 	<p>
 	  Again, the first two lines are optional, but if either one is present then
 	  both must be present. And an example Z-matrix geometry for water:
 	</p>
 
-	<pre><code>O
-H 1 OH
-H 1 OH 2 HOH
-
-OH = 1.0
-HOH = 109.5
-</code></pre>
+	code_block(examples/water.zmat)
 
 	<p>
 	  Aside from the caveats above about Z-matrix input,
@@ -347,82 +273,82 @@ HOH = 109.5
 	  level of theory as the QFF.
 	</p>
 
-	<h3 id=charge><a href="#charge">Charge</a></h3>
+	head3(Charge)
 
 	<p>
 	  <code>charge</code> is possibly the most straightforward input option as
 	  it is simply the molecular charge as a whole number. As we'll see in later
 	  sections, this won't necessarily be used if you omit
-	  a <code>{{.charge}}</code> entry in your program template, but the
+	  a <code>{{{{.charge}}}}</code> entry in your program template, but the
 	  option must be provided in the pbqff input file even in those cases.
 	</p>
 
-	<h3 id=step-size><a href="#step-size">Step Size</a></h3>
+	head3(Step Size)
 
 	<p>
 	</p>
 
-	<h3 id=sleep-interval><a href="#sleep-interval">Sleep Interval</a></h3>
+	head3(Sleep Interval)
 
 	<p>
 	</p>
 
-	<h3 id=job-limit-and-chunk-size><a href="#job-limit-and-chunk-size">Job Limit and Chunk Size</a></h3>
+	head3(Job Limit and Chunk Size)
 
 	<p>
 	</p>
 
-	<h3 id=coordinate-types><a href="#coordinate-types">Coordinate Types</a></h3>
+	head3(Coordinate Types)
 
 	<p>
 	</p>
 
-	<h3 id=quantum-chemistry-program-types><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></h3>
+	head3(Quantum Chemistry Program Types)
 
 	<p>
 	</p>
 
-	<h3 id=queue-types><a href="#queue-types">Queue Types</a></h3>
+	head3(Queue Types)
 
 	<p>
 	</p>
 
-	<h3 id=quantum-chemistry-program-templates><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></h3>
+	head3(Quantum Chemistry Program Templates)
 
 	<p>
 	</p>
 
-	<h3 id=queue-templates><a href="#queue-templates">Queue Templates</a></h3>
+	head3(Queue Templates)
 
 	<p>
 	</p>
 
-	<h3 id=derivative-types><a href="#derivative-types">Derivative Types</a></h3>
+	head3(Derivative Types)
 
 	<p>
 	</p>
 
-	<h3 id=checkpoints><a href="#checkpoints">Checkpoints</a></h3>
+	head3(Checkpoints)
 
 	<p>
 	</p>
 
-	<h3 id=atomic-masses><a href="#atomic-masses">Atomic Masses</a></h3>
+	head3(Atomic Masses)
 
 	<p>
 	</p>
 
-	<h3 id=dummy-atoms><a href="#dummy-atoms">Dummy Atoms</a></h3>
+	head3(Dummy Atoms)
 
 	<p>
 	</p>
 
-	<h3 id=resuming-normal-coordinate-qffs><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></h3>
+	head3(Resuming Normal Coordinate QFFs)
 
 	<p>
 	</p>
 
-	<h2 id=command-line-options><a href="#command-line-options">Command Line Options</a></h2>
+	head2(Command Line Options)
 
 	<p>
 	  In addition to the settings in the input file described in the previous
@@ -435,42 +361,7 @@ HOH = 109.5
 
 	<table>
 	  <caption>Summary of command line options</caption>
-	  <tr>
-<th>Option</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td><nobr><code>-c/--checkpoint</nobr></code></td>
-<td>bool</td>
-<td>Resume from the checkpoint files in the current directory (chk.json and res.chk). Defaults to false.</td>
-</tr>
-<tr>
-<td><nobr><code>-o/--overwrite</nobr></code></td>
-<td>bool</td>
-<td>Overwrite existing output from a previous run. Defaults to false.</td>
-</tr>
-<tr>
-<td><nobr><code>-v/--version</nobr></code></td>
-<td>bool</td>
-<td>Print the git commit hash and exit. Defaults to false.</td>
-</tr>
-<tr>
-<td><nobr><code>-t/--threads</nobr></code></td>
-<td>usize</td>
-<td>Set the maximum number of threads to use. Defaults to 0, which means to use as many threads as there are CPUS.</td>
-</tr>
-<tr>
-<td><nobr><code>-j/--json</nobr></code></td>
-<td>bool</td>
-<td>Serialize the input file to JSON and exit. For use by qffbuddy.</td>
-</tr>
-<tr>
-<td><nobr><code>-n/--no_del</nobr></code></td>
-<td>bool</td>
-<td>Don't delete any files when running the single-point energies. Defaults to false.</td>
-</tr>
-
+	  csv_table(tables/cli.csv)
 	</table>
 
 	<p>
