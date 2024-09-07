@@ -94,10 +94,34 @@
 		<li><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></li>
 		<li><a href="#queue-types">Queue Types</a></li>
 		<li><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></li>
+	<ul>
+		<li><a href="#mopac">MOPAC</a></li>
+</ul>
+	<ul>
+		<li><a href="#molpro">Molpro</a></li>
+</ul>
+	<ul>
+		<li><a href="#cfour">CFOUR</a></li>
+</ul>
+	<ul>
+		<li><a href="#dftb+">DFTB+</a></li>
+</ul>
 		<li><a href="#queue-templates">Queue Templates</a></li>
+	<ul>
+		<li><a href="#pbs">PBS</a></li>
+</ul>
+	<ul>
+		<li><a href="#slurm">Slurm</a></li>
+</ul>
+	<ul>
+		<li><a href="#local">Local</a></li>
+</ul>
 		<li><a href="#derivative-types">Derivative Types</a></li>
 		<li><a href="#checkpoints">Checkpoints</a></li>
 		<li><a href="#atomic-masses">Atomic Masses</a></li>
+	<ul>
+		<li><a href="#example">Example</a></li>
+</ul>
 		<li><a href="#dummy-atoms">Dummy Atoms</a></li>
 		<li><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></li>
 	</ul>
@@ -641,22 +665,76 @@ HOH = 109.5
 	<h3 id=quantum-chemistry-program-types><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></h3>
 
 	<p>
+	  As mentioned in the introduction, pbqff offloads the interface to both
+	  chemistry programs and queuing systems to the psqs library. As listed in
+	  the psqs README, it currently supports writing input files and reading
+	  output files for the following programs:
+	</p>
+
+	<ul>
+	  <li>MOPAC</li>
+	  <li>Molpro</li>
+	  <li>CFOUR</li>
+	  <li>DFTB+</li>
+	</ul>
+
+	<p>
+	  Where these are listed roughly in order of support quality. MOPAC and
+	  Molpro have been tested the most thoroughly, while CFOUR and DFTB+ have
+	  been tested but to a much more limited extent. Each of these can be
+	  requested in the pbqff input file using the <code>program</code> keyword
+	  with valid options being the <b>lowercase</b> versions of each program
+	  name as a TOML
+	  string: <code>"mopac"</code>, <code>"molpro"</code>, <code>"cfour"</code>, <code>"dftb+"</code>.
 	</p>
 
 	<h3 id=queue-types><a href="#queue-types">Queue Types</a></h3>
 
 	<p>
+	  Like the <code>program</code> option above, the <code>queue</code> option
+	  depends on the values supported by psqs, which are the following:
 	</p>
+
+	<ul>
+	  <li>PBS</li>
+	  <li>Slurm</li>
+	  <li>Local</li>
+	</ul>
+
+	<p>
+	  PBS and Slurm are popular queuing systems on HPC clusters, while the local
+	  queue is a way to run pbqff on a single computer. Again, these are listed
+	  roughly in order of support. Hundreds of QFFs have been run with pbqff on
+	  a PBS cluster, while a much smaller number have been run on a smaller
+	  Slurm cluster. The local queue is used in all of the pbqff unit tests, so
+	  by that metric it is arguably the best-tested, but it essentially has no
+	  error handling, making it suited really only for these tests and other
+	  short test calculations rather than "production" QFFs.
+	</p>
+
+	<p>
+	  These can be selected by their lowercase TOML string forms with
+	  the <code>queue</code> keyword: <code>"pbs"</code>, <code>"slurm"</code>,
+	  and <code>"local"</code>.
 
 	<h3 id=quantum-chemistry-program-templates><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></h3>
 
 	<p>
 	</p>
 
+	<h4 id=mopac><a href="#mopac">MOPAC</a></h4>
+	<h4 id=molpro><a href="#molpro">Molpro</a></h4>
+	<h4 id=cfour><a href="#cfour">CFOUR</a></h4>
+	<h4 id=dftb+><a href="#dftb+">DFTB+</a></h4>
+
 	<h3 id=queue-templates><a href="#queue-templates">Queue Templates</a></h3>
 
 	<p>
 	</p>
+
+	<h4 id=pbs><a href="#pbs">PBS</a></h4>
+	<h4 id=slurm><a href="#slurm">Slurm</a></h4>
+	<h4 id=local><a href="#local">Local</a></h4>
 
 	<h3 id=derivative-types><a href="#derivative-types">Derivative Types</a></h3>
 
@@ -671,16 +749,76 @@ HOH = 109.5
 	<h3 id=atomic-masses><a href="#atomic-masses">Atomic Masses</a></h3>
 
 	<p>
+	  The optional <code>weights</code> keyword is used to specify the atomic
+	  masses to use for normal coordinate generation and mass-dependent
+	  spectroscopic calculations. If this is not provided, the mass of the most
+	  abundant isotope from
+	  the <a href="https://www.nist.gov/pml/atomic-weights-and-isotopic-compositions-relative-atomic-masses">NIST
+	  atomic weight database</a> is used. See below for an example of how to
+	  include this in your input file for water. Currently the number of weights
+	  must equal the number of atoms. There is no way to specify weights for a
+	  subset of atoms.
 	</p>
+
+	<h4 id=example><a href="#example">Example</a></h4>
+	<pre><code>geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+
+# one-line version
+weight = [15.99491461957, 1.00782503223, 1.00782503223]
+
+# multiline version, useful for larger molecules
+weight = [
+    15.99491461957,
+    1.00782503223,
+    1.00782503223,
+]
+
+# use one deuterium
+weight = [
+    15.99491461957,
+    2.01410177812, # <- D
+    1.00782503223,
+]
+</code></pre>
 
 	<h3 id=dummy-atoms><a href="#dummy-atoms">Dummy Atoms</a></h3>
 
 	<p>
+	  This is possibly the worst-named pbqff option because it has nothing to do
+	  with the kind of dummy atoms typically included in a Z-matrix, for
+	  example, which do not require any special treatment in the pbqff input
+	  file (they should be erased by the chemistry program before pbqff sees the
+	  Cartesian geometry). Instead this is used to specify a number of atoms
+	  that should not be displaced in the course of the QFF. This is a somewhat
+	  experimental option that I have currently only used in Molpro to compute
+	  QFFs for small molecules in the presence of a non-bonded atom. This takes
+	  advantage of
+	  Molpro's <a href="https://www.molpro.net/manual/doku.php?id=molecular_geometry#z-matrix_input">Z-matrix
+	  input</a>, which allows including some Cartesian coordinates too. These
+	  Cartesian coordinates are frozen in geometry optimizations, allowing for
+	  the type of calculation described here. I consider it unlikely that this
+	  option will be useful or even usable in other packages, but it exists if
+	  you need it.
 	</p>
 
 	<h3 id=resuming-normal-coordinate-qffs><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></h3>
 
 	<p>
+	  Finally, the <code>norm_resume_hff</code> option allows you to resume a
+	  (presumably failed) normal coordinate QFF from the initial HFF stage. This
+	  was a much-requested feature by users of pbqff, but the separation of
+	  normal coordinate QFFs into the HFF and QFF stages made it difficult to
+	  integrate with the existing checkpoint mechanism, leading to this separate
+	  option. Indeed, it is fully separate from the command
+	  line <code>--checkpoint</code> option, which can be omitted when
+	  using <code>norm_resume_hff</code>.
 	</p>
 
 	<h2 id=command-line-options><a href="#command-line-options">Command Line Options</a></h2>

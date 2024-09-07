@@ -1,0 +1,25 @@
+geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+
+# one-line version
+weight = [15.99491461957, 1.00782503223, 1.00782503223]
+
+# multiline version, useful for larger molecules
+weight = [
+    15.99491461957,
+    1.00782503223,
+    1.00782503223,
+]
+
+# use one deuterium
+weight = [
+    15.99491461957,
+    2.01410177812, # <- D
+    1.00782503223,
+]
