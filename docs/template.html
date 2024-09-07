@@ -574,13 +574,29 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 
 	head3(Quantum Chemistry Program Templates)
 
+	  <!-- things to cover here include both keyword replacement and default
+	  optimization line additions -->
+
 	<p>
 	</p>
 
 	head4(MOPAC)
+	<!-- keywords: none! just appends to the keyword line and geom at end -->
+	<!-- opt line: none! that's the default, so just adds 1SCF on non-opt -->
+
 	head4(Molpro)
+	<!-- keywords: geom, charge -->
+	<!-- opt line: {optg,grms=1.d-8,srms=1.d-8} -->
+	<!-- misc: added curly brace in geometry -->
+
 	head4(CFOUR)
+	<!-- keywords: geom, charge (adds CHARGE=) in front, keywords -->
+	<!-- opt line: none! this is handled by user Z-matrix with * in it -->
+
 	head4(DFTB+)
+	<!-- keywords: geom, charge -->
+
+	code_block(examples/dftb_default_opt.txt)
 
 	head3(Queue Templates)
 
