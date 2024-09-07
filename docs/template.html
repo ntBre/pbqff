@@ -272,9 +272,9 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	  the geometry before building the rest of the QFF. Because the quality of
 	  the Taylor series approximation underlying the QFF is tied to the
 	  assumption that the input geometry is a minimum on the potential energy
-	  surface, any geometries provided with <code>optimize = false</code> should
-	  definitely have been optimized prior to the pbqff run and at the same
-	  level of theory as the QFF.
+	  surface (PES), any geometries provided with <code>optimize = false</code>
+	  should definitely have been optimized prior to the pbqff run and at the
+	  same level of theory as the QFF.
 	</p>
 
 	head3(Charge)
@@ -400,6 +400,121 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 	head3(Coordinate Types)
 
 	<p>
+	  pbqff originally grew out of two separate projects: <code>go-cart</code>,
+	  which was my first implementation of finite-difference
+	  Cartesian-coordinate QFFs, and pbqff proper, which automated our group's
+	  traditional least-squares fitted symmetry-internal coordinate (SIC) QFFs.
+	  These two (SICs and Cartesian coordinates) are still supported, along with
+	  the newest but already most-used normal-coordinate QFFs. Fully documenting
+	  the construction of a symmetry-internal coordinate system is beyond the
+	  scope of this manual (at least for now but likely forever) because it
+	  involves a lot of practice and manual construction. Thus, the two
+	  recommended coordinate systems for pbqff are Cartesian coordinates,
+	  requested by <code>coord_type = "cart"</code> and normal coordinates,
+	  requested by <code>coord_type = "norm"</code>.
+	</p>
+
+	head4(Cartesian Coordinates)
+
+	<p>
+	  Cartesian coordinates are the most straightforward coordinate system. The
+	  initial geometry is either already in Cartesian (XYZ) form or can be
+	  converted from a Z-matrix by the quantum chemistry program. Then, each of
+	  these coordinates is displaced in all of the two-, three-, and
+	  four-coordinate combinations needed to map out the QFF. It is
+	  theoretically possible to approximate the PES with a least-squares fit in
+	  Cartesian coordinates, but this is not currently implemented. I tried this
+	  in a previous version of pbqff, and it led to significant bottlenecks in
+	  the least-squares fit due to the much larger number of Cartesian points
+	  compared to SICs without any improvement (and occasional worsening) of the
+	  results. In other words, Cartesian coordinates imply <code>findiff =
+	  true</code>.
+	</p>
+
+	head4(Normal Coordinates)
+
+	<p>
+	  Normal coordinates are generally a clear improvement over Cartesian
+	  coordinates. First, the VPT2 implementation in spectro only requires the
+	  semi-diagonal normal coordinate force constants (Φ<sub>iijj</sub> and
+	  Φ<sub>iiii</sub>), but these require the fully-off-diagonal Cartesian
+	  coordinate force constants like F<sub>ijkl</sub> to compute. Similarly,
+	  and even more straightforwardly, normal coordinates discard the rotational
+	  and translational degrees of freedom present in Cartesian coordinates,
+	  lowering the number of coordinates from <code>3N</code> to <code>3N
+	  &minus; 6</code>. Combined, these factors allow for far fewer single-point
+	  energies to be evaluated in normal coordinates.
+	</p>
+
+	<p>
+	  Further, normal coordinates share the convenience of Cartesian
+	  coordinates: they can be derived automatically from the input geometry.
+	  This may not be clear from this manual because of the limited treatment of
+	  SICs, but this is the primary contrast between SICs and normal coordinates
+	  because SICs also require far fewer points than Cartesians, putting them
+	  on more equal footing with normal coordinates in terms of computational
+	  cost (but still worse for even medium-sized molecules) but certainly not
+	  in convenience.
+	</p>
+
+	<p>
+	  Of course, the similarity to Cartesian coordinates is no accident. Normal
+	  coordinates can only be derived automatically by computing a Cartesian
+	  harmonic force field (HFF) to obtain the Hessian matrix, from which the
+	  mass-weighted eigenvalues can be extracted to yield the normal
+	  coordinates. This separation of the HFF and QFF leads to two additional
+	  options for normal coordinate QFFs: <code>hybrid_template</code>
+	  and <code>norm_resume_hff</code>. These are both discussed more fully in
+	  later sections, but in brief, <code>hybrid_template</code> allows you to
+	  use the plain <code>template</code> as the template for the HFF points and
+	  the <code>hybrid_template</code> for the cubic and quartic points;
+	  and <code>norm_resume_hff</code> allows you to resume a normal coordinate
+	  QFF from a checkpoint after the initial HFF.
+	</p>
+
+	<p>
+	  Normal coordinates are also the only coordinate type for which
+	  the <code>findiff</code> option actually has any effect. SICs are assumed
+	  to be fitted (<code>findiff = false</code>) and Cartesians are assumed to
+	  be finite-difference. However, because of the way normal coordinates are
+	  constructed (via the initial HFF), fitted normal coordinates are not refit
+	  to zero the approximated function gradient as was typical with SICs.
+	  Again, this is likely not to make much sense unless you're familiar with
+	  the SIC procedure itself, but in short, this means normal coordinates
+	  don't really capture the benefits SICs got from performing this fitting,
+	  and finite differences are more economical, so stick with finite
+	  differences (<code>findiff = true</code>) unless you really know what
+	  you're doing.
+	</p>
+
+	<p>
+	  Finally, normal coordinates are not without their limitations. Their main
+	  shortcoming relates to the mass-weighting involved in their definition,
+	  which causes the atomic masses to be baked into the resulting force
+	  constants in a way that is not easy to reverse. Practically, this means
+	  that computing isotopic spectroscopic data with normal coordinate QFFs
+	  requires recomputing the QFF for each combination
+	  of <a href="#atomic-masses">atomic masses</a>. Second, because they are
+	  based on the Cartesian HFF, any numerical issues in the initial HFF can be
+	  dramatically compounded in the QFF. This mostly arises with highly
+	  symmetrical molecules (symmetric and spherical tops) with many resonances,
+	  but it can also pop up for other tricky molecules. It should be pretty
+	  obvious when this happens (anharmonic frequencies of 10,000 or more), but
+	  it's something to keep in the back of your mind.
+	</p>
+
+	head4(Symmetry-Internal Coordinates)
+
+	<p>
+	  As mentioned above, fully documenting the SIC code could double the size
+	  of this document. All I'll say here is that running an SIC QFF in pbqff
+	  requires the top of an INTDER input file (the simple- and
+	  symmetry-internal coordinate definitions) in a file
+	  named <code>intder.in</code> in the directory where you invoke pbqff. If
+	  there's a resurgence of interest in SICs, I'd like to handle this kind of
+	  input in a more compact way and without requiring a separate file. Feel
+	  free to send me an email or open a GitHub issue if you are interested in
+	  this or try using it and encounter any problems.
 	</p>
 
 	head3(Quantum Chemistry Program Types)
