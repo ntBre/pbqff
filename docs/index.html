@@ -724,19 +724,255 @@ HOH = 109.5
 	  optimization line additions -->
 
 	<p>
+	  The program <code>template</code> is the main way for you to customize how
+	  pbqff runs the single-point energies that compose the QFF. The template
+	  syntax is inspired by
+	  Go's <a href="https://pkg.go.dev/text/template">template</a> library,
+	  where patterns like <code>{{.geom}}</code> are replaced by the
+	  appropriate information (somewhat obviously the geometry in this example).
+	  Currently each supported program has its own set of supported options, but
+	  most of them are the same at least.
+	</p>
+
+	<p>
+	  Most users of pbqff specify both these <code>template</code> values and
+	  the <code>queue_template</code> discussed in the next section as a literal
+	  TOML string, but you can also specify an external file using the syntax
+	  below.
+	</p>
+
+	<pre><code>template = { file = "/path/to/template" }</code></pre>
+
+	<p>
+	  All of the examples in the following sections will work for either
+	  plain <code>template</code> input or for the
+	  special <code>hybrid_template</code> option. As mentioned in the section
+	  on <a href="#normal-coordinates">normal
+	  coordinates</a>, <code>hybrid_template</code> allows you to run the HFF
+	  portion of a normal coordinate QFF with one level of theory and the cubic
+	  and quartic portions of the QFF at a second level of theory. As far as I
+	  know, this has only been tested to work with <a href="#molpro">Molpro</a>,
+	  so see that section below for an example input file.
 	</p>
 
 	<h4 id=mopac><a href="#mopac">MOPAC</a></h4>
 
+	<p>
+	  MOPAC has the simplest <code>template</code> format because MOPAC uses a
+	  single line at the start of the file to specify all options, followed by
+	  two comment lines and the geometry. As such, pbqff does not handle any
+	  template parameter replacements for MOPAC (the curly brace stuff from the
+	  paragraphs above). Options like the charge and whether or not to run an
+	  optimization are simply appended to the first line of the template, and
+	  the geometry for each single-point energy calculation is appended to the
+	  file after two arbitrary comment lines. As such, the <code>template</code>
+	  value in a MOPAC QFF should be a single-line TOML string like those in the
+	  examples below.
+	</p>
+
+	<pre><code>template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"</code></pre>
+	<pre><code>template = """gnorm=0.0 scfcrt=1.D-21 aux(precision=14 comp xp xs xw) \
+PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
+
+	<p>
+	  As shown in the second example, you can also use the multi-line TOML
+	  string syntax (triple quotes) to allow very long templates to be broken
+	  across multiple lines with a backslash. Unfortunately this is not
+	  supported by single-line TOML strings with single quotes.
+	</p>
+
+	<p>
+	  MOPAC defaults to running a geometry optimization, so the input
+	  option <code>1SCF</code> is added to the input line to disable this for
+	  the single-point energy computations. As far as I know it's safe to
+	  include any geometry-optimization-specific options
+	  (like <code>gnorm</code> above) in these single-point calculations, so
+	  pbqff doesn't have to do any further processing on the template.
+	</p>
+
 	<h4 id=molpro><a href="#molpro">Molpro</a></h4>
+
+	<p>
+	  For Molpro, pbqff supports two template
+	  parameters: <code>{{.geom}}</code> and <code>{{.charge}}</code>,
+	  although it's often easier to supply the charge literally in
+	  your <code>template</code>. The <code>charge</code> option is quite
+	  straightforward as the input <code>charge</code> option is simply
+	  substituted directly for <code>{{.charge}}</code> in the template
+	  string. The geometry handling, on the other hand, is slightly more
+	  complicated. Notice that there is no closing curly brace in the templates
+	  below. The reason for this is simply programming convenience, at a slight
+	  risk of confusion for the user. For Z-matrix geometries, Molpro expects
+	  the main Z-matrix to be inside the curly braces and the variable
+	  definitions to follow the closing curly brace. In contrast, XYZ geometries
+	  should be fully enclosed in curly braces. Omitting the closing curly brace
+	  makes it easier for pbqff to handle this distinction.
+	</p>
+
+	<p>
+	  Here's a somewhat complicated template example that captures the
+	  flexibility of the template input for a TZ-cCR calculation:
+	</p>
+
+	<pre><code>template = """memory,8,g
+gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+gthresh,optgrad=1.d-8,optstep=1.d-8;
+nocompress;
+
+geometry={
+{{.geom}}
+basis={
+default,cc-pCVTZ-f12
+}
+set,charge={{.charge}}
+set,spin=0
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10,nocheck;core}
+{optg,grms=1.d-8,srms=1.d-8}
+etz=energy
+
+basis=cc-pvtz-dk
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edk=energy
+
+basis=cc-pvtz-dk
+dkroll=1
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edkr=energy
+
+pbqff=etz(2)+edkr-edk
+show[1,f20.12],pbqff"""</code></pre>
+
+	<p>
+	  In addition to the note about the missing curly brace, also note that
+	  pbqff will only read the output energy if it is named <code>pbqff</code>
+	  and displayed in the output using the <code>show</code> directive. For
+	  simple calculations, this can be achieved using an expression
+	  like <code>pbqff=energy</code>, followed by thte <code>show</code> line in
+	  the example above. However, for F12 calculations in particular, it's
+	  important to remember that the F12 energy in Molpro is a vector, with the
+	  F12a and F12b energies in it. The example above uses the F12b energy
+	  (<code>etz(2)</code>). This might look unusual if you're a programmer used
+	  to indices starting at zero, but Fortran indices actually start at 1,
+	  meaning <code>etz(1)</code> is the F12a energy and <code>etz(2)</code> is
+	  the F12b energy.
+	</p>
+
+	<p>
+	  Another important feature of Molpro template handling is how it adds or
+	  subtracts geometry optimization keywords depending on the type of
+	  calculation requested. There are four possibilities here:
+	</p>
+
+	<ul>
+	  <li>Optimization requested and <code>optg</code> included in template</li>
+	  <li>Optimization requested and no <code>optg</code> included</li>
+	  <li>No optimization requested and <code>optg</code> included</li>
+	  <li>No optimization requested and no <code>optg</code> included</li>
+	</ul>
+
+	<p>
+	  In the first and last cases, pbqff doesn't have to make any changes to
+	  your template. However, in the second and third cases, pbqff needs to
+	  bring the request for an initial geometry optimization into alignment with
+	  the provided template. It does this by either adding a
+	  default <code>optg</code> directive
+	  (<code>{optg,grms=1.d-8,srms=1.d-8}</code>) in the second case, or by
+	  deleting a line matching the regular
+	  expression <code>(?i)^.*optg(,|\s*$)</code>. If you're not familiar with
+	  the intricacies of regular expressions, this looks for a line starting
+	  with some optional junk (such as a curly brace), followed by the literal
+	  word <code>optg</code>, followed by either a comma or some number of
+	  spaces and a newline. While writing this, it doesn't seem quite right, but
+	  it has worked for a couple of years in practice to identify
+	  typical <code>optg</code> lines
+	  like <code>{optg,grms=1.d-8,srms=1.d-8}</code> and skip lines
+	  like <code>gthresh,optgrad=1.d-8,optstep=1.d-8;</code>, which also
+	  includes <code>optg</code> but not in the right way.
+	</p>
+
+	<p>
+	  In summary, if you're picky about how the optimization should be run, be
+	  sure to include a single-line <code>optg</code> directive of your own
+	  choosing, and pbqff will remove it as needed for single-point energy
+	  calculations. Otherwise you can omit an <code>optg</code> line entirely
+	  and pbqff will include a default one as needed too.
+	</p>
+
+	<p>
+	  As one final example, here's a combination <code>template</code>
+	  and <code>hybrid_template</code> input file section for a TZ-cCR+DZ
+	  calculation:
+	</p>
+
+	<pre><code>template = """memory,1,g
+gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+gthresh,optgrad=1.d-8,optstep=1.d-8;
+nocompress;
+
+geometry={
+{{.geom}}
+basis={
+default,cc-pCVTZ-f12
+}
+set,charge={{.charge}}
+set,spin=0
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10,nocheck;core}
+{optg,grms=1.d-8,srms=1.d-8}
+etz=energy
+
+basis=cc-pvtz-dk
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edk=energy
+
+basis=cc-pvtz-dk
+dkroll=1
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T),thrden=1.0d-12,thrvar=1.0d-10,nocheck;}
+edkr=energy
+
+pbqff=etz(2)+edkr-edk
+show[1,f20.12],pbqff"""
+
+hybrid_template = """memory,1,g
+gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+gthresh,optgrad=1.d-8,optstep=1.d-8;
+nocompress;
+
+geometry={
+{{.geom}}
+basis={
+default,cc-pVDZ-f12
+}
+set,charge={{.charge}}
+set,spin=0
+hf,accuracy=16,energy=1.0d-10
+{CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10}
+{optg,grms=1.d-8,srms=1.d-8}
+
+pbqff=energy(2)
+show[1,f20.12],pbqff
+"""</code></pre>
+
+	<p>
+	  If renamed just to <code>template</code>, the <code>hybrid_template</code>
+	  would serve as an F12-DZ template itself.
+	</p>
+
 	<!-- keywords: geom, charge -->
 	<!-- opt line: {optg,grms=1.d-8,srms=1.d-8} -->
-	<!-- misc: added curly brace in geometry -->
+	<!-- misc: added curly brace in geometry, hybrid qffs -->
 
 	<h4 id=cfour><a href="#cfour">CFOUR</a></h4>
 	<!-- keywords: geom, charge (adds CHARGE=) in front, keywords -->
+	<!-- opt line: none! this is handled by user Z-matrix with * in it -->
 
 	<h4 id=dftb+><a href="#dftb+">DFTB+</a></h4>
+	<!-- keywords: geom, charge -->
 
 	<pre><code>Driver = GeometryOptimization {
 	Optimizer = Rational {}
