@@ -963,16 +963,46 @@ show[1,f20.12],pbqff
 	  would serve as an F12-DZ template itself.
 	</p>
 
-	<!-- keywords: geom, charge -->
-	<!-- opt line: {optg,grms=1.d-8,srms=1.d-8} -->
-	<!-- misc: added curly brace in geometry, hybrid qffs -->
-
 	<h4 id=cfour><a href="#cfour">CFOUR</a></h4>
-	<!-- keywords: geom, charge (adds CHARGE=) in front, keywords -->
-	<!-- opt line: none! this is handled by user Z-matrix with * in it -->
+
+	<p>
+	  Like with Molpro, pbqff also supports the <code>{{.geom}}</code>
+	  and <code>{{.charge}}</code> keywords for CFOUR. Additionally, pbqff
+	  recognizes a <code>{{.keywords}}</code> template parameter that it
+	  needs to know where to insert things like <code>COORD=CARTESIAN</code> for
+	  the single-point energy calculations. One, admittedly strange, difference
+	  with the CFOUR <code>{{.charge}}</code> parameter is that it also adds
+	  the prefix <code>CHARGE=</code> as expected by CFOUR. With these
+	  considerations in mind, an example CFOUR template for a CCSD/cc-pVTZ QFF
+	  is shown below.
+	</p>
+
+	<pre><code>comment line
+{{.geom}}
+
+*CFOUR(CALC=CCSD,BASIS=PVTZ,MEMORY_SIZE=8,MEM_UNIT=GB,REF=RHF,MULT=1
+{{.charge}}
+{{.keywords}})</code></pre>
+
+	<p>
+	  Unlike Molpro, there is no special handling of geometry optimization. If
+	  you request a geometry optimization, pbqff assumes that you have marked
+	  all of the variables in the Z-matrix to optimize with <code>*</code> as
+	  expected by CFOUR and will extract the optimized Cartesian geometry from
+	  the MOLDEN output file in the same directory as the main CFOUR output.
+	</p>
 
 	<h4 id=dftb+><a href="#dftb+">DFTB+</a></h4>
-	<!-- keywords: geom, charge -->
+
+	<p>
+	  Again, like Molpro and CFOUR, DFTB+ supports
+	  the <code>{{.geom}}</code> and <code>{{.charge}}</code> template
+	  parameters. Also like Molpro, DFTB+ requires a rather elaborate geometry
+	  optimization input section, so if you don't provide a section matching the
+	  regular expression <code>(?i)Driver = GeometryOptimization</code>
+	  (basically just that literal text but ignoring case), pbqff will add the
+	  default value shown below.
+	</p>
 
 	<pre><code>Driver = GeometryOptimization {
 	Optimizer = Rational {}
@@ -987,6 +1017,57 @@ show[1,f20.12],pbqff
 		DispNorm = 1e-7
 	}
 }
+</code></pre>
+
+	<p>
+	  And here is a full DFTB+ example template with a custom geometry
+	  optimization block that is probably a more sensible default.
+	</p>
+
+	<pre><code>template = """Geometry = xyzFormat {
+{{.geom}}
+}
+
+Hamiltonian = DFTB {
+  Scc = Yes
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/home/brent/chem/dftb/matsci/"
+    Separator = "-"
+    Suffix = ".skf"
+  }
+  MaxAngularMomentum {
+    C = "p"
+    H = "s"
+  }
+  Charge = {{.charge}}
+  PolynomialRepulsive = SetForAll { Yes }
+}
+
+Options {
+}
+
+Analysis {
+  CalculateForces = Yes
+}
+
+ParserOptions {
+  ParserVersion = 12
+}
+
+Driver = GeometryOptimization {
+  Optimizer = LBFGS { }
+  MovedAtoms = 1:-1
+  MaxSteps = 500
+  OutputPrefix = "geom.out"
+  Convergence {
+    Energy = 1e-8
+    GradElem = 1e-8
+    GradNorm = 1e-8
+    DispElem = 1e-7
+    DispNorm = 1e-7
+  }
+}
+"""
 </code></pre>
 
 	<h3 id=queue-templates><a href="#queue-templates">Queue Templates</a></h3>

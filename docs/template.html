@@ -740,18 +740,50 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	  would serve as an F12-DZ template itself.
 	</p>
 
-	<!-- keywords: geom, charge -->
-	<!-- opt line: {optg,grms=1.d-8,srms=1.d-8} -->
-	<!-- misc: added curly brace in geometry, hybrid qffs -->
-
 	head4(CFOUR)
-	<!-- keywords: geom, charge (adds CHARGE=) in front, keywords -->
-	<!-- opt line: none! this is handled by user Z-matrix with * in it -->
+
+	<p>
+	  Like with Molpro, pbqff also supports the <code>{{{{.geom}}}}</code>
+	  and <code>{{{{.charge}}}}</code> keywords for CFOUR. Additionally, pbqff
+	  recognizes a <code>{{{{.keywords}}}}</code> template parameter that it
+	  needs to know where to insert things like <code>COORD=CARTESIAN</code> for
+	  the single-point energy calculations. One, admittedly strange, difference
+	  with the CFOUR <code>{{{{.charge}}}}</code> parameter is that it also adds
+	  the prefix <code>CHARGE=</code> as expected by CFOUR. With these
+	  considerations in mind, an example CFOUR template for a CCSD/cc-pVTZ QFF
+	  is shown below.
+	</p>
+
+	code_block(examples/cfour/template.toml)
+
+	<p>
+	  Unlike Molpro, there is no special handling of geometry optimization. If
+	  you request a geometry optimization, pbqff assumes that you have marked
+	  all of the variables in the Z-matrix to optimize with <code>*</code> as
+	  expected by CFOUR and will extract the optimized Cartesian geometry from
+	  the MOLDEN output file in the same directory as the main CFOUR output.
+	</p>
 
 	head4(DFTB+)
-	<!-- keywords: geom, charge -->
+
+	<p>
+	  Again, like Molpro and CFOUR, DFTB+ supports
+	  the <code>{{{{.geom}}}}</code> and <code>{{{{.charge}}}}</code> template
+	  parameters. Also like Molpro, DFTB+ requires a rather elaborate geometry
+	  optimization input section, so if you don't provide a section matching the
+	  regular expression <code>(?i)Driver = GeometryOptimization</code>
+	  (basically just that literal text but ignoring case), pbqff will add the
+	  default value shown below.
+	</p>
 
 	code_block(examples/dftb_default_opt.txt)
+
+	<p>
+	  And here is a full DFTB+ example template with a custom geometry
+	  optimization block that is probably a more sensible default.
+	</p>
+
+	code_block(examples/dftb/template.toml)
 
 	head3(Queue Templates)
 

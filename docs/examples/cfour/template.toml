@@ -1,0 +1,6 @@
+comment line
+{{{{.geom}}}}
+
+*CFOUR(CALC=CCSD,BASIS=PVTZ,MEMORY_SIZE=8,MEM_UNIT=GB,REF=RHF,MULT=1
+{{{{.charge}}}}
+{{{{.keywords}}}})

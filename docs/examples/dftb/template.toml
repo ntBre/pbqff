@@ -1,0 +1,44 @@
+template = """Geometry = xyzFormat {
+{{{{.geom}}}}
+}
+
+Hamiltonian = DFTB {
+  Scc = Yes
+  SlaterKosterFiles = Type2FileNames {
+    Prefix = "/home/brent/chem/dftb/matsci/"
+    Separator = "-"
+    Suffix = ".skf"
+  }
+  MaxAngularMomentum {
+    C = "p"
+    H = "s"
+  }
+  Charge = {{{{.charge}}}}
+  PolynomialRepulsive = SetForAll { Yes }
+}
+
+Options {
+}
+
+Analysis {
+  CalculateForces = Yes
+}
+
+ParserOptions {
+  ParserVersion = 12
+}
+
+Driver = GeometryOptimization {
+  Optimizer = LBFGS { }
+  MovedAtoms = 1:-1
+  MaxSteps = 500
+  OutputPrefix = "geom.out"
+  Convergence {
+    Energy = 1e-8
+    GradElem = 1e-8
+    GradNorm = 1e-8
+    DispElem = 1e-7
+    DispNorm = 1e-7
+  }
+}
+"""
