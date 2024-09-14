@@ -16,10 +16,10 @@ coord_type = "norm"
 template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
 queue_template = """
 #!/bin/sh
-#PBS -N {{.basename}}
+#PBS -N {{{{.basename}}}}
 #PBS -S /bin/bash
 #PBS -j oe
-#PBS -o pts/{{.basename}}.out
+#PBS -o pts/{{{{.basename}}}}.out
 #PBS -W umask=022
 #PBS -l walltime=100:00:00
 #PBS -l cput=100:00:00
@@ -31,10 +31,11 @@ module load openpbs
 
 export WORKDIR=$PBS_O_WORKDIR
 export TMPDIR=/tmp/$USER/$PBS_JOBID
-export MOPAC_PATH=/ddnlus/r2518/Packages/mopac/build/mopac
+export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
 export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
 cd $WORKDIR
 mkdir -p $TMPDIR
+trap 'rm -rf $TMPDIR' EXIT
 """
 program = "mopac"
 queue = "slurm"

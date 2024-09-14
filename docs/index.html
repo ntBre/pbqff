@@ -100,13 +100,25 @@
 <ul>
 <li><a href="#pbs">PBS</a></li>
 <ul>
-<li><a href="#mopac">MOPAC</a></li>
-<li><a href="#molpro">Molpro</a></li>
-<li><a href="#cfour">CFOUR</a></li>
-<li><a href="#dftb+">DFTB+</a></li>
+<li><a href="#mopac-">MOPAC </a></li>
+<li><a href="#molpro-">Molpro </a></li>
+<li><a href="#cfour-">CFOUR </a></li>
+<li><a href="#dftb+-">DFTB+ </a></li>
 </ul>
 <li><a href="#slurm">Slurm</a></li>
+<ul>
+<li><a href="#mopac--">MOPAC  </a></li>
+<li><a href="#molpro--">Molpro  </a></li>
+<li><a href="#cfour--">CFOUR  </a></li>
+<li><a href="#dftb+--">DFTB+  </a></li>
+</ul>
 <li><a href="#local">Local</a></li>
+<ul>
+<li><a href="#mopac---">MOPAC   </a></li>
+<li><a href="#molpro---">Molpro   </a></li>
+<li><a href="#cfour---">CFOUR   </a></li>
+<li><a href="#dftb+---">DFTB+   </a></li>
+</ul>
 </ul>
 <li><a href="#derivative-types">Derivative Types</a></li>
 <li><a href="#checkpoints">Checkpoints</a></li>
@@ -194,10 +206,10 @@ coord_type = "norm"
 template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
 queue_template = """
 #!/bin/sh
-#PBS -N .basename
+#PBS -N {{.basename}}
 #PBS -S /bin/bash
 #PBS -j oe
-#PBS -o pts/.basename.out
+#PBS -o pts/{{.basename}}.out
 #PBS -W umask=022
 #PBS -l walltime=100:00:00
 #PBS -l cput=100:00:00
@@ -209,7 +221,7 @@ module load openpbs
 
 export WORKDIR=$PBS_O_WORKDIR
 export TMPDIR=/tmp/$USER/$PBS_JOBID
-export MOPAC_PATH=/ddnlus/r2518/Packages/mopac/build/mopac
+export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
 export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
 cd $WORKDIR
 mkdir -p $TMPDIR
@@ -1159,16 +1171,74 @@ Driver = GeometryOptimization {
 	  updated <code>CFOUR_CMD</code> value.
 	</p>
 
-	<h5 id=mopac><a href="#mopac">MOPAC</a></h5>
-	<h5 id=molpro><a href="#molpro">Molpro</a></h5>
-	<h5 id=cfour><a href="#cfour">CFOUR</a></h5>
-	<h5 id=dftb+><a href="#dftb+">DFTB+</a></h5>
+	<!-- These spaces are a disgusting hack to keep separate anchors for each
+	section with the same visible name -->
+
+	<h5 id=mopac-><a href="#mopac-">MOPAC </a></h5>
+	<pre><code>geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+optimize = true
+charge = 0
+step_size = 0.005
+sleep_int = 2
+job_limit = 2048
+chunk_size = 1
+coord_type = "norm"
+template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+queue_template = """
+#!/bin/sh
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o pts/{{.basename}}.out
+#PBS -W umask=022
+#PBS -l walltime=100:00:00
+#PBS -l cput=100:00:00
+#PBS -l ncpus=1
+#PBS -l mem=16gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
+export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
+cd $WORKDIR
+mkdir -p $TMPDIR
+"""
+program = "mopac"
+queue = "slurm"
+findiff = true
+check_int = 0</code></pre>
+
+	<h5 id=molpro-><a href="#molpro-">Molpro </a></h5>
+	<pre><code></code></pre>
+
+	<h5 id=cfour-><a href="#cfour-">CFOUR </a></h5>
+	<pre><code></code></pre>
+
+	<h5 id=dftb+-><a href="#dftb+-">DFTB+ </a></h5>
+	<pre><code></code></pre>
 
 	<h4 id=slurm><a href="#slurm">Slurm</a></h4>
-	<!-- TODO -->
+
+	<h5 id=mopac--><a href="#mopac--">MOPAC  </a></h5>
+	<h5 id=molpro--><a href="#molpro--">Molpro  </a></h5>
+	<h5 id=cfour--><a href="#cfour--">CFOUR  </a></h5>
+	<h5 id=dftb+--><a href="#dftb+--">DFTB+  </a></h5>
 
 	<h4 id=local><a href="#local">Local</a></h4>
-	<!-- TODO -->
+	<h5 id=mopac---><a href="#mopac---">MOPAC   </a></h5>
+	<h5 id=molpro---><a href="#molpro---">Molpro   </a></h5>
+	<h5 id=cfour---><a href="#cfour---">CFOUR   </a></h5>
+	<h5 id=dftb+---><a href="#dftb+---">DFTB+   </a></h5>
 
 	<h3 id=derivative-types><a href="#derivative-types">Derivative Types</a></h3>
 	<!-- TODO -->

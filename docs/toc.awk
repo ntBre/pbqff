@@ -2,7 +2,7 @@
 
 function make_id(s,   ret) {
 	ret = tolower(s)
-	gsub(/ +/, "-", ret)
+	gsub(/ /, "-", ret)
 	return ret
 }
 

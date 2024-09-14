@@ -844,16 +844,33 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	  updated <code>CFOUR_CMD</code> value.
 	</p>
 
-	head5(MOPAC)
-	head5(Molpro)
-	head5(CFOUR)
-	head5(DFTB+)
+	<!-- These spaces are a disgusting hack to keep separate anchors for each
+	section with the same visible name -->
+
+	head5(MOPAC )
+	code_block(examples/mopac_pbs.toml)
+
+	head5(Molpro )
+	code_block(examples/molpro_pbs.toml)
+
+	head5(CFOUR )
+	code_block(examples/cfour_pbs.toml)
+
+	head5(DFTB+ )
+	code_block(examples/dftb_pbs.toml)
 
 	head4(Slurm)
-	<!-- TODO -->
+
+	head5(MOPAC  )
+	head5(Molpro  )
+	head5(CFOUR  )
+	head5(DFTB+  )
 
 	head4(Local)
-	<!-- TODO -->
+	head5(MOPAC   )
+	head5(Molpro   )
+	head5(CFOUR   )
+	head5(DFTB+   )
 
 	head3(Derivative Types)
 	<!-- TODO -->
