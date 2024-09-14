@@ -1,0 +1,5 @@
+Program,Template
+MOPAC,<code>$MOPAC_CMD {filename}.mop</code>
+Molpro,<code>$MOLPRO_CMD {filename}.inp</code>
+CFOUR,<code>(cd {filename} && $CFOUR_CMD)</code>
+DFTB+,<code>(cd {filename} && $DFTB_CMD > out)</code>

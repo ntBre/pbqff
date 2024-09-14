@@ -1,0 +1,5 @@
+Program,Default Command
+MOPAC,<code>/ddnlus/r2518/Packages/mopac/build/mopac</code>
+Molpro,<code>"molpro -t $NCPUS --no-xml-output"</code>
+CFOUR,<code>"/ddn/home8/r2610/bin/c4ext_new.sh $NCPUS"</code>
+DFTB+,<code>/ddnlus/r2518/.conda/envs/dftb/bin/dftb+</code>

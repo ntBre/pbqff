@@ -8,6 +8,7 @@
 
 
 
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -43,11 +44,11 @@
 		  padding: 8px 10px;
 		  text-align: left;
 	  }
-	  h2 a, h3 a, h4 a {
+	  h2 a, h3 a, h4 a, h5 a {
 		  text-decoration: none;
 		  color: inherit;
 	  }
-	  h2 a:hover, h3 a:hover, h4 a:hover {
+	  h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover {
 		  text-decoration: underline;
 	  }
 	</style>
@@ -65,67 +66,57 @@
 
 	<h2>Table of Contents</h2>
 	<ul>
-	<li><a href="#introduction">Introduction</a></li>
-	<li><a href="#program-input">Program Input</a></li>
-	<ul>
-		<li><a href="#example-input-file">Example Input File</a></li>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#program-input">Program Input</a></li>
+<ul>
+<li><a href="#example-input-file">Example Input File</a></li>
+<li><a href="#summary-of-input-options">Summary of Input Options</a></li>
 </ul>
-	<ul>
-		<li><a href="#summary-of-input-options">Summary of Input Options</a></li>
+<ul>
+<li><a href="#geometry-specification-and-optimization">Geometry Specification and Optimization</a></li>
+<li><a href="#charge">Charge</a></li>
+<li><a href="#step-size">Step Size</a></li>
+<li><a href="#sleep-interval">Sleep Interval</a></li>
+<li><a href="#job-limit-and-chunk-size">Job Limit and Chunk Size</a></li>
+<ul>
+<li><a href="#rules-of-thumb">Rules of Thumb</a></li>
 </ul>
-	<ul>
-	<li><a href="#geometry-specification-and-optimization">Geometry Specification and Optimization</a></li>
-		<li><a href="#charge">Charge</a></li>
-		<li><a href="#step-size">Step Size</a></li>
-		<li><a href="#sleep-interval">Sleep Interval</a></li>
-		<li><a href="#job-limit-and-chunk-size">Job Limit and Chunk Size</a></li>
-	<ul>
-		<li><a href="#rules-of-thumb">Rules of Thumb</a></li>
+<li><a href="#coordinate-types">Coordinate Types</a></li>
+<ul>
+<li><a href="#cartesian-coordinates">Cartesian Coordinates</a></li>
+<li><a href="#normal-coordinates">Normal Coordinates</a></li>
+<li><a href="#symmetry-internal-coordinates">Symmetry-Internal Coordinates</a></li>
 </ul>
-		<li><a href="#coordinate-types">Coordinate Types</a></li>
-	<ul>
-		<li><a href="#cartesian-coordinates">Cartesian Coordinates</a></li>
+<li><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></li>
+<li><a href="#queue-types">Queue Types</a></li>
+<li><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></li>
+<ul>
+<li><a href="#mopac">MOPAC</a></li>
+<li><a href="#molpro">Molpro</a></li>
+<li><a href="#cfour">CFOUR</a></li>
+<li><a href="#dftb+">DFTB+</a></li>
 </ul>
-	<ul>
-		<li><a href="#normal-coordinates">Normal Coordinates</a></li>
+<li><a href="#queue-templates">Queue Templates</a></li>
+<ul>
+<li><a href="#pbs">PBS</a></li>
+<ul>
+<li><a href="#mopac">MOPAC</a></li>
+<li><a href="#molpro">Molpro</a></li>
+<li><a href="#cfour">CFOUR</a></li>
+<li><a href="#dftb+">DFTB+</a></li>
 </ul>
-	<ul>
-		<li><a href="#symmetry-internal-coordinates">Symmetry-Internal Coordinates</a></li>
+<li><a href="#slurm">Slurm</a></li>
+<li><a href="#local">Local</a></li>
 </ul>
-		<li><a href="#quantum-chemistry-program-types">Quantum Chemistry Program Types</a></li>
-		<li><a href="#queue-types">Queue Types</a></li>
-		<li><a href="#quantum-chemistry-program-templates">Quantum Chemistry Program Templates</a></li>
-	<ul>
-		<li><a href="#mopac">MOPAC</a></li>
+<li><a href="#derivative-types">Derivative Types</a></li>
+<li><a href="#checkpoints">Checkpoints</a></li>
+<li><a href="#atomic-masses">Atomic Masses</a></li>
+<ul>
+<li><a href="#example">Example</a></li>
 </ul>
-	<ul>
-		<li><a href="#molpro">Molpro</a></li>
+<li><a href="#dummy-atoms">Dummy Atoms</a></li>
+<li><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></li>
 </ul>
-	<ul>
-		<li><a href="#cfour">CFOUR</a></li>
-</ul>
-	<ul>
-		<li><a href="#dftb+">DFTB+</a></li>
-</ul>
-		<li><a href="#queue-templates">Queue Templates</a></li>
-	<ul>
-		<li><a href="#pbs">PBS</a></li>
-</ul>
-	<ul>
-		<li><a href="#slurm">Slurm</a></li>
-</ul>
-	<ul>
-		<li><a href="#local">Local</a></li>
-</ul>
-		<li><a href="#derivative-types">Derivative Types</a></li>
-		<li><a href="#checkpoints">Checkpoints</a></li>
-		<li><a href="#atomic-masses">Atomic Masses</a></li>
-	<ul>
-		<li><a href="#example">Example</a></li>
-</ul>
-		<li><a href="#dummy-atoms">Dummy Atoms</a></li>
-		<li><a href="#resuming-normal-coordinate-qffs">Resuming Normal Coordinate QFFs</a></li>
-	</ul>
 <li><a href="#command-line-options">Command Line Options</a></li>
 </ul>
 
@@ -1079,16 +1070,114 @@ Driver = GeometryOptimization {
 	  queues it knows about: PBS, Slurm, and what it calls a "local" queue.
 	</p>
 
+	<p>
+	  One thing to keep in mind with the queue templates is how the chemistry
+	  program is invoked for each input job. The primary means of customizing
+	  this is through the <code>PROGRAM_CMD</code> variables. The table below
+	  shows the command that pbqff writes to a submission script for each job in
+	  a chunk. Don't worry about <code>{filename}</code> here, that's a Rust
+	  format string parameter, not a template parameter like we saw in the
+	  previous sections. pbqff will automatically replace this with the proper
+	  filename.
+	</p>
+
+<!-- , followed by the default value for each program's <code>CMD</code> -->
+
+	<table>
+	  <tr>
+<th>Program</th>
+<th>Template</th>
+</tr>
+<tr>
+<td>MOPAC</td>
+<td><code>$MOPAC_CMD {filename}.mop</code></td>
+</tr>
+<tr>
+<td>Molpro</td>
+<td><code>$MOLPRO_CMD {filename}.inp</code></td>
+</tr>
+<tr>
+<td>CFOUR</td>
+<td><code>(cd {filename} && $CFOUR_CMD)</code></td>
+</tr>
+<tr>
+<td>DFTB+</td>
+<td><code>(cd {filename} && $DFTB_CMD > out)</code></td>
+</tr>
+
+	</table>
+
+	<p>
+	  Note that CFOUR and DFTB+ expect a single filename for each input file
+	  (ZMAT and dftb_in.hsd, respectively), so their "filenames" actually
+	  correspond to directories. Again, that is effectively an implementation
+	  detail of pbqff, not something you should have to worry about.
+	</p>
+
+	<p>
+	  The structure of each section below is the same. First, tables containing
+	  the default <code>CMD</code> values for each of the supported programs on
+	  that queue are shown, followed by example <code>queue_template</code>
+	  values for each program.
+	</p>
+
 	<h4 id=pbs><a href="#pbs">PBS</a></h4>
+
+	<table>
+	  <tr>
+<th>Program</th>
+<th>Default Command</th>
+</tr>
+<tr>
+<td>MOPAC</td>
+<td><code>/ddnlus/r2518/Packages/mopac/build/mopac</code></td>
+</tr>
+<tr>
+<td>Molpro</td>
+<td><code>"molpro -t $NCPUS --no-xml-output"</code></td>
+</tr>
+<tr>
+<td>CFOUR</td>
+<td><code>"/ddn/home8/r2610/bin/c4ext_new.sh $NCPUS"</code></td>
+</tr>
+<tr>
+<td>DFTB+</td>
+<td><code>/ddnlus/r2518/.conda/envs/dftb/bin/dftb+</code></td>
+</tr>
+
+	</table>
+
+	<p>
+	  MOPAC and DFTB+ have simple commands (just paths to executables here that
+	  don't require quotes, but Molpro and CFOUR require additional arguments
+	  separated by spaces. For MCSR users, note that the default CFOUR command
+	  has not been updated following the Lustre migration and will thus not
+	  work. I was going to update this, but that CFOUR script also contains many
+	  references to the previous filesystem and won't work anyway. Thus,
+	  consider this default only as an example. Real usage of CFOUR will require
+	  a custom <code>queue_template</code> with an
+	  updated <code>CFOUR_CMD</code> value.
+	</p>
+
+	<h5 id=mopac><a href="#mopac">MOPAC</a></h5>
+	<h5 id=molpro><a href="#molpro">Molpro</a></h5>
+	<h5 id=cfour><a href="#cfour">CFOUR</a></h5>
+	<h5 id=dftb+><a href="#dftb+">DFTB+</a></h5>
+
 	<h4 id=slurm><a href="#slurm">Slurm</a></h4>
+	<!-- TODO -->
+
 	<h4 id=local><a href="#local">Local</a></h4>
+	<!-- TODO -->
 
 	<h3 id=derivative-types><a href="#derivative-types">Derivative Types</a></h3>
+	<!-- TODO -->
 
 	<p>
 	</p>
 
 	<h3 id=checkpoints><a href="#checkpoints">Checkpoints</a></h3>
+	<!-- TODO -->
 
 	<p>
 	</p>

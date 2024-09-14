@@ -3,11 +3,12 @@
 BEGIN { print "<ul>" }
 END { print "</ul>" }
 
-/head[234]\(/ {
+/head[2345]\(/ {
 	printf "\t"
 }
 
 /head2\(/ {
+	last_level = 2
 	if (sublist) {
 		print "</ul>" # close previous sublist
 		sublist = 0
@@ -17,6 +18,7 @@ END { print "</ul>" }
 }
 
 /head3\(/ {
+	last_level = 3
 	if (!sublist) {
 		print "<ul>"
 	}
@@ -27,9 +29,21 @@ END { print "</ul>" }
 }
 
 /head4\(/ {
+	last_level = 4
 	print "<ul>" # always add a list level for this, assume it's alone
 	printf "\t\t"
 	match($0, /head4\(([^)]+)\)/, arr)
+	printf "<li><a href=\"#%s\">%s</a></li>\n", make_id(arr[1]), arr[1]
+	print "</ul>"
+}
+
+/head5\(/ {
+	last_level = 5
+	if (last_level != 4) {
+		print "<ul>" # always add a list level for this, assume it's alone
+	}
+	printf "\t\t"
+	match($0, /head5\(([^)]+)\)/, arr)
 	printf "<li><a href=\"#%s\">%s</a></li>\n", make_id(arr[1]), arr[1]
 	print "</ul>"
 }

@@ -7,6 +7,7 @@ define({{make_id}}, {{translit(tolower($1), {{ }}, {{-}})}})
 define({{head2}}, {{<h2 id=make_id($1)><a href="#make_id($1)">$1</a></h2>}})
 define({{head3}}, {{<h3 id=make_id($1)><a href="#make_id($1)">$1</a></h3>}})
 define({{head4}}, {{<h4 id=make_id($1)><a href="#make_id($1)">$1</a></h4>}})
+define({{head5}}, {{<h5 id=make_id($1)><a href="#make_id($1)">$1</a></h5>}})
 define({{code_block}}, {{<pre><code>include($1)</code></pre>}})
 define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 
@@ -45,11 +46,11 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 		  padding: 8px 10px;
 		  text-align: left;
 	  }
-	  h2 a, h3 a, h4 a {
+	  h2 a, h3 a, h4 a, h5 a {
 		  text-decoration: none;
 		  color: inherit;
 	  }
-	  h2 a:hover, h3 a:hover, h4 a:hover {
+	  h2 a:hover, h3 a:hover, h4 a:hover, h5 a:hover {
 		  text-decoration: underline;
 	  }
 	</style>
@@ -794,8 +795,59 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	  queues it knows about: PBS, Slurm, and what it calls a "local" queue.
 	</p>
 
+	<p>
+	  One thing to keep in mind with the queue templates is how the chemistry
+	  program is invoked for each input job. The primary means of customizing
+	  this is through the <code>PROGRAM_CMD</code> variables. The table below
+	  shows the command that pbqff writes to a submission script for each job in
+	  a chunk. Don't worry about <code>{filename}</code> here, that's a Rust
+	  format string parameter, not a template parameter like we saw in the
+	  previous sections. pbqff will automatically replace this with the proper
+	  filename.
+	</p>
+
+<!-- , followed by the default value for each program's <code>CMD</code> -->
+
+	<table>
+	  csv_table(tables/queue.csv)
+	</table>
+
+	<p>
+	  Note that CFOUR and DFTB+ expect a single filename for each input file
+	  (ZMAT and dftb_in.hsd, respectively), so their "filenames" actually
+	  correspond to directories. Again, that is effectively an implementation
+	  detail of pbqff, not something you should have to worry about.
+	</p>
+
+	<p>
+	  The structure of each section below is the same. First, tables containing
+	  the default <code>CMD</code> values for each of the supported programs on
+	  that queue are shown, followed by example <code>queue_template</code>
+	  values for each program.
+	</p>
+
 	head4(PBS)
-	<!-- TODO -->
+
+	<table>
+	  csv_table(tables/pbs.csv)
+	</table>
+
+	<p>
+	  MOPAC and DFTB+ have simple commands (just paths to executables here that
+	  don't require quotes, but Molpro and CFOUR require additional arguments
+	  separated by spaces. For MCSR users, note that the default CFOUR command
+	  has not been updated following the Lustre migration and will thus not
+	  work. I was going to update this, but that CFOUR script also contains many
+	  references to the previous filesystem and won't work anyway. Thus,
+	  consider this default only as an example. Real usage of CFOUR will require
+	  a custom <code>queue_template</code> with an
+	  updated <code>CFOUR_CMD</code> value.
+	</p>
+
+	head5(MOPAC)
+	head5(Molpro)
+	head5(CFOUR)
+	head5(DFTB+)
 
 	head4(Slurm)
 	<!-- TODO -->
