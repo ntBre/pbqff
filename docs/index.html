@@ -1220,11 +1220,12 @@ module load openpbs
 
 export WORKDIR=$PBS_O_WORKDIR
 export TMPDIR=/tmp/$USER/$PBS_JOBID
-export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
-export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
 cd $WORKDIR
 mkdir -p $TMPDIR
 trap 'rm -rf $TMPDIR' EXIT
+
+export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
+export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
 """
 </code></pre>
 
