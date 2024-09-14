@@ -1,0 +1,19 @@
+queue_template = """
+#!/bin/sh
+#PBS -N {{{{.basename}}}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o {{{{.filename}}}}.out
+#PBS -W umask=022
+#PBS -l walltime=1000:00:00
+#PBS -l ncpus=1
+#PBS -l mem=8gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+cd $WORKDIR
+
+CFOUR_CMD=\"/ddn/home8/r2610/bin/c4ext_new.sh $NCPUS\"
+"""

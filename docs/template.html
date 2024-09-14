@@ -820,6 +820,18 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	</p>
 
 	<p>
+	  In addition to using these command variables, all of the queue
+	  implementations have access to the template
+	  parameters <code>{{{{.basename}}}}</code>
+	  and <code>{{{{.filename}}}}</code>. These both refer to the filename of
+	  the submission script itself (usually something
+	  like <code>main0.pbs</code>
+	  or <code>main0.slurm</code>). <code>basename</code> just strips off any
+	  directory information, which makes it a bit neater to use as the job name,
+	  as shown in the examples below.
+	</p>
+
+	<p>
 	  The structure of each section below is the same. First, tables containing
 	  the default <code>CMD</code> values for each of the supported programs on
 	  that queue are shown, followed by example <code>queue_template</code>
@@ -848,16 +860,46 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	section with the same visible name -->
 
 	head5(MOPAC )
-	code_block(examples/mopac_pbs.toml)
+
+	<p>
+	  This example is repeated from the initial input file example. One feature
+	  to point out here that will be shared with later templates is the use of
+	  the <code>trap</code> shell command to run any commands that need to be
+	  run after the single-point energy calculations. pbqff just appends
+	  each <code>CMD</code> line to the template, so there's not any opportunity
+	  to append commands after that. <code>trap</code> allows you to associate
+	  an action with a signal received by the shell process, in this case the
+	  EXIT signal sent when the process exits. If you need to run multiple
+	  commands you can either separate them with colons or <code>&&</code>, or
+	  define a simple shell <code>cleanup</code> function and invoke it like
+	  this: <code>trap cleanup EXIT</code>.
+	</p>
+
+	code_block(examples/pbs_mopac.toml)
 
 	head5(Molpro )
-	code_block(examples/molpro_pbs.toml)
+	code_block(examples/pbs_molpro.toml)
+
+	<p>
+	  One potentially surprising part of this template is the use
+	  of <code>basename</code> instead of <code>filename</code> in
+	  the <code>#PBS -o</code> line. While Molpro PBS jobs get written into a
+	  single directory, unlike CFOUR and DFTB+ jobs, the Molpro module on Maple
+	  doesn't allow Molpro jobs to be submitted from a separate directory
+	  anymore. As a result, pbqff will change to the appropriate directory
+	  before submitting a job, leading to this template discrepancy.
+	<p>
 
 	head5(CFOUR )
-	code_block(examples/cfour_pbs.toml)
+	code_block(examples/pbs_cfour.toml)
+
+	<p>
+	  Again, for MCSR users, note that this example file will not run on
+	  hpcwoods because of the outdated CFOUR path and script.
+	</p>
 
 	head5(DFTB+ )
-	code_block(examples/dftb_pbs.toml)
+	code_block(examples/pbs_dftb.toml)
 
 	head4(Slurm)
 

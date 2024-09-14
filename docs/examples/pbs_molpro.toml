@@ -1,0 +1,22 @@
+queue_template = """
+#!/bin/sh
+#PBS -N {{{{.basename}}}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o {{{{.basename}}}}.out
+#PBS -W umask=022
+#PBS -l walltime=1000:00:00
+#PBS -l ncpus=1
+#PBS -l mem=8gb
+#PBS -q workq
+
+module load openpbs molpro
+
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER/$PBS_JOBID
+cd $WORKDIR
+mkdir -p $TMPDIR
+trap 'rm -rf $TMPDIR' EXIT
+
+export MOLPRO_CMD=\"molpro -t $NCPUS --no-xml-output\"
+"""
