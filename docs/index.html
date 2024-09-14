@@ -1229,6 +1229,13 @@ export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
 """
 </code></pre>
 
+	<p>
+	  Note the addition of the <code>LD_LIBRARY_PATH</code> variable along
+	  with <code>MOPAC_CMD</code>. This is not a pbqff requirement but something
+	  to keep in mind if your command points to a dynamically-linked executable
+	  like this version of MOPAC.
+	</p>
+
 	<h5 id=molpro-><a href="#molpro-">Molpro </a></h5>
 	<pre><code>queue_template = """
 #!/bin/sh
