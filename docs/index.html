@@ -1163,7 +1163,7 @@ Driver = GeometryOptimization {
 </tr>
 <tr>
 <td>CFOUR</td>
-<td><code>"/ddn/home8/r2610/bin/c4ext_new.sh $NCPUS"</code></td>
+<td><code>"/ddnlus/r2518/bin/c4ext_new.sh $NCPUS"</code></td>
 </tr>
 <tr>
 <td>DFTB+</td>
@@ -1175,13 +1175,7 @@ Driver = GeometryOptimization {
 	<p>
 	  MOPAC and DFTB+ have simple commands (just paths to executables here that
 	  don't require quotes, but Molpro and CFOUR require additional arguments
-	  separated by spaces. For MCSR users, note that the default CFOUR command
-	  has not been updated following the Lustre migration and will thus not
-	  work. I was going to update this, but that CFOUR script also contains many
-	  references to the previous filesystem and won't work anyway. Thus,
-	  consider this default only as an example. Real usage of CFOUR will require
-	  a custom <code>queue_template</code> with an
-	  updated <code>CFOUR_CMD</code> value.
+	  separated by spaces.
 	</p>
 
 	<!-- These spaces are a disgusting hack to keep separate anchors for each
@@ -1288,13 +1282,8 @@ module load openpbs
 export WORKDIR=$PBS_O_WORKDIR
 cd $WORKDIR
 
-CFOUR_CMD=\"/ddn/home8/r2610/bin/c4ext_new.sh $NCPUS\"
+CFOUR_CMD=\"/ddnlus/r2518/bin/c4ext_new.sh $NCPUS\"
 """</code></pre>
-
-	<p>
-	  Again, for MCSR users, note that this example file will not run on
-	  hpcwoods because of the outdated CFOUR path and script.
-	</p>
 
 	<h5 id=dftb+-><a href="#dftb+-">DFTB+ </a></h5>
 	<pre><code>queue_template = """

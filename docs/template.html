@@ -847,13 +847,7 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	<p>
 	  MOPAC and DFTB+ have simple commands (just paths to executables here that
 	  don't require quotes, but Molpro and CFOUR require additional arguments
-	  separated by spaces. For MCSR users, note that the default CFOUR command
-	  has not been updated following the Lustre migration and will thus not
-	  work. I was going to update this, but that CFOUR script also contains many
-	  references to the previous filesystem and won't work anyway. Thus,
-	  consider this default only as an example. Real usage of CFOUR will require
-	  a custom <code>queue_template</code> with an
-	  updated <code>CFOUR_CMD</code> value.
+	  separated by spaces.
 	</p>
 
 	<!-- These spaces are a disgusting hack to keep separate anchors for each
@@ -899,11 +893,6 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 
 	head5(CFOUR )
 	code_block(examples/pbs_cfour.toml)
-
-	<p>
-	  Again, for MCSR users, note that this example file will not run on
-	  hpcwoods because of the outdated CFOUR path and script.
-	</p>
 
 	head5(DFTB+ )
 	code_block(examples/pbs_dftb.toml)
