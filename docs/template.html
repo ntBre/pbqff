@@ -28,6 +28,7 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 		  width:60%;
 		  margin-left: auto;
 		  margin-right: auto;
+		  margin-bottom: 20%;
 	  }
 	  pre {
 		  word-wrap: normal;
@@ -59,6 +60,7 @@ define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 		  text-decoration: underline;
 	  }
 	</style>
+	<script src=qffbuddy.js></script>
   </head>
   <body>
 	<h1>pbqff</h1>
@@ -1158,6 +1160,105 @@ CFOUR_CMD=cfour)
 	  built-in <code>-h/--help</code> flag contained in pbqff. However, it is
 	  documented here in case it proves useful for other interfaces to pbqff.
 	</p>
+
+	head2(qffbuddy)
+
+	<p>
+	  You may know qffbuddy as a Python GUI for writing and even running pbqff
+	  jobs. This section contains a reimplementation of qffbuddy as an HTML
+	  form. While you can't use it to run pbqff directly, submitting the form
+	  will copy the generated TOML file to your clipboard for pasting into an
+	  actual TOML file.
+	</p>
+
+	<form onsubmit="return qffbuddy(this);" class="qffbuddy">
+	  <label for="geometry">Geometry in Å:</label>
+	  <textarea id="geometry" name="geometry" rows="10" cols="72"> </textarea>
+
+	  <br>
+	  <label for="optimize">Does it need to be optimized?</label>
+	  <input type="checkbox" id="optimize" name="optimize" value="true"/>
+
+	  <br>
+	  <label for="charge">Charge</label>
+	  <input type="number" id="charge" name="charge" value="0"/>
+
+	  <br>
+	  <label for="step_size">Step Size in Å</label>
+	  <input type="number" id="step_size" name="step_size" min="0"
+			 value="0.005" step="0.001"/>
+
+	  <br>
+	  <label for="sleep_int">Sleep interval in sec</label>
+	  <input type="number" id="sleep_int" name="sleep_int" min="1" value="60" step="1"/>
+
+	  <br>
+	  <label for="job_limit">Max jobs to submit at once</label>
+	  <input type="number" id="job_limit" name="job_limit" min="1" value="1024" step="1"/>
+
+	  <br>
+	  <label for="chunk_size">Jobs per chunk</label>
+	  <input type="number" id="chunk_size" name="chunk_size" min="1" value="1" step="1"/>
+
+	  <br>
+	  <label for="check_int">Checkpoint interval (0 to disable)</label>
+	  <input type="number" id="check_int" name="check_int" min="0" value="100" step="1"/>
+
+	  <br>
+	  <fieldset>
+		<legend>Coordinate type</legend>
+		<input type="radio" id="SIC" name="coord_type" value="sic"/>
+		<label for="SIC">SIC</label>
+		<input type="radio" id="Cartesian" name="coord_type" value="cart"/>
+		<label for="Cartesian">Cartesian</label>
+		<input type="radio" id="Normal" name="coord_type" value="norm" checked/>
+		<label for="Normal">Normal</label>
+	  </fieldset>
+
+	  <br>
+	  <label for="findiff">Finite differences? (Normal coordinates only)</label>
+	  <input type="checkbox" id="findiff" name="findiff" value="true"/>
+	  <br>
+
+	  <br>
+	  <fieldset>
+		<legend>Chemistry Program</legend>
+		<input type="radio" id="molpro" name="program" value="molpro" checked/>
+		<label for="molpro">Molpro</label>
+		<input type="radio" id="mopac" name="program" value="mopac"/>
+		<label for="mopac">Mopac</label>
+		<input type="radio" id="dftb+" name="program" value="dftb+"/>
+		<label for="dftb+">DFTB+</label>
+		<input type="radio" id="cfour" name="program" value="cfour"/>
+		<label for="cfour">CFOUR</label>
+	  </fieldset>
+
+	  <br>
+	  <fieldset>
+		<legend>Queuing System</legend>
+		<input type="radio" id="pbs" name="queue" value="pbs" checked/>
+		<label for="pbs">PBS</label>
+		<input type="radio" id="slurm" name="queue" value="slurm"/>
+		<label for="slurm">Slurm</label>
+		<input type="radio" id="local" name="queue" value="local"/>
+		<label for="local">Local</label>
+	  </fieldset>
+
+	  <br>
+	  <label for="template">Template input file</label>
+	  <textarea id="template" name="template" rows="10" cols="72"></textarea>
+
+	  <br>
+	  <label for="queue_template">Queue template (optional)</label>
+	  <textarea id="queue_template" name="queue_template" rows="10" cols="72"></textarea>
+
+	  <br>
+	  <label for="hybrid_template">Hybrid template (optional)</label>
+	  <textarea id="hybrid_template" name="hybrid_template" rows="10" cols="72"></textarea>
+
+	  <br>
+	  <input type="submit" value="Submit">
+	</form>
 
   </body>
 </html>
