@@ -969,15 +969,81 @@ MOLPRO_CMD=molpro)
 CFOUR_CMD=cfour)
 
 	head3(Derivative Types)
-	<!-- TODO -->
 
 	<p>
+	  As alluded to in the coordinate type discussion, pbqff supports two types
+	  of derivative calculations for the force constants used in the VPT2
+	  calculations. The first, and more traditional, of these involves a
+	  least-squares fit of the QFF energies to the Taylor series expansion of
+	  the potential energy surface using
+	  the <a href="https://github.com/ntBre/anpass">ANPASS</a> program. This
+	  works well for small molecules and can help to smooth over minor numerical
+	  issues because the initial guess at the PES can be refit to the function
+	  minimum to yield zero-gradient force constants. On the other hand, for
+	  large molecules, assembling the matrix of energies and performing the
+	  least-squares solution actually becomes a fairly significant bottleneck in
+	  terms of both time and memory requirements. This is compounded by larger
+	  coordinate systems like Cartesians.
+	</p>
+
+	<p>
+	  As such, most of our recent calculations have relied instead
+	  on <a href="https://en.wikipedia.org/wiki/Finite_difference">finite
+	  difference derivatives</a>, specifically central finite differences. These
+	  are easier to compute because the individual energies comprising each
+	  force constant can be accumulated directly into their corresponding force
+	  constant rather than being kept around for a big calculation at the end.
+	</p>
+
+	<p>
+	  Again, as described in the <a href="#normal-coordinates">normal
+	  coordinate</a> section, normal coordinates are the only type for which
+	  the <code>findiff</code> option is used. Cartesian coordinates
+	  assume <code>findiff = true</code> (they always use finite differences),
+	  and SICs assume <code>findiff = false</code> (they always use an ANPASS
+	  fitting). Normal coordinates also default to <code>findiff = false</code>,
+	  but because of the benefits mentioned above, you will usually want to use
+	  them with <code>findiff = true</code>, so this default should probably be
+	  updated.
 	</p>
 
 	head3(Checkpoints)
-	<!-- TODO -->
 
 	<p>
+	  Checkpoints are configured through the <code>check_int</code> option. As
+	  the name somewhat implies, this sets the checkpoint interval in units of
+	  polling iterations (see <a href="#sleep-interval">Sleep Interval</a> for
+	  more details). A value of <code>0</code> disables checkpoints, while a
+	  positive value will write a psqs checkpoint file (<code>chk.json</code>)
+	  at that interval.
+	</p>
+
+	<p>
+	  In addition to the <code>chk.json</code> file written by psqs, which
+	  contains all of the information needed to recreate the queue of running
+	  chemistry jobs, pbqff writes its own checkpoint to
+	  the <code>res.chk</code> file. This file contains the rest of the state
+	  needed to pick up after psqs resumes from its own checkpoint. Despite the
+	  strange file extension, this is also a JSON file that you can inspect if
+	  needed, although modifying either of these files could cause some very
+	  strange issues unless you are very careful.
+	</p>
+
+	<p>
+	  To resume a QFF from these two checkpoint files, provide the pbqff binary
+	  with the <code>-c</code> or <nobr><code>--checkpoint</code></nobr> flag.
+	</p>
+
+	<p>
+	  As described in the <a href="#normal-coordinates">normal coordinate</a>
+	  section, there is also a configuration option
+	  called <code>norm_resume_hff</code>, which allows resuming a normal
+	  coordinate QFF from within the initial HFF (as in before it moves on to
+	  the QFF portion). This relies on the same <code>res.chk</code> file as the
+	  normal checkpoints, but its contents are very different during the HFF. To
+	  trigger this kind of checkpoint, you actually need to omit
+	  the <code>-c</code> command line flag and only include this option in the
+	  input file itself.
 	</p>
 
 	head3(Atomic Masses)
@@ -1026,7 +1092,7 @@ CFOUR_CMD=cfour)
 	  normal coordinate QFFs into the HFF and QFF stages made it difficult to
 	  integrate with the existing checkpoint mechanism, leading to this separate
 	  option. Indeed, it is fully separate from the command
-	  line <code>--checkpoint</code> option, which can be omitted when
+	  line <code>--checkpoint</code> option, which must be omitted when
 	  using <code>norm_resume_hff</code>.
 	</p>
 
