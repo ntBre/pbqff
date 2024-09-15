@@ -9,6 +9,11 @@ define({{head3}}, {{<h3 id=make_id($1)><a href="#make_id($1)">$1</a></h3>}})
 define({{head4}}, {{<h4 id=make_id($1)><a href="#make_id($1)">$1</a></h4>}})
 define({{head5}}, {{<h5 id=make_id($1)><a href="#make_id($1)">$1</a></h5>}})
 define({{code_block}}, {{<pre><code>include($1)</code></pre>}})
+define({{qcode_block}}, {{changequote({{`}}, {{'}})dnl
+code_block($1)dnl
+changequote(`{{', `}}')dnl}})
+define({{icode_block}}, {{<pre><code>dnl
+$1 </code></pre>}})
 define({{csv_table}}, {{syscmd({{./tables/convert.awk $1}})}})
 
 <!DOCTYPE html>
@@ -892,6 +897,14 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 	<p>
 
 	head5(CFOUR )
+	<p>
+	  This template and the following are pretty much the same, as were the
+	  previous two, so there's not much more to say. In general, the top portion
+	  of each template just consists of normal PBS directives with optional
+	  template parameters, followed by a single command or couple of commands
+	  (for MOPAC) to set the variable used by pbqff.
+	</p>
+
 	code_block(examples/pbs_cfour.toml)
 
 	head5(DFTB+ )
@@ -899,16 +912,61 @@ PM6 SINGLET THREADS=1 external=params.dat"""</code></pre>
 
 	head4(Slurm)
 
+	<p>
+	  The general approach for Slurm and the local queue is identical to PBS, so
+	  you may want to read the previous section even if you're intending to use
+	  one of these other queues. Here I will just present some example templates
+	  for quick reference.
+	</p>
+
 	head5(MOPAC  )
+
+	<p>
+	  This template and the Molpro one below are embedded directly from psqs,
+	  where the templates for pbqff are defined. psqs doesn't currently define
+	  default templates for CFOUR or DFTB+, so you'll have to provide
+	  a <code>queue_template</code> of your own for those programs.
+	</p>
+
+	qcode_block(../../psqs/templates/slurm/mopac)
+
 	head5(Molpro  )
+	qcode_block(../../psqs/templates/slurm/molpro)
+
 	head5(CFOUR  )
+	qcode_block(examples/slurm_cfour.toml)
+
 	head5(DFTB+  )
+	qcode_block(examples/slurm_dftb.toml)
 
 	head4(Local)
+
+	<p>
+	  Like for Slurm, pbqff includes only two default templates for the local
+	  queue option, which is primarily used for testing. Because the local queue
+	  simply "submits" jobs using bash scripts rather than PBS or Slurm
+	  submission scripts, a local queue template can be much simpler than a PBS
+	  or Slurm template, essentially just defining the path to the executable to
+	  be run. Of course, you can add any additional commands you want, but this
+	  is all that pbqff requires.
+	</p>
+
 	head5(MOPAC   )
-	head5(Molpro   )
-	head5(CFOUR   )
+	icode_block(
+export MOPAC_CMD=/opt/mopac/mopac
+export LD_LIBRARY_PATH=/opt/mopac/)
+
 	head5(DFTB+   )
+	icode_block(
+DFTB_CMD=/opt/dftb+/dftb+)
+
+	head5(Molpro   )
+	icode_block(
+MOLPRO_CMD=molpro)
+
+	head5(CFOUR   )
+	icode_block(
+CFOUR_CMD=cfour)
 
 	head3(Derivative Types)
 	<!-- TODO -->

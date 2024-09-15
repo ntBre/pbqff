@@ -9,6 +9,8 @@
 
 
 
+
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -115,9 +117,9 @@
 <li><a href="#local">Local</a></li>
 <ul>
 <li><a href="#mopac---">MOPAC   </a></li>
+<li><a href="#dftb+---">DFTB+   </a></li>
 <li><a href="#molpro---">Molpro   </a></li>
 <li><a href="#cfour---">CFOUR   </a></li>
-<li><a href="#dftb+---">DFTB+   </a></li>
 </ul>
 </ul>
 <li><a href="#derivative-types">Derivative Types</a></li>
@@ -1265,6 +1267,14 @@ export MOLPRO_CMD=\"molpro -t $NCPUS --no-xml-output\"
 	<p>
 
 	<h5 id=cfour-><a href="#cfour-">CFOUR </a></h5>
+	<p>
+	  This template and the following are pretty much the same, as were the
+	  previous two, so there's not much more to say. In general, the top portion
+	  of each template just consists of normal PBS directives with optional
+	  template parameters, followed by a single command or couple of commands
+	  (for MOPAC) to set the variable used by pbqff.
+	</p>
+
 	<pre><code>queue_template = """
 #!/bin/sh
 #PBS -N {{.basename}}
@@ -1308,16 +1318,92 @@ export DFTB_CMD=/ddnlus/r2518/.conda/envs/dftb/bin/dftb+
 
 	<h4 id=slurm><a href="#slurm">Slurm</a></h4>
 
-	<h5 id=mopac--><a href="#mopac--">MOPAC  </a></h5>
-	<h5 id=molpro--><a href="#molpro--">Molpro  </a></h5>
-	<h5 id=cfour--><a href="#cfour--">CFOUR  </a></h5>
-	<h5 id=dftb+--><a href="#dftb+--">DFTB+  </a></h5>
+	<p>
+	  The general approach for Slurm and the local queue is identical to PBS, so
+	  you may want to read the previous section even if you're intending to use
+	  one of these other queues. Here I will just present some example templates
+	  for quick reference.
+	</p>
 
+	<h5 id=mopac--><a href="#mopac--">MOPAC  </a></h5>
+
+	<p>
+	  This template and the Molpro one below are embedded directly from psqs,
+	  where the templates for pbqff are defined. psqs doesn't currently define
+	  default templates for CFOUR or DFTB+, so you'll have to provide
+	  a <code>queue_template</code> of your own for those programs.
+	</p>
+
+	<pre><code>#!/bin/bash
+#SBATCH --job-name=semp
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o {{.filename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=1gb
+export LD_LIBRARY_PATH=/home/qc/mopac2016/
+export MOPAC_CMD=/home/qc/mopac2016/MOPAC2016.exe
+echo $SLURM_JOB_ID
+date
+hostname
+</code></pre>
+	<h5 id=molpro--><a href="#molpro--">Molpro  </a></h5>
+	<pre><code>#!/bin/bash
+#SBATCH --job-name={{.filename}}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o {{.filename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+
+MOLPRO_CMD="/home/qc/bin/molpro2020.sh 1 1"
+</code></pre>
+	<h5 id=cfour--><a href="#cfour--">CFOUR  </a></h5>
+	<pre><code>#!/bin/bash
+#SBATCH --job-name={{.filename}}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o {{.filename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+
+CFOUR_CMD="cfour"
+</code></pre>
+	<h5 id=dftb+--><a href="#dftb+--">DFTB+  </a></h5>
+	<pre><code>#!/bin/bash
+#SBATCH --job-name={{.filename}}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o {{.filename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+
+DFTB_CMD="dftb+"
+</code></pre>
 	<h4 id=local><a href="#local">Local</a></h4>
+
+	<p>
+	  Like for Slurm, pbqff includes only two default templates for the local
+	  queue option, which is primarily used for testing. Because the local queue
+	  simply "submits" jobs using bash scripts rather than PBS or Slurm
+	  submission scripts, a local queue template can be much simpler than a PBS
+	  or Slurm template, essentially just defining the path to the executable to
+	  be run. Of course, you can add any additional commands you want, but this
+	  is all that pbqff requires.
+	</p>
+
 	<h5 id=mopac---><a href="#mopac---">MOPAC   </a></h5>
-	<h5 id=molpro---><a href="#molpro---">Molpro   </a></h5>
-	<h5 id=cfour---><a href="#cfour---">CFOUR   </a></h5>
+	<pre><code>export MOPAC_CMD=/opt/mopac/mopac
+export LD_LIBRARY_PATH=/opt/mopac/ </code></pre>
+
 	<h5 id=dftb+---><a href="#dftb+---">DFTB+   </a></h5>
+	<pre><code>DFTB_CMD=/opt/dftb+/dftb+ </code></pre>
+
+	<h5 id=molpro---><a href="#molpro---">Molpro   </a></h5>
+	<pre><code>MOLPRO_CMD=molpro </code></pre>
+
+	<h5 id=cfour---><a href="#cfour---">CFOUR   </a></h5>
+	<pre><code>CFOUR_CMD=cfour </code></pre>
 
 	<h3 id=derivative-types><a href="#derivative-types">Derivative Types</a></h3>
 	<!-- TODO -->
