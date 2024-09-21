@@ -39,6 +39,36 @@ pub enum Derivative {
     Quartic(usize, usize, usize),
 }
 
+impl Derivative {
+    #[inline]
+    pub const fn parts(n: usize) -> (usize, usize, usize) {
+        let nfc2 = n * n;
+        let nfc3 = n * (n + 1) * (n + 2) / 6;
+        let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
+
+        (nfc2, nfc3, nfc4)
+    }
+
+    #[inline]
+    pub const fn harmonic(n: usize) -> Self {
+        Self::Harmonic(n * n)
+    }
+
+    #[inline]
+    pub const fn quartic(n: usize) -> Self {
+        let (nfc2, nfc3, nfc4) = Self::parts(n);
+        Self::Quartic(nfc2, nfc3, nfc4)
+    }
+
+    pub fn nfcs(&self) -> usize {
+        match self {
+            Derivative::Harmonic(n) => *n,
+            Derivative::Cubic(m, n) => *n + *m,
+            Derivative::Quartic(l, m, n) => *l + *m + *n,
+        }
+    }
+}
+
 pub enum Nderiv {
     Two,
     Four,
@@ -84,8 +114,6 @@ where
     ) -> (Spectro, Output) {
         let FirstOutput {
             n,
-            nfc2,
-            nfc3,
             mut fcs,
             mut mol,
             energies,
@@ -108,7 +136,7 @@ where
             &energies,
             &mut fcs,
             n,
-            Derivative::Quartic(nfc2, nfc3, 0),
+            Derivative::quartic(n),
             Some(freq_dir),
         );
 
@@ -140,8 +168,6 @@ where
 pub struct Resume {
     njobs: usize,
     n: usize,
-    nfc2: usize,
-    nfc3: usize,
     fcs: Vec<f64>,
     mol: Molecule,
     targets: Vec<Target>,
@@ -243,14 +269,11 @@ impl Cart {
         let ndummies = config.dummy_atoms.unwrap_or(0);
         // 3 * (#atoms - #dummy_atoms)
         let n = 3 * (geom.len() - ndummies);
-        let nfc2 = n * n;
-        let nfc3 = n * (n + 1) * (n + 2) / 6;
-        let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
         let deriv = match nderiv {
-            Nderiv::Two => Derivative::Harmonic(nfc2),
-            Nderiv::Four => Derivative::Quartic(nfc2, nfc3, nfc4),
+            Nderiv::Two => Derivative::harmonic(n),
+            Nderiv::Four => Derivative::quartic(n),
         };
-        let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+        let mut fcs = vec![0.0; deriv.nfcs()];
         let mut mol = Molecule::new(geom.to_vec());
         if let Some(ws) = &config.weights {
             for (i, w) in ws.iter().enumerate() {
@@ -295,8 +318,6 @@ impl Cart {
         let resume = Resume {
             njobs,
             n,
-            nfc2,
-            nfc3,
             fcs,
             mol,
             targets,
@@ -320,8 +341,6 @@ impl Cart {
 
         Ok(FirstOutput {
             n: resume.n,
-            nfc2: resume.nfc2,
-            nfc3: resume.nfc3,
             fcs: resume.fcs,
             mol: resume.mol,
             energies,
@@ -363,8 +382,6 @@ impl Cart {
 
         Ok(FirstOutput {
             n: resume.n,
-            nfc2: resume.nfc2,
-            nfc3: resume.nfc3,
             fcs: resume.fcs,
             mol: resume.mol,
             energies,
@@ -377,8 +394,6 @@ impl Cart {
 
 pub struct FirstOutput {
     pub n: usize,
-    pub nfc2: usize,
-    pub nfc3: usize,
     pub fcs: Vec<f64>,
     pub mol: Molecule,
     pub energies: Vec<f64>,

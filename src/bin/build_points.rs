@@ -39,10 +39,8 @@ fn main() {
     let geom = geom.xyz().expect("expected an XYZ geometry, not Zmat");
     // 3 * #atoms
     let n = 3 * geom.len();
-    let nfc2 = n * n;
-    let nfc3 = n * (n + 1) * (n + 2) / 6;
-    let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
-    let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+    let deriv = Derivative::quartic(n);
+    let mut fcs = vec![0.0; deriv.nfcs()];
 
     let mut mol = Molecule::new(geom.to_vec());
     mol.normalize();
@@ -53,7 +51,7 @@ fn main() {
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
-        Derivative::Quartic(nfc2, nfc3, nfc4),
+        deriv,
         &mut fcs,
         &mut target_map,
         n,

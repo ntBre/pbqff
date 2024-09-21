@@ -238,16 +238,14 @@ impl Normal {
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     {
         let n = self.ncoords;
-        let nfc2 = n * n;
-        let nfc3 = n * (n + 1) * (n + 2) / 6;
-        let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
-        let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+        let deriv = Derivative::quartic(n);
+        let mut fcs = vec![0.0; deriv.nfcs()];
         let mut map = BigHash::new(o.geom.clone(), pg);
         let geoms = self.build_points(
             Geom::Xyz(o.geom.atoms.clone()),
             config.step_size,
             ref_energy,
-            Derivative::Quartic(nfc2, nfc3, nfc4),
+            deriv,
             &mut fcs,
             &mut map,
             n,
@@ -272,13 +270,7 @@ impl Normal {
         let resume = Resume {
             normal: self.clone(),
             njobs: jobs.len(),
-            deriv: DerivType::Findiff {
-                targets,
-                fcs,
-                n,
-                nfc2,
-                nfc3,
-            },
+            deriv: DerivType::Findiff { targets, fcs, n },
             output: o.clone(),
             spectro: s.clone(),
         };
@@ -302,6 +294,7 @@ impl Normal {
             unreachable!()
         };
         self.map_energies(targets, &energies, &mut fcs);
+        let (nfc2, nfc3, _) = Derivative::parts(n);
         let cubs = &fcs[nfc2..nfc2 + nfc3];
         let quarts = &fcs[nfc2 + nfc3..];
         to_qcm(&o.harms, n, cubs, quarts, intder::HART)
@@ -484,10 +477,9 @@ where
                 targets,
                 mut fcs,
                 n,
-                nfc2,
-                nfc3,
             } => {
                 self.map_energies(targets, &energies, &mut fcs);
+                let (nfc2, nfc3, _) = Derivative::parts(n);
                 let cubs = &fcs[nfc2..nfc2 + nfc3];
                 let quarts = &fcs[nfc2 + nfc3..];
                 to_qcm(&output.harms, n, cubs, quarts, intder::HART)
@@ -563,8 +555,6 @@ pub enum DerivType {
         targets: Vec<Target>,
         fcs: Vec<f64>,
         n: usize,
-        nfc2: usize,
-        nfc3: usize,
     },
     Fitted {
         taylor: Taylor,
@@ -841,7 +831,6 @@ impl Normal {
         let pts_dir = root_dir.as_ref().join(PTS_DIR);
         let FirstOutput {
             n,
-            nfc2,
             mut fcs,
             mol,
             energies,
@@ -870,7 +859,7 @@ impl Normal {
             &energies,
             &mut fcs,
             n,
-            Derivative::Harmonic(nfc2),
+            Derivative::harmonic(n),
             Some(pts_dir),
         );
         let (spectro, output) =

@@ -23,6 +23,7 @@ use crate::coord_type::normal::Normal;
 use crate::coord_type::normal::Resume;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
+use crate::coord_type::Derivative;
 use crate::coord_type::Load;
 use crate::coord_type::Sic;
 
@@ -365,10 +366,8 @@ H       0.8934572640   2.2429362586  -0.0000000000",
 
     // 3 * #atoms
     let n = 3 * geom.len();
-    let nfc2 = n * n;
-    let nfc3 = n * (n + 1) * (n + 2) / 6;
-    let nfc4 = n * (n + 1) * (n + 2) * (n + 3) / 24;
-    let mut fcs = vec![0.0; nfc2 + nfc3 + nfc4];
+    let deriv = Derivative::quartic(n);
+    let mut fcs = vec![0.0; deriv.nfcs()];
 
     let mut mol = Molecule::new(geom.to_vec());
     mol.normalize();
@@ -379,7 +378,7 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         Geom::Xyz(mol.atoms.clone()),
         config.step_size,
         ref_energy,
-        crate::coord_type::Derivative::Quartic(nfc2, nfc3, nfc4),
+        deriv,
         &mut fcs,
         &mut target_map,
         n,
@@ -392,13 +391,7 @@ H       0.8934572640   2.2429362586  -0.0000000000",
         geoms.len(),
         Output::default(),
         Spectro::default(),
-        DerivType::Findiff {
-            targets,
-            fcs,
-            n,
-            nfc2,
-            nfc3,
-        },
+        DerivType::Findiff { targets, fcs, n },
     );
     let chk = "/tmp/build_pts.json";
     resume.dump(chk);
@@ -412,8 +405,6 @@ H       0.8934572640   2.2429362586  -0.0000000000",
             targets: mut gmap,
             fcs: gfcs,
             n: gn,
-            nfc2: gnfc2,
-            nfc3: gnfc3,
         } = got.deriv
         else {
             unreachable!()
@@ -422,15 +413,11 @@ H       0.8934572640   2.2429362586  -0.0000000000",
             targets: mut wmap,
             fcs: wfcs,
             n: wn,
-            nfc2: wnfc2,
-            nfc3: wnfc3,
         } = resume.deriv
         else {
             unreachable!()
         };
         assert_eq!(gn, wn);
-        assert_eq!(gnfc2, wnfc2);
-        assert_eq!(gnfc3, wnfc3);
         assert_eq!(gfcs, wfcs);
 
         gmap.sort_by(|a, b| a.source_index.cmp(&b.source_index));
