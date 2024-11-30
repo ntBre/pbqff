@@ -1,9 +1,9 @@
 ---
 source: tests/cart.rs
-expression: "read_to_string(dir.path().join(\"pbqff.out\"))?"
+expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
-PID: 3507331
+PID: [PID]
 version: deadbeef
 normalized geometry:
 

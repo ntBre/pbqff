@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, path::Path};
 
 use assert_cmd::Command;
-use insta::assert_snapshot;
+use insta::{assert_snapshot, with_settings};
 use tempfile::tempdir;
 
 #[test]
@@ -20,7 +20,13 @@ fn cart() -> std::io::Result<()> {
         read_to_string(dir.path().join("pbqff.log"))?,
     );
 
-    assert_snapshot!(read_to_string(dir.path().join("pbqff.out"))?);
+    with_settings!(
+        {filters => vec![
+            (r"PID: \d+", "PID: [PID]"),
+        ]}, {
+            assert_snapshot!(read_to_string(dir.path().join("pbqff.out")).unwrap());
+        }
+    );
 
     Ok(())
 }
