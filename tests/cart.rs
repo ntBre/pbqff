@@ -1,6 +1,7 @@
 use std::{fs::read_to_string, path::Path};
 
 use assert_cmd::Command;
+use insta::assert_snapshot;
 use tempfile::tempdir;
 
 #[test]
@@ -18,6 +19,8 @@ fn cart() -> std::io::Result<()> {
         String::from_utf8_lossy(&output.stderr),
         read_to_string(dir.path().join("pbqff.log"))?,
     );
+
+    assert_snapshot!(read_to_string(dir.path().join("pbqff.out"))?);
 
     Ok(())
 }
