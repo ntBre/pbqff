@@ -502,6 +502,7 @@ impl Sic {
         // spectro
         let mut spectro = Spectro::from(mol);
         spectro.header = SPECTRO_HEADER.to_vec();
+        spectro.verbose = true;
 
         let fc3 = spectro::new_fc3(spectro.n3n, &f3);
         let fc4 = spectro::new_fc4(spectro.n3n, &f4);
