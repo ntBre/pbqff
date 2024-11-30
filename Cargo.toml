@@ -24,7 +24,9 @@ log = "0.4.22"
 
 [dev-dependencies]
 approx = "0.5.1"
-tempfile = "3.10.0"
+tempfile = "3.14.0"
+assert_cmd = "2.0.16"
+insta = "1.41.1"
 
 [[bin]]
 name = "cart"
