@@ -4,7 +4,7 @@ use pbqff::{
     cleanup,
     config::{self, Config},
     coord_type::{normal::Normal, Cart, CoordType, Load, Sic},
-    Intder,
+    die, Intder,
 };
 use psqs::{
     program::{cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},
@@ -66,19 +66,14 @@ fn main() -> Result<(), std::io::Error> {
         match serde_json::to_string(&config) {
             Ok(s) => println!("{}", s),
             Err(e) => {
-                eprintln!(
-                    "failed to deserialize {infile} with {e}",
-                    infile = args.infile
-                );
-                std::process::exit(1);
+                die!("failed to deserialize {} with {e}", args.infile);
             }
         };
         return Ok(());
     }
     let path = Path::new("pbqff.out");
     if path.exists() && !args.overwrite {
-        eprintln!("existing pbqff output. overwrite with -o/--overwrite");
-        std::process::exit(1);
+        die!("existing pbqff output. overwrite with -o/--overwrite");
     }
     let outfile = File::create(path).expect("failed to create outfile");
     let logfile = File::create("pbqff.log").expect("failed to create log file");
