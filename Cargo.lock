@@ -814,7 +814,7 @@ dependencies = [
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#afc966226d7eb42710865650cf986823646735af"
+source = "git+https://github.com/ntBre/spectro#6294c673587cfcb4f4229a64781c1b8b1139a4a1"
 dependencies = [
  "log",
  "nalgebra",
@@ -833,7 +833,7 @@ checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 [[package]]
 name = "symm"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/symm#39161c959507d4216967ed85b282c664c88bd19a"
+source = "git+https://github.com/ntBre/symm#e87c30859f4fc0d02269330230f39a474235afd2"
 dependencies = [
  "approx",
  "nalgebra",
@@ -877,7 +877,7 @@ dependencies = [
 [[package]]
 name = "tensor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/tensor#fa7d3b8f84d6cf5d2b89728de25dc5d8ebe43d12"
+source = "git+https://github.com/ntBre/tensor#b7331cbf697d51ce7fbf8d41de55229f0cfeaa77"
 dependencies = [
  "approx",
 ]
