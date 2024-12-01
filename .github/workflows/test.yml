@@ -37,4 +37,4 @@ jobs:
             cp mopac-23.0.2-linux/lib/libmopac.so /opt/mopac/.
 
       - name: cargo test --locked
-        run: cargo test --locked --all-features --all-targets -- --include-ignored
+        run: cargo test --locked --all-features --all-targets -- --include-ignored --nocapture
