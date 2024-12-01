@@ -1,0 +1,27 @@
+---
+source: src/config/tests.rs
+expression: "Config::load(\"testfiles/normal.toml\")"
+snapshot_kind: text
+---
+Config {
+    geometry: Zmat(
+        "O\nH 1 OH\nH 1 OH 2 HOH\n\nOH = 1.0\nHOH = 109.5\n",
+    ),
+    optimize: true,
+    charge: 0,
+    step_size: 0.005,
+    coord_type: Normal,
+    template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
+    hybrid_template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
+    queue_template: None,
+    program: Mopac,
+    queue: Slurm,
+    sleep_int: 2,
+    job_limit: 2048,
+    chunk_size: 1,
+    findiff: false,
+    check_int: 0,
+    weights: None,
+    dummy_atoms: None,
+    norm_resume_hff: true,
+}

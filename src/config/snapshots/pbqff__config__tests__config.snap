@@ -1,0 +1,27 @@
+---
+source: src/config/tests.rs
+expression: "Config::load(\"testfiles/test.toml\")"
+snapshot_kind: text
+---
+Config {
+    geometry: Zmat(
+        "C\nC 1 CC\nC 1 CC 2 CCC\nH 2 CH 1 HCC 3 180.0\nH 3 CH 1 HCC 2 180.0\n\nCC =                  1.42101898\nCCC =                55.60133141\nCH =                  1.07692776\nHCC =               147.81488230\n",
+    ),
+    optimize: true,
+    charge: 0,
+    step_size: 0.005,
+    coord_type: Sic,
+    template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
+    hybrid_template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
+    queue_template: None,
+    program: Mopac,
+    queue: Slurm,
+    sleep_int: 2,
+    job_limit: 2048,
+    chunk_size: 1,
+    findiff: false,
+    check_int: 100,
+    weights: None,
+    dummy_atoms: None,
+    norm_resume_hff: false,
+}
