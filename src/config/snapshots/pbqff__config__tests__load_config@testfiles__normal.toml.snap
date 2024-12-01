@@ -15,7 +15,7 @@ Config {
     hybrid_template: "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1",
     queue_template: None,
     program: Mopac,
-    queue: Slurm,
+    queue: Local,
     sleep_int: 2,
     job_limit: 2048,
     chunk_size: 1,
