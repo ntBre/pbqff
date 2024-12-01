@@ -893,6 +893,7 @@ impl Normal {
         mol.to_bohr();
         let mut spectro = Spectro::from(mol);
         spectro.header = SPECTRO_HEADER.to_vec();
+        spectro.verbose = true;
 
         // write input
         if let Some(dir) = dir {

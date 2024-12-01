@@ -1,6 +1,5 @@
 ---
 source: tests/run.rs
-assertion_line: 48
 expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
@@ -17,7 +16,7 @@ Harmonic Frequencies:
     2   A1  1315.5
 3 normal coordinates require 69 points
 anpass sum of squared residuals:    3.47850821e-19
-
+[Vibrational States]
 Transformed Geometry (Å):
 [Transformed Geometry]
 Equilibrium Rotational Constants (cm-1):
