@@ -34,7 +34,9 @@ jobs:
             tar xf mopac-23.0.2-linux.tar
             mkdir -p /opt/mopac
             cp mopac-23.0.2-linux/bin/mopac /opt/mopac/.
-            cp mopac-23.0.2-linux/lib/libmopac.so /opt/mopac/.
+            cp mopac-23.0.2-linux/lib/libmopac.so* /opt/mopac/.
+            ls /opt/mopac
+            ldd /opt/mopac/mopac
 
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets -- --include-ignored --nocapture
