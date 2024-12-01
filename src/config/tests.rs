@@ -1,18 +1,11 @@
 use insta::assert_debug_snapshot;
+use test_case::test_case;
 
 use super::*;
 
-#[test]
-fn config() {
-    assert_debug_snapshot!(Config::load("testfiles/test.toml"));
-}
-
-#[test]
-fn path_template() {
-    assert_debug_snapshot!(Config::load("testfiles/path.toml"));
-}
-
-#[test]
-fn normal() {
-    assert_debug_snapshot!(Config::load("testfiles/normal.toml"));
+#[test_case("testfiles/test.toml")]
+#[test_case("testfiles/path.toml")]
+#[test_case("testfiles/normal.toml")]
+fn load_config(path: &str) {
+    assert_debug_snapshot!(Config::load(path));
 }

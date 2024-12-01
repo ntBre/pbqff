@@ -1,6 +1,6 @@
 ---
 source: src/config/tests.rs
-expression: "Config::load(\"testfiles/test.toml\")"
+expression: "Config::load(path)"
 snapshot_kind: text
 ---
 Config {
