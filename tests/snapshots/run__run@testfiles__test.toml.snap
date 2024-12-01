@@ -4,7 +4,7 @@ expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
 PID: [PID]
-version: deadbeef
+version: [version]
 
 Configuration Options:
 geometry = {

@@ -4,7 +4,7 @@ expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
 PID: [PID]
-version: deadbeef
+version: [version]
 normalized geometry:[Normalized Geometry]
 point group:C2v(Axis(Y), Plane(Axis(Y), Axis(Z)), Plane(Axis(X), Axis(Y)))
 15 Cartesian coordinates requires 11952 points

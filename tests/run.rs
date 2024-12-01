@@ -33,6 +33,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
     with_settings!({
         filters => vec![
             (r"(?m)^PID: \d+$", "PID: [PID]"),
+            (r"(?m)^version: [a-z0-9]+$", "version: [version]"),
             (r"(?s)(normalized geometry:).*(point group)", "$1[Normalized Geometry]\n$2"),
             (r"(?ms)^Normal Coordinates:.*?^$", "[Normal Coordinates]"),
             (r"(?ms)^STATE NO.*?^$", "[Vibrational States]"),
@@ -41,6 +42,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
             (r"(?s)(Geometry:).*(Vibrational)", "$1\n[Geometry]\n$2"),
             (r"(?s)(Vibrational Frequencies \(cm-1\):).*?(ZPT)", "$1\n[Freqs]\n$2"),
             (r"(?ms)(^Rotational Constants \(cm-1\):).*?(Coriolis Resonances)", "$1\n[Rotational Constants]\n$2"),
+            (r"(?m)^(anpass sum of squared residuals):(.+)$", "$1: [residual]"),
         ],
         snapshot_suffix => path
 

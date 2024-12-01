@@ -4,7 +4,7 @@ expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
 PID: [PID]
-version: deadbeef
+version: [version]
 normalized geometry:[Normalized Geometry]
 point group:C2v(Axis(Y), Plane(Axis(Y), Axis(Z)), Plane(Axis(X), Axis(Y)))
 9 Cartesian coordinates requires 64 points
@@ -15,7 +15,7 @@ Harmonic Frequencies:
     1   B2  2523.5
     2   A1  1315.5
 3 normal coordinates require 69 points
-anpass sum of squared residuals:    3.47850821e-19
+anpass sum of squared residuals: [residual]
 [Vibrational States]
 Transformed Geometry (Å):
 [Transformed Geometry]
