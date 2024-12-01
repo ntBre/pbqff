@@ -18,11 +18,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
         std::fs::copy(file, dir.path().join(filename))?;
     }
     let mut cmd = Command::cargo_bin("pbqff").unwrap();
-    let assert = cmd
-        .arg("pbqff.toml")
-        .args(["-t", "1"])
-        .current_dir(&dir)
-        .assert();
+    let assert = cmd.arg("pbqff.toml").current_dir(&dir).assert();
     let output = assert.get_output();
 
     assert!(
