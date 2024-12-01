@@ -44,7 +44,7 @@ jobs:
       - name: copy over mopac
         run: |
             mkdir -p /opt/mopac
-            cp mopac/build/mopac /opt/mopac/.
+            cp mopac/build/mopac mopac/build/libmopac.so /opt/mopac/.
       # https://twitter.com/jonhoo/status/1571290371124260865
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets -- --include-ignored --test-threads=1 --nocapture
