@@ -1,0 +1,20 @@
+geometry = """
+O
+H 1 OH
+H 1 OH 2 HOH
+
+OH = 1.0
+HOH = 109.5
+"""
+optimize = true
+charge = 0
+step_size = 0.005
+coord_type = "norm"
+norm_resume_hff = false
+program = "mopac"
+queue = "local"
+sleep_int = 2
+job_limit = 2048
+chunk_size = 1
+template = "scfcrt=1.D-21 aux(precision=14 comp xp xs xw) PM6 THREADS=1"
+check_int = 0

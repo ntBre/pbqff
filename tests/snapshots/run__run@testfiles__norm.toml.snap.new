@@ -1,5 +1,6 @@
 ---
-source: tests/cart.rs
+source: tests/run.rs
+assertion_line: 48
 expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
 snapshot_kind: text
 ---
@@ -7,8 +8,16 @@ PID: [PID]
 version: deadbeef
 normalized geometry:[Normalized Geometry]
 point group:C2v(Axis(Y), Plane(Axis(Y), Axis(Z)), Plane(Axis(X), Axis(Y)))
-15 Cartesian coordinates requires 11952 points
-[Vibrational States]
+9 Cartesian coordinates requires 64 points
+[Normal Coordinates]
+
+Harmonic Frequencies:
+    0   A1  2602.7
+    1   B2  2523.5
+    2   A1  1315.5
+3 normal coordinates require 69 points
+anpass sum of squared residuals:    3.47850821e-19
+
 Transformed Geometry (Å):
 [Transformed Geometry]
 Equilibrium Rotational Constants (cm-1):
@@ -18,28 +27,16 @@ Geometry:
 [Geometry]
 Vibrational Frequencies (cm-1):
 [Freqs]
-ZPT =   6675.1
+ZPT =   3158.7
 
 Rotational Constants (cm-1):
 [Rotational Constants]
 Coriolis Resonances:
-    4    3    C
-    5    4    A
-    6    5    A
-    7    6    B
-    8    5    B
-    8    7    A
+    1    0    C
 
 Type 1 Fermi Resonances:
-    5    2
-    6    2
-    7    2
-    8    2
+    2    0
 
 Type 2 Fermi Resonances:
-    4    2    1
-    6    2    1
-    6    4    2
-    8    2    0
 
 normal termination of pbqff
