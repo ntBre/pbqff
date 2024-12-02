@@ -34,7 +34,7 @@ name = "cart"
 path = "src/bin/cart.rs"
 
 [build-dependencies]
-git2 = { version = "0.18.2", optional = true }
+git2 = { version = "0.19.0", optional = true }
 
 [features]
 vers = ["dep:git2"]
