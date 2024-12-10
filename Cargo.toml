@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 intder = { git = "https://github.com/ntBre/intder" }
-libc = "0.2.155"
+libc = "0.2.168"
 nalgebra = "0.33.2"
 psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
