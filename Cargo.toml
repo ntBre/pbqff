@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 intder = { git = "https://github.com/ntBre/intder" }
-libc = "0.2.155"
+libc = "0.2.169"
 nalgebra = "0.33.2"
 psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
@@ -17,8 +17,8 @@ spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
 toml = "0.8.10"
-rustc-hash = "2.0.0"
-clap = { version = "4.5.20", features = ["derive"] }
+rustc-hash = "2.1.0"
+clap = { version = "4.5.23", features = ["derive"] }
 env_logger = "0.11.3"
 log = "0.4.22"
 

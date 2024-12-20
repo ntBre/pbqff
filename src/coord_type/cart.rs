@@ -12,7 +12,7 @@ use spectro::{Output, Spectro};
 use symm::{Molecule, PointGroup};
 
 use crate::{
-    config::Config, coord_type::CHK_NAME, make_check, optimize, ref_energy,
+    config::Config, coord_type::CHK_NAME, die, make_check, optimize, ref_energy,
 };
 
 use super::{
@@ -258,6 +258,9 @@ impl Cart {
             };
             (Geom::Xyz(cart), res.energy)
         } else {
+            if !config.geometry.is_xyz() {
+                die!("expected an XYZ geometry, not Zmat");
+            }
             let ref_energy = ref_energy(
                 queue,
                 config.geometry.clone(),
