@@ -3,29 +3,28 @@ name = "pbqff"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 intder = { git = "https://github.com/ntBre/intder" }
-nalgebra = "0.33.2"
 psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
-serde_json = "1.0"
-serde = { version = "1.0", features = ["derive"] }
 spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
-toml = "0.8.10"
-rustc-hash = "2.1.0"
+
 clap = { version = "4.5.23", features = ["derive"] }
 env_logger = "0.11.3"
 log = "0.4.22"
+nalgebra = "0.33.2"
+rustc-hash = "2.1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8.10"
 
 [dev-dependencies]
 approx = "0.5.1"
-tempfile = "3.14.0"
 assert_cmd = "2.0.16"
 insta = { version = "1.41.1", features = ["filters"] }
+tempfile = "3.14.0"
 test-case = "3.3.1"
 
 [[bin]]
