@@ -1,0 +1,59 @@
+
+ Working directory              : /tmp/r2518/3186699.maple/molpro.r5WG27WOuh/
+ Global scratch directory       : /tmp/r2518/3186699.maple/molpro.r5WG27WOuh/
+ Wavefunction directory         : /ddn/home1/r2518/wfu/
+ Main file repository           : /tmp/r2518/3186699.maple/molpro.r5WG27WOuh/
+
+ id        : olemiss
+
+ Nodes     nprocs
+ cn050        1
+ GA implementation: MPI file
+ GA implementation (serial work in mppx): MPI file
+
+ Using customized tuning parameters: mindgm=1; mindgv=20; mindgc=4; mindgr=1; noblas=0; minvec=7
+ default implementation of scratch files=df  
+
+
+ Variables initialized (1015), CPU time= 0.01 sec
+ memory,1,g
+ gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
+ gthresh,optgrad=1.d-8,optstep=1.d-8;
+ nocompress;
+ 
+ geometry={
+ H 0.000000000000 -1.528210513418 0.000000000000
+ C 0.005000000000 -0.442937172818 0.000000000000
+ C 1.223581464000 0.206385657482 0.000000000000
+ C -1.223581464000 0.206385657482 0.000000000000
+ H 1.273142415600 1.292915292382 0.000000000000
+ H 2.152903150300 -0.344220185418 0.000000000000
+ H -1.273142415600 1.287915292382 0.000000000000
+ H -2.152903150300 -0.344220185418 0.000000000000
+ }
+ 
+ basis={
+ default,cc-pVDZ-f12
+ }
+ set,charge=0
+ set,spin=1
+ orbital,ignore_error=1
+ hf,accuracy=16,energy=1.0d-10
+ {CCSD(T)-F12,thrden=1.0d-12,thrvar=1.0d-10,nocheck}
+ 
+ pbqff=energy(2)
+ show[1,f20.12],pbqff
+ Commands initialized (834), CPU time= 0.01 sec, 672 directives.
+ Default parameters read. Elapsed time= 0.10 sec
+
+ Checking input...
+
+ Unknown command or directive ORBITAL
+
+    1 input errors found
+
+ ? Error
+ ? Input errors!
+ ? The problem occurs in check_input
+
+ GLOBAL ERROR fehler on processor   0                                         

@@ -1,0 +1,24 @@
+---
+source: src/queue/pbs.rs
+expression: got
+---
+#!/bin/sh
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -W umask=022
+#PBS -l walltime=1000:00:00
+#PBS -l ncpus=1
+#PBS -l mem=1gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+cd $WORKDIR
+
+export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
+export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
+$MOPAC_CMD pts/opt0.inp.mop
+$MOPAC_CMD pts/opt1.inp.mop
+$MOPAC_CMD pts/opt2.inp.mop
+$MOPAC_CMD pts/opt3.inp.mop

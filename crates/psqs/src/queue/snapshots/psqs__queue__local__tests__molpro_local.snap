@@ -1,0 +1,8 @@
+---
+source: src/queue/local.rs
+expression: got
+---
+$MOLPRO_CMD opt0.inp.inp
+$MOLPRO_CMD opt1.inp.inp
+$MOLPRO_CMD opt2.inp.inp
+$MOLPRO_CMD opt3.inp.inp

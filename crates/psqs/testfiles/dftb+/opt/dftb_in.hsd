@@ -1,0 +1,40 @@
+Geometry = GenFormat {
+3 C
+  O H
+
+  1 1  0.00000000000E+00 -0.10000000000E+01  0.00000000000E+00
+  2 2  0.00000000000E+00  0.00000000000E+00  0.78306400000E+00
+  3 2  0.00000000000E+00  0.00000000000E+00 -0.78306400000E+00
+}
+
+Driver = GeometryOptimization {
+  Optimizer = Rational {}
+  MovedAtoms = 1:-1
+  MaxSteps = 100
+  OutputPrefix = "geom.out"
+  Convergence {GradAMax = 1E-8}
+}
+
+Hamiltonian = DFTB {
+  Scc = Yes
+  SlaterKosterFiles {
+    O-O = "/opt/dftb+/slako/mio/mio-1-1/O-O.skf"
+    O-H = "/opt/dftb+/slako/mio/mio-1-1/O-H.skf"
+    H-O = "/opt/dftb+/slako/mio/mio-1-1/H-O.skf"
+    H-H = "/opt/dftb+/slako/mio/mio-1-1/H-H.skf"
+  }
+  MaxAngularMomentum {
+    O = "p"
+    H = "s"
+  }
+}
+
+Options {}
+
+Analysis {
+  CalculateForces = Yes
+}
+
+ParserOptions {
+  ParserVersion = 12
+}

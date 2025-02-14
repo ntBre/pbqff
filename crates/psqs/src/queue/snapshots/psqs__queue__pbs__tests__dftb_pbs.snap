@@ -1,0 +1,23 @@
+---
+source: src/queue/pbs.rs
+expression: got
+---
+#!/bin/sh
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -W umask=022
+#PBS -l walltime=1000:00:00
+#PBS -l ncpus=1
+#PBS -l mem=8gb
+#PBS -q workq
+
+module load openpbs
+
+export WORKDIR=$PBS_O_WORKDIR
+cd $WORKDIR
+
+export DFTB_CMD=/ddnlus/r2518/.conda/envs/dftb/bin/dftb+
+(cd pts/opt0.inp && $DFTB_CMD > out)
+(cd pts/opt1.inp && $DFTB_CMD > out)
+(cd pts/opt2.inp && $DFTB_CMD > out)
+(cd pts/opt3.inp && $DFTB_CMD > out)

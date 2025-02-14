@@ -1,0 +1,9 @@
+#!/bin/bash
+#SBATCH --job-name={{.filename}}
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH -o {{.filename}}.out
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+
+MOLPRO_CMD="/home/qc/bin/molpro2020.sh 1 1"

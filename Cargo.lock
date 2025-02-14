@@ -408,7 +408,7 @@ dependencies = [
  "approx",
  "nalgebra",
  "ndarray",
- "psqs",
+ "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
  "regex",
  "serde",
  "symm",
@@ -592,7 +592,7 @@ dependencies = [
  "libc",
  "log",
  "nalgebra",
- "psqs",
+ "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
  "rust-anpass",
  "rustc-hash",
  "serde",
@@ -659,6 +659,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "60946a68e5f9d28b0dc1c21bb8a97ee7d018a8b322fa57838ba31cc878e22d99"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "psqs"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "env_logger",
+ "insta",
+ "libc",
+ "log",
+ "rayon",
+ "regex",
+ "serde",
+ "serde_json",
+ "symm",
+ "tempfile",
+ "test-case",
 ]
 
 [[package]]
