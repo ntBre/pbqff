@@ -1,4 +1,4 @@
-use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
+use std::path::Path;
 
 use pbqff::{
     cleanup,
@@ -75,15 +75,7 @@ fn main() -> Result<(), std::io::Error> {
     if path.exists() && !args.overwrite {
         die!("existing pbqff output. overwrite with -o/--overwrite");
     }
-    let outfile = File::create(path).expect("failed to create outfile");
-    let logfile = File::create("pbqff.log").expect("failed to create log file");
-    let out_fd = outfile.as_raw_fd();
-    let log_fd = logfile.as_raw_fd();
-    // redirect stdout to outfile and stderr to logfile
-    unsafe {
-        libc::dup2(out_fd, 1);
-        libc::dup2(log_fd, 2);
-    }
+
     let config = Config::load(&args.infile);
     println!("PID: {}", std::process::id());
     println!("version: {}", version());
