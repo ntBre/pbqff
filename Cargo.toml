@@ -1,9 +1,11 @@
-[package]
-name = "pbqff"
-version = "0.1.0"
+[workspace]
+members = ["crates/*"]
+resolver = "2"
+
+[workspace.package]
 edition = "2021"
 
-[dependencies]
+[workspace.dependencies]
 intder = { git = "https://github.com/ntBre/intder" }
 psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
@@ -11,23 +13,17 @@ spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
 
+approx = "0.5.1"
+assert_cmd = "2.0.16"
 clap = { version = "4.5.23", features = ["derive"] }
 env_logger = "0.11.3"
 libc = "0.2.169"
+insta = { version = "1.41.1", features = ["filters"] }
 log = "0.4.22"
 nalgebra = "0.33.2"
 rustc-hash = "2.1.0"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-toml = "0.8.10"
-
-[dev-dependencies]
-approx = "0.5.1"
-assert_cmd = "2.0.16"
-insta = { version = "1.41.1", features = ["filters"] }
 tempfile = "3.14.0"
 test-case = "3.3.1"
-
-[[bin]]
-name = "cart"
-path = "src/bin/cart.rs"
+toml = "0.8.10"

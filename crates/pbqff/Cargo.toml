@@ -1,0 +1,28 @@
+[package]
+name = "pbqff"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+intder = { workspace = true }
+psqs = { workspace = true }
+rust-anpass = { workspace = true }
+spectro = { workspace = true }
+symm = { workspace = true }
+taylor = { workspace = true }
+
+clap = { workspace = true }
+env_logger = { workspace = true }
+log = { workspace = true }
+nalgebra = { workspace = true }
+rustc-hash = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+
+[dev-dependencies]
+approx = { workspace = true }
+assert_cmd = { workspace = true }
+insta = { workspace = true }
+tempfile = { workspace = true }
+test-case = { workspace = true }

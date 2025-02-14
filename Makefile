@@ -43,7 +43,7 @@ endif
 install:
 	cargo install --path . --bin pbqff
 
-src := build.rs $(shell find src -name '*.rs')
+src := $(shell find . -name '*.rs')
 
 target/release/pbqff: $(src)
 	cargo build --release
