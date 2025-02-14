@@ -32,21 +32,21 @@ build:
 ifeq (${DEBUG}, 1)
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --features vers --target x86_64-unknown-linux-gnu
+	cargo build --target x86_64-unknown-linux-gnu
 else
     # see https://msfjarvis.dev/posts/building-static-rust-binaries-for-linux
 	RUSTFLAGS='-C target-feature=+crt-static' \
-	cargo build --features vers --release --target x86_64-unknown-linux-gnu
+	cargo build --release --target x86_64-unknown-linux-gnu
 endif
 
 
 install:
-	cargo install --features vers --path . --bin pbqff
+	cargo install --path . --bin pbqff
 
 src := build.rs $(shell find src -name '*.rs')
 
 target/release/pbqff: $(src)
-	cargo build --features vers --release
+	cargo build --release
 
 PREFIX := /usr/bin
 MANDIR := /usr/local/share/man/man1

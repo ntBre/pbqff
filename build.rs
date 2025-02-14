@@ -1,29 +1,23 @@
-use std::{env, ffi::OsString, fs, path::Path};
+use std::{env, error::Error, ffi::OsString, fs, path::Path, process::Command};
 
-#[cfg(not(feature = "vers"))]
-fn make_id() -> &'static str {
-    "deadbeef"
+fn main() {
+    println!("cargo:rerun-if-changed=.git/index");
+    let out_dir = env::var_os("OUT_DIR").unwrap();
+    version(&out_dir);
+    dispatch(&out_dir);
 }
 
-#[cfg(feature = "vers")]
-fn make_id() -> String {
-    let repo = git2::Repository::discover(".").unwrap();
-    let head = repo.head().unwrap();
-    let id = &head.peel_to_commit().unwrap().id().to_string()[..8];
-    id.to_owned()
+fn make_id() -> Result<String, Box<dyn Error>> {
+    let cmd = Command::new("git").arg("rev-parse").arg("HEAD").output()?;
+    Ok(String::from_utf8(cmd.stdout[..8].to_vec())?)
 }
 
 fn version(out_dir: &OsString) {
     let dest_path = Path::new(&out_dir).join("version.rs");
-    let id = make_id();
+    let id = make_id().unwrap_or_else(|_| "deadbeef".to_string());
     fs::write(
         dest_path,
-        format!(
-            "pub fn version() -> &'static str {{
-	    \"{id}\"
-	}}
-	"
-        ),
+        format!("pub fn version() -> &'static str {{ \"{id}\" }}"),
     )
     .unwrap();
 }
@@ -91,11 +85,4 @@ config::Queue::{queue},
     write!(s, "}}}}").unwrap();
     let dest_path = Path::new(&out_dir).join("dispatch.rs");
     fs::write(dest_path, s).unwrap();
-}
-
-fn main() {
-    println!("cargo:rerun-if-changed=.git/index");
-    let out_dir = env::var_os("OUT_DIR").unwrap();
-    version(&out_dir);
-    dispatch(&out_dir);
 }
