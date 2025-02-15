@@ -26,7 +26,7 @@ pub(crate) fn resona(
     fermi1: &[Fermi1],
     fermi2: &[Fermi2],
     eng: &mut [f64],
-) -> Dmat {
+) -> Option<Dmat> {
     let (n1dm, _, _) = Mode::count(modes);
     let (i1mode, _, _) = Mode::partition(modes);
     let dnm = init_res_denom(n1dm, freq, fermi1, fermi2);
@@ -66,7 +66,7 @@ pub(crate) fn resona(
         let mut e = e0;
         for ii in 0..n1dm {
             let i = i1mode[ii];
-            e += freq[i] * (iirst[(ii, ist)] as f64 + 0.5);
+            e += freq[i] * (*iirst.get((ii, ist))? as f64 + 0.5);
             for jj in 0..=ii {
                 let j = i1mode[jj];
                 e += xcnst[(i, j)]
@@ -74,7 +74,7 @@ pub(crate) fn resona(
                     * (iirst[(jj, ist)] as f64 + 0.5);
             }
         }
-        eng[ist] = e - zpe;
+        *eng.get_mut(ist)? = e - zpe;
 
         println!("E* of state {ist} = {}", eng[ist]);
         // NOTE I have all the right numbers, but the order is different and
@@ -106,7 +106,7 @@ pub(crate) fn resona(
     println!("Eigenvalues:{:.2}", vals.transpose());
     println!("Eigenvectors:{:.7}", vecs);
 
-    resmat
+    Some(resmat)
 }
 
 /// computes the general resonance element between states `istate` and `jstate`

@@ -84,7 +84,7 @@ fn c2h4_polyad() {
     );
 
     assert_abs_diff_eq!(
-        got.abs(),
+        got.unwrap().abs(),
         test.want.abs().transpose(),
         epsilon = test.eps
     );
