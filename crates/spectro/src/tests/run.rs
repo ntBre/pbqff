@@ -411,9 +411,8 @@ fn lin() {
     inner!(&tests);
 }
 
-#[test]
-#[ignore]
-fn sphere() {
+// TODO
+fn _sphere() {
     use State::*;
     let states = [include!("../../testfiles/tdrane/states.rs")];
     // can't be detected as a spherical top here or in fortran version.
