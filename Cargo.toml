@@ -13,6 +13,7 @@ taylor = { git = "https://github.com/ntBre/taylor" }
 
 clap = { version = "4.5.23", features = ["derive"] }
 env_logger = "0.11.3"
+libc = "0.2.169"
 log = "0.4.22"
 nalgebra = "0.33.2"
 rustc-hash = "2.1.0"

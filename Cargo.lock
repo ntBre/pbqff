@@ -577,6 +577,7 @@ dependencies = [
  "env_logger",
  "insta",
  "intder",
+ "libc",
  "log",
  "nalgebra",
  "psqs",

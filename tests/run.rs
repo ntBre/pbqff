@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{fs::read_to_string, path::Path};
 
 use assert_cmd::Command;
 use insta::{assert_snapshot, with_settings};
@@ -21,11 +21,11 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
     let assert = cmd.arg("pbqff.toml").current_dir(&dir).assert();
     let output = assert.get_output();
 
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    let stdout = String::from_utf8_lossy(&output.stdout);
     assert!(
         output.status.success(),
-        "stderr: {stderr}\nstdout: {stdout}"
+        "stderr: {}\nlog: {}",
+        String::from_utf8_lossy(&output.stderr),
+        read_to_string(dir.path().join("pbqff.log"))?,
     );
 
     // filter out essentially all of the numerical results just to check that
@@ -49,7 +49,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
         snapshot_suffix => path
 
     }, {
-        assert_snapshot!(stdout);
+        assert_snapshot!(read_to_string(dir.path().join("pbqff.out")).unwrap());
     });
 
     Ok(())
