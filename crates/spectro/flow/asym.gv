@@ -1,0 +1,41 @@
+digraph main {
+	run -> load_fc2 -> rot2nd -> fc2;
+	fc2 -> form_sec -> fxm -> freq;
+	fxm -> lxm;
+	lxm -> lx;
+
+	// cubic section
+	run -> load_fc3 -> rot3rd;
+	rot3rd -> force3;
+	lx -> force3;
+	lxp -> force3;
+	freq -> force3;
+	force3 -> f3qcm;
+
+	// quartic section
+	run -> load_fc4 -> rot4th -> force4;
+	lx -> force4;
+	lxp -> force4;
+	freq -> force4;
+	force4 -> f4qcm;
+
+	lxm -> zeta -> zmat;
+	zeta -> wila;
+
+	{zmat f3qcm freq} -> restst;
+	restst -> {coriolis fermi1 fermi2 states modes};
+
+	{f4qcm freq f3qcm zmat modes fermi1 fermi2} -> xcalc -> {xcnst e0};
+
+	{freq xcnst} -> {harms funds};
+
+	{freq wila zmat f3qcm modes states coriolis} -> alphaa -> rotnst;
+
+	{e0 modes freq xcnst fermi1 fermi2} -> resona -> eng;
+
+	{eng freq xcnst restst f3qcm e0} -> enrgy -> corrs;
+
+	{freq wila} -> quartic_new -> quartic
+
+	{rotnst states quartic} -> rota -> rots;
+}

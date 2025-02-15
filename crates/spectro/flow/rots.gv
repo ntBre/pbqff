@@ -1,0 +1,12 @@
+// for debugging mismatches in `corrs` - fully-resonance-corrected anharmonic
+// vibrational frequencies. the arrows are the dependencies in this case, not
+// the flow of information
+
+digraph symm_tops {
+	rots -> rota;
+	rota -> {rotnst states quartic};
+	states -> restst;
+	quartic -> {freq wila};
+	rotnst -> alphaa;
+	alphaa -> {freq wila zmat f3qcm restst};
+}

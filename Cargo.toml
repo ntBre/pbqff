@@ -8,10 +8,11 @@ edition = "2021"
 [workspace.dependencies]
 psqs = { path = "crates/psqs" }
 symm = { path = "crates/symm" }
+intder = { path = "crates/intder" }
+spectro = { path = "crates/spectro" }
 
-intder = { git = "https://github.com/ntBre/intder" }
+tensor = { git = "https://github.com/ntBre/tensor" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
-spectro = { git = "https://github.com/ntBre/spectro" }
 taylor = { git = "https://github.com/ntBre/taylor" }
 
 approx = "0.5.1"
@@ -24,6 +25,7 @@ insta = { version = "1.41.1", features = ["filters"] }
 libc = "0.2.169"
 log = "0.4.22"
 nalgebra = "0.33.2"
+ndarray = { version = "0.15.6", features = ["approx-0_5"] }
 rayon = "1.5.3"
 regex = { version = "1.9.1" }
 rustc-hash = "2.1.0"

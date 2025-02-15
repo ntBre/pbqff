@@ -500,15 +500,14 @@ dependencies = [
 [[package]]
 name = "intder"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/intder#f76a4ce83765731de5a96e09d5d849153d8f8ec6"
 dependencies = [
  "approx",
  "nalgebra",
  "ndarray",
- "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
+ "psqs",
  "regex",
  "serde",
- "symm 0.1.0 (git+https://github.com/ntBre/symm)",
+ "symm 0.1.0",
 ]
 
 [[package]]
@@ -715,7 +714,7 @@ dependencies = [
  "libc",
  "log",
  "nalgebra",
- "psqs 0.1.0",
+ "psqs",
  "rust-anpass",
  "rustc-hash",
  "serde",
@@ -829,21 +828,6 @@ dependencies = [
  "symm 0.1.0",
  "tempfile",
  "test-case",
-]
-
-[[package]]
-name = "psqs"
-version = "0.1.0"
-source = "git+https://github.com/ntBre/psqs#2b4e5c74ad877ca4949bc13fb15632edc5844479"
-dependencies = [
- "chrono",
- "libc",
- "log",
- "rayon",
- "regex",
- "serde",
- "serde_json",
- "symm 0.1.0 (git+https://github.com/ntBre/symm)",
 ]
 
 [[package]]
@@ -1037,14 +1021,23 @@ checksum = "bbbb5d9659141646ae647b42fe094daf6c6192d1620870b449d9557f748b2daa"
 [[package]]
 name = "spectro"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/spectro#6294c673587cfcb4f4229a64781c1b8b1139a4a1"
 dependencies = [
+ "approx",
  "log",
  "nalgebra",
  "serde",
  "serde_json",
- "symm 0.1.0 (git+https://github.com/ntBre/symm)",
+ "symm 0.1.0",
  "tensor",
+]
+
+[[package]]
+name = "spectro_bin"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "serde_json",
+ "spectro",
 ]
 
 [[package]]
