@@ -13,6 +13,9 @@ intder = { path = "crates/intder" }
 spectro = { path = "crates/spectro" }
 taylor = { path = "crates/taylor" }
 
+# not really interested in bringing this one over. it's the least-used and
+# least-changing, and I should probably just replace its usage with ndarray
+# anyway
 tensor = { git = "https://github.com/ntBre/tensor" }
 
 approx = "0.5.1"
