@@ -6,5 +6,5 @@ edition = "2021"
 [dependencies]
 symm = { workspace = true }
 nalgebra = { workspace = true }
-rust-anpass = { workspace = true }
+anpass = { workspace = true }
 serde = { workspace = true }

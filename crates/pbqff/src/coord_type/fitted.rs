@@ -12,7 +12,7 @@ use taylor::Taylor;
 use super::FreqError;
 
 pub(crate) type AtomicNumbers = Vec<usize>;
-type AnpassRes = (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias);
+type AnpassRes = (Vec<anpass::fc::Fc>, anpass::Bias);
 type AnpassError = Box<Result<(Spectro, Output), FreqError>>;
 
 /// Required methods for a least-squares fitted [crate::coord_type::CoordType].
@@ -33,8 +33,8 @@ pub trait Fitted {
     ) -> Result<(Vec<Geom>, Taylor, AtomicNumbers), Self::Error>;
 
     /// Perform the fitting of the potential energy surface. Return the final
-    /// force constants ([rust_anpass::fc::Fc]) and the corresponding
-    /// [rust_anpass::Bias].
+    /// force constants ([anpass::fc::Fc]) and the corresponding
+    /// [anpass::Bias].
     fn anpass<W: Write>(
         &self,
         dir: Option<impl AsRef<Path>>,

@@ -1,6 +1,6 @@
 // could I use const generics for these for m and n?
+use anpass::Anpass;
 use nalgebra as na;
-use rust_anpass::Anpass;
 use serde::{Deserialize, Serialize};
 use symm::{Irrep, PointGroup};
 

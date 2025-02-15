@@ -8,6 +8,8 @@
 
 use std::{error::Error, io::Write, path::Path};
 
+use anpass::Dmat;
+pub use anpass::{fc::Fc, Bias};
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
 use nalgebra::DVector;
@@ -16,8 +18,6 @@ use psqs::{
     program::{Job, Program, Template},
     queue::Queue,
 };
-use rust_anpass::Dmat;
-pub use rust_anpass::{fc::Fc, Bias};
 use serde::{Deserialize, Serialize};
 pub use spectro::{F3qcm, F4qcm, Output, Spectro};
 use symm::{Irrep, Molecule, Pg, PointGroup};
@@ -673,7 +673,7 @@ impl Fitted for Normal {
         step_size: f64,
         w: &mut W,
     ) -> Result<
-        (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
+        (Vec<anpass::fc::Fc>, anpass::Bias),
         Box<Result<(Spectro, Output), super::FreqError>>,
     > {
         make_rel(dir.as_ref(), energies);

@@ -6,6 +6,7 @@ resolver = "2"
 edition = "2021"
 
 [workspace.dependencies]
+anpass = { path = "crates/anpass" }
 psqs = { path = "crates/psqs" }
 symm = { path = "crates/symm" }
 intder = { path = "crates/intder" }
@@ -13,7 +14,6 @@ spectro = { path = "crates/spectro" }
 taylor = { path = "crates/taylor" }
 
 tensor = { git = "https://github.com/ntBre/tensor" }
-rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
 
 approx = "0.5.1"
 assert_cmd = "2.0.16"
@@ -34,3 +34,6 @@ serde_json = "1.0"
 tempfile = "3.14.0"
 test-case = "3.3.1"
 toml = "0.8.10"
+
+[profile.test]
+opt-level = 3  # mostly for anpass

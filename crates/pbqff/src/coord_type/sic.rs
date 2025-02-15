@@ -296,7 +296,7 @@ impl Fitted for Sic {
         step_size: f64,
         w: &mut W,
     ) -> Result<
-        (Vec<rust_anpass::fc::Fc>, rust_anpass::Bias),
+        (Vec<anpass::fc::Fc>, anpass::Bias),
         Box<Result<(Spectro, Output), FreqError>>,
     > {
         make_rel(dir.as_ref(), energies);

@@ -6,7 +6,7 @@ edition.workspace = true
 [dependencies]
 intder = { workspace = true }
 psqs = { workspace = true }
-rust-anpass = { workspace = true }
+anpass = { workspace = true }
 spectro = { workspace = true }
 symm = { workspace = true }
 taylor = { workspace = true }

@@ -2,6 +2,7 @@ use std::fs;
 use std::io::Stdout;
 use std::str::FromStr;
 
+use anpass::Dvec;
 use approx::abs_diff_ne;
 use approx::assert_abs_diff_eq;
 use intder::Intder;
@@ -9,7 +10,6 @@ use nalgebra::dvector;
 use psqs::geom::Geom;
 use psqs::program::mopac::Mopac;
 use psqs::queue::local::Local;
-use rust_anpass::Dvec;
 use spectro::Output;
 use spectro::Spectro;
 use symm::Molecule;

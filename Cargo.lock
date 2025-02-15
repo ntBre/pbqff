@@ -33,6 +33,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "4b46cbb362ab8752921c97e041f5e366ee6297bd428a31275b9fcf1e380f7299"
 
 [[package]]
+name = "anpass"
+version = "0.1.0"
+dependencies = [
+ "approx",
+ "nalgebra",
+ "regex",
+]
+
+[[package]]
 name = "anstream"
 version = "0.6.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -705,6 +714,7 @@ checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
 name = "pbqff"
 version = "0.1.0"
 dependencies = [
+ "anpass",
  "approx",
  "assert_cmd",
  "clap",
@@ -715,7 +725,6 @@ dependencies = [
  "log",
  "nalgebra",
  "psqs",
- "rust-anpass",
  "rustc-hash",
  "serde",
  "serde_json",
@@ -895,15 +904,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 
 [[package]]
-name = "rust-anpass"
-version = "0.1.0"
-source = "git+https://github.com/ntBre/rust-anpass#3fafacb42f2a1cde4d7eabb2e352ec37723636b6"
-dependencies = [
- "nalgebra",
- "regex",
-]
-
-[[package]]
 name = "rustc-hash"
 version = "2.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1070,8 +1070,8 @@ dependencies = [
 name = "taylor"
 version = "0.1.0"
 dependencies = [
+ "anpass",
  "nalgebra",
- "rust-anpass",
  "serde",
  "symm",
 ]
