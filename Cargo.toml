@@ -6,8 +6,9 @@ resolver = "2"
 edition = "2021"
 
 [workspace.dependencies]
+psqs = { path = "crates/psqs" }
+
 intder = { git = "https://github.com/ntBre/intder" }
-psqs = { git = "https://github.com/ntBre/psqs" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
 spectro = { git = "https://github.com/ntBre/spectro" }
 symm = { git = "https://github.com/ntBre/symm" }

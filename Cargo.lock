@@ -715,7 +715,7 @@ dependencies = [
  "libc",
  "log",
  "nalgebra",
- "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
+ "psqs 0.1.0",
  "rust-anpass",
  "rustc-hash",
  "serde",
