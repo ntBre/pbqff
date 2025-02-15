@@ -106,6 +106,15 @@ The interval at which to write checkpoint files. Every coordinate type will writ
 .TP
 .B weights \fIOption<Vec<f64>>\fR
 An optional vector of atomic masses to use for normal coordinate generation and Spectro.
+.TP
+.B dummy_atoms \fIOption<usize>\fR
+An optional number of atoms to hold constant in the QFF displacements. These must come at the end of the geometry. Experimental
+.TP
+.B #[serde(default) \fI\fR
+Resume a normal coordinate QFF from the initial HFF phase.
+.TP
+.B norm_resume_hff \fIbool\fR
+
 
 .SH EXAMPLE
 The following is an example input file for c-C3H2 in SICs in Mopac on the Slurm
@@ -130,7 +139,7 @@ charge = 0
 step_size = 0.005
 coord_type = "sic"
 program = "mopac"
-queue = "slurm"
+queue = "local"
 sleep_int = 2
 job_limit = 2048
 chunk_size = 1

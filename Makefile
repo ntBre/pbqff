@@ -83,10 +83,11 @@ docs: man/rpbqff.1
 %.pdf: %.1
 	groff -Tpdf $? -mman > $@
 
-man/config.man: src/config.rs scripts/config.awk
+pbqff := crates/pbqff
+man/config.man: $(pbqff)/src/config.rs scripts/config.awk
 	scripts/config.awk $< > $@
 
-man/rpbqff.1: man/rpbqff.head man/config.man man/example.man testfiles/test.toml man/rpbqff.tail
+man/rpbqff.1: man/rpbqff.head man/config.man man/example.man $(pbqff)/testfiles/test.toml man/rpbqff.tail
 	cat $^ > $@
 
 scripts: qffbuddy/qffbuddy*

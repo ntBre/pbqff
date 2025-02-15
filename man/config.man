@@ -46,3 +46,12 @@ The interval at which to write checkpoint files. Every coordinate type will writ
 .TP
 .B weights \fIOption<Vec<f64>>\fR
 An optional vector of atomic masses to use for normal coordinate generation and Spectro.
+.TP
+.B dummy_atoms \fIOption<usize>\fR
+An optional number of atoms to hold constant in the QFF displacements. These must come at the end of the geometry. Experimental
+.TP
+.B #[serde(default) \fI\fR
+Resume a normal coordinate QFF from the initial HFF phase.
+.TP
+.B norm_resume_hff \fIbool\fR
+
