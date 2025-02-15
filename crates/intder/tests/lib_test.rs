@@ -344,7 +344,7 @@ fn test_a_matrix() {
 /// load a file where each line is a DVec
 fn load_geoms(filename: &str) -> Vec<DVec> {
     let f = std::fs::File::open(filename).unwrap();
-    let lines = BufReader::new(f).lines().flatten();
+    let lines = BufReader::new(f).lines().map_while(Result::ok);
     let mut ret = Vec::new();
     for line in lines {
         if !line.is_empty() {
@@ -413,7 +413,7 @@ fn load_tensor(filename: &str) -> Tensor3 {
     let lines = BufReader::new(f).lines();
     let mut hold = Vec::new();
     let mut buf = Vec::new();
-    for line in lines.flatten() {
+    for line in lines.map_while(Result::ok) {
         let mut fields = line.split_whitespace().peekable();
         if fields.peek().is_none() {
             // in between chunks
