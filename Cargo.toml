@@ -10,10 +10,10 @@ psqs = { path = "crates/psqs" }
 symm = { path = "crates/symm" }
 intder = { path = "crates/intder" }
 spectro = { path = "crates/spectro" }
+taylor = { path = "crates/taylor" }
 
 tensor = { git = "https://github.com/ntBre/tensor" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
-taylor = { git = "https://github.com/ntBre/taylor" }
 
 approx = "0.5.1"
 assert_cmd = "2.0.16"

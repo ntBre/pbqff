@@ -507,7 +507,7 @@ dependencies = [
  "psqs",
  "regex",
  "serde",
- "symm 0.1.0",
+ "symm",
 ]
 
 [[package]]
@@ -720,7 +720,7 @@ dependencies = [
  "serde",
  "serde_json",
  "spectro",
- "symm 0.1.0",
+ "symm",
  "taylor",
  "tempfile",
  "test-case",
@@ -825,7 +825,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "symm 0.1.0",
+ "symm",
  "tempfile",
  "test-case",
 ]
@@ -1027,7 +1027,7 @@ dependencies = [
  "nalgebra",
  "serde",
  "serde_json",
- "symm 0.1.0",
+ "symm",
  "tensor",
 ]
 
@@ -1056,16 +1056,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "symm"
-version = "0.1.0"
-source = "git+https://github.com/ntBre/symm#e87c30859f4fc0d02269330230f39a474235afd2"
-dependencies = [
- "approx",
- "nalgebra",
- "serde",
-]
-
-[[package]]
 name = "syn"
 version = "2.0.98"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1079,12 +1069,21 @@ dependencies = [
 [[package]]
 name = "taylor"
 version = "0.1.0"
-source = "git+https://github.com/ntBre/taylor#2c2fbf0403972909425961ce88726c29ef8228b1"
 dependencies = [
  "nalgebra",
  "rust-anpass",
  "serde",
- "symm 0.1.0 (git+https://github.com/ntBre/symm)",
+ "symm",
+]
+
+[[package]]
+name = "taylor-bin"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "intder",
+ "symm",
+ "taylor",
 ]
 
 [[package]]
