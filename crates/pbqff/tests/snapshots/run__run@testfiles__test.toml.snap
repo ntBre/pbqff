@@ -1,7 +1,6 @@
 ---
-source: tests/run.rs
+source: crates/pbqff/tests/run.rs
 expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
-snapshot_kind: text
 ---
 PID: [PID]
 version: [version]
@@ -59,6 +58,8 @@ anpass sum of squared residuals: [residual]
 
 Refit Geometry
 [Refit Geometry]
+
+[Polyads]
 [Vibrational States]
 Transformed Geometry (Å):
 [Transformed Geometry]

@@ -1,13 +1,14 @@
 ---
-source: tests/run.rs
+source: crates/pbqff/tests/run.rs
 expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
-snapshot_kind: text
 ---
 PID: [PID]
 version: [version]
 normalized geometry:[Normalized Geometry]
 point group:C2v(Axis(Y), Plane(Axis(Y), Axis(Z)), Plane(Axis(X), Axis(Y)))
 15 Cartesian coordinates requires 11952 points
+
+[Polyads]
 [Vibrational States]
 Transformed Geometry (Å):
 [Transformed Geometry]

@@ -36,6 +36,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
             (r"(?m)^version: [a-z0-9]+$", "version: [version]"),
             (r"(?si)(normalized geometry:).*(point group)", "$1[Normalized Geometry]\n$2"),
             (r"(?ms)^Normal Coordinates:.*?^$", "[Normal Coordinates]"),
+            (r"(?ms)^Energies of deperturbed states:.*(^STATE NO)", "[Polyads]\n$1"),
             (r"(?ms)^STATE NO.*?^$", "[Vibrational States]"),
             (r"(?s)(Transformed Geometry \(Å\):).*(Equilibrium)", "$1\n[Transformed Geometry]\n$2"),
             (r"(?ms)(Equilibrium Rotational Constants \(cm-1\):).*?^$", "$1\n[Rotational Constants]\n"),

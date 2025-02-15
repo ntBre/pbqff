@@ -1,7 +1,6 @@
 ---
-source: tests/run.rs
+source: crates/pbqff/tests/run.rs
 expression: "read_to_string(dir.path().join(\"pbqff.out\")).unwrap()"
-snapshot_kind: text
 ---
 PID: [PID]
 version: [version]
@@ -16,6 +15,8 @@ Harmonic Frequencies:
     2   A1  1315.5
 3 normal coordinates require 69 points
 anpass sum of squared residuals: [residual]
+
+[Polyads]
 [Vibrational States]
 Transformed Geometry (Å):
 [Transformed Geometry]
