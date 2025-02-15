@@ -7,11 +7,11 @@ edition = "2021"
 
 [workspace.dependencies]
 psqs = { path = "crates/psqs" }
+symm = { path = "crates/symm" }
 
 intder = { git = "https://github.com/ntBre/intder" }
 rust-anpass = { git = "https://github.com/ntBre/rust-anpass" }
 spectro = { git = "https://github.com/ntBre/spectro" }
-symm = { git = "https://github.com/ntBre/symm" }
 taylor = { git = "https://github.com/ntBre/taylor" }
 
 approx = "0.5.1"

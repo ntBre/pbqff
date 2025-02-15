@@ -508,7 +508,7 @@ dependencies = [
  "psqs 0.1.0 (git+https://github.com/ntBre/psqs)",
  "regex",
  "serde",
- "symm",
+ "symm 0.1.0 (git+https://github.com/ntBre/symm)",
 ]
 
 [[package]]
@@ -721,7 +721,7 @@ dependencies = [
  "serde",
  "serde_json",
  "spectro",
- "symm",
+ "symm 0.1.0",
  "taylor",
  "tempfile",
  "test-case",
@@ -826,7 +826,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "symm",
+ "symm 0.1.0",
  "tempfile",
  "test-case",
 ]
@@ -843,7 +843,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
- "symm",
+ "symm 0.1.0 (git+https://github.com/ntBre/symm)",
 ]
 
 [[package]]
@@ -1043,7 +1043,7 @@ dependencies = [
  "nalgebra",
  "serde",
  "serde_json",
- "symm",
+ "symm 0.1.0 (git+https://github.com/ntBre/symm)",
  "tensor",
 ]
 
@@ -1052,6 +1052,15 @@ name = "strsim"
 version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
+
+[[package]]
+name = "symm"
+version = "0.1.0"
+dependencies = [
+ "approx",
+ "nalgebra",
+ "serde",
+]
 
 [[package]]
 name = "symm"
@@ -1082,7 +1091,7 @@ dependencies = [
  "nalgebra",
  "rust-anpass",
  "serde",
- "symm",
+ "symm 0.1.0 (git+https://github.com/ntBre/symm)",
 ]
 
 [[package]]
