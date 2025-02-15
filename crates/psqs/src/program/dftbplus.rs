@@ -85,7 +85,6 @@ impl Program for DFTBPlus {
     /// ParserOptions {
     ///   ParserVersion = 12
     /// }
-
     /// ```
     fn write_input(&mut self, proc: Procedure) {
         use std::io::Write;

@@ -13,7 +13,7 @@ clean:
 	cargo clean
 
 clippy:
-	cargo clippy --all-features --all-targets --workspace
+	cargo +nightly clippy --all-features --all-targets --workspace
 
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
