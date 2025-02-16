@@ -1,0 +1,15 @@
+---
+source: src/queue/slurm.rs
+expression: got
+---
+#!/bin/bash
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --no-requeue
+#SBATCH --mem=8gb
+
+MOLPRO_CMD="/home/qc/bin/molpro2020.sh 1 1"
+$MOLPRO_CMD opt0.inp.inp
+$MOLPRO_CMD opt1.inp.inp
+$MOLPRO_CMD opt2.inp.inp
+$MOLPRO_CMD opt3.inp.inp

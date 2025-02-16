@@ -1,0 +1,8 @@
+---
+source: src/queue/slurm.rs
+expression: got
+---
+(cd opt0.inp && $DFTB_CMD > out)
+(cd opt1.inp && $DFTB_CMD > out)
+(cd opt2.inp && $DFTB_CMD > out)
+(cd opt3.inp && $DFTB_CMD > out)

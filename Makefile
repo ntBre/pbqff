@@ -13,7 +13,7 @@ clean:
 	cargo clean
 
 clippy:
-	cargo clippy --all-features --all-targets --workspace
+	cargo +nightly clippy --all-features --all-targets --workspace
 
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}
@@ -43,7 +43,7 @@ endif
 install:
 	cargo install --path . --bin pbqff
 
-src := build.rs $(shell find src -name '*.rs')
+src := $(shell find . -name '*.rs')
 
 target/release/pbqff: $(src)
 	cargo build --release
@@ -83,10 +83,11 @@ docs: man/rpbqff.1
 %.pdf: %.1
 	groff -Tpdf $? -mman > $@
 
-man/config.man: src/config.rs scripts/config.awk
+pbqff := crates/pbqff
+man/config.man: $(pbqff)/src/config.rs scripts/config.awk
 	scripts/config.awk $< > $@
 
-man/rpbqff.1: man/rpbqff.head man/config.man man/example.man testfiles/test.toml man/rpbqff.tail
+man/rpbqff.1: man/rpbqff.head man/config.man man/example.man $(pbqff)/testfiles/test.toml man/rpbqff.tail
 	cat $^ > $@
 
 scripts: qffbuddy/qffbuddy*

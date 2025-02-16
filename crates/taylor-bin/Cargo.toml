@@ -1,0 +1,10 @@
+[package]
+name = "taylor-bin"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { workspace = true }
+intder = { workspace = true }
+symm = { workspace = true }
+taylor = { workspace = true }

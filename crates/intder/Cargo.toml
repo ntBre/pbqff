@@ -1,0 +1,17 @@
+[package]
+name = "intder"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "irreps"
+path = "src/bin/irreps.rs"
+
+[dependencies]
+approx = { workspace = true }
+nalgebra = { workspace = true }
+ndarray = { workspace = true }
+psqs = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+symm = { workspace = true }

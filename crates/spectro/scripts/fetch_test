@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# run this in testfiles. it will create a new directory (argument 2) and copy
+# the input files from the corresponding directory on woods (argument 1). then
+# it will run summarize to build a file that can be loaded by test_run
+
+echo making $2
+mkdir $2
+
+echo copying files
+rsync woods:$1/{spectro.in,spectro2.in,spectro2.out,fort.15,fort.30,fort.40} $2/.
+
+# delete unused count lines
+sed -i 1d $2/fort.15 $2/fort.30 $2/fort.40
+# delete everything after the geometry
+sed -i '/WEIGHT/,$d' $2/spectro.in
+
+echo summarizing output
+summarize -json $2/spectro2.out \
+    | jq '{harms: .Harm, funds: .Fund, corrs: .Corr, rots: .Rots}' > $2/summary.json
+
+bat $2/spectro.in

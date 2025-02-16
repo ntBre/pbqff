@@ -1,0 +1,9 @@
+---
+source: src/queue/local.rs
+expression: got
+---
+CFOUR_CMD=/opt/cfour/cfour
+(cd opt0.inp && $CFOUR_CMD)
+(cd opt1.inp && $CFOUR_CMD)
+(cd opt2.inp && $CFOUR_CMD)
+(cd opt3.inp && $CFOUR_CMD)

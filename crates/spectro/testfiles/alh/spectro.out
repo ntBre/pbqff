@@ -1,0 +1,681 @@
+
+ ************************************************************
+                      PROGRAM SPECTRO 
+    SPECTROSCOPIC CONSTANTS AND VIBRATIONAL PROPERTIES
+
+             WRITTEN BY:  JEFFREY F. GAW 
+                    AND  ANDREW WILLETTS 
+
+
+  RUNNING IN:        CARTESIAN   --->    NORMAL MODE
+ ************************************************************
+
+ NCART    =   99
+ ISOTOP   =    0
+ NBOND    =    0
+ NBEND    =    0
+ 2*NLBEND =    0
+ NOFPB    =    0
+ NTORS    =    0
+ NDERIV   =    4
+ ISYMM    =    0
+ ICURVQ   =    0
+ IDEGNL   =    0
+ IFREQ    =    0
+ IPRNT    =    0
+ NWFRQ    =    0
+ NPROP    =    0
+ ICORIL   =    0
+ IFERM1   =    0
+ IFERM2   =    0
+ IROTRN   =    0
+ ILSQRS   =    0
+ IAVERG   =    0
+ IREP     =    0
+ IPARMF   =    0
+ IPARMD   =    0
+ IGEOM    =    0
+ ITEMP    =  300
+ IDARL    =    0
+ MAXJ     =    3
+ INORM    =    0
+ <>
+ ISOTOPE #            1
+
+  GEOMETRY ANALYSIS - 1. INITIAL GEOMETRY
+                      2. MOVE TO PRINCIPAL AXES
+                      3. ROTATE ATOM TO X-AXIS
+                         (SYMMETRIC TOP ONLY)
+
+
+****************************************
+ ORIGINAL COORDINATE REPRESENTATION 
+****************************************
+
+
+   MOLECULAR CARTESIAN GEOMETRY (IN A)
+
+ATOM NO.               X              Y              Z              W
+    1             -1.6001659      0.0000000      0.0000000      1.0078250
+    2              0.0597700      0.0000000      0.0000000     26.9815386
+
+   CENTER OF MASS COORDINATES
+
+           CMX            CMY            CMZ
+       -0.0000000      0.0000000      0.0000000
+
+   CARTESIAN COORDINATES W.R.T. CENTER OF MASS
+
+ATOM NO.               X              Y              Z              W
+    1             -1.6001658      0.0000000      0.0000000      1.0078250
+    2              0.0597700      0.0000000      0.0000000     26.9815386
+
+   INERTIA TENSOR
+
+             1           2           3
+  ------------------------------------------
+   1     0.0000000
+   2     0.0000000   2.6769573
+   3     0.0000000   0.0000000   2.6769573
+
+   EIGENVECTORS OF INERTIA TENSOR
+
+              1           2           3
+   ------------------------------------------
+    1    1.00000000  0.00000000  0.00000000
+    2    0.00000000  1.00000000  0.00000000
+    3    0.00000000  0.00000000  1.00000000
+
+**************************************************
+ COORDINATE SYSTEM ABOUT PRINCIPAL AXES 
+**************************************************
+
+
+   MOLECULAR PRINCIPAL GEOMETRY (IN A)
+
+ATOM NO.               A              B              C              W
+    1              0.0000000      0.0000000      1.6001658      1.0078250
+    2              0.0000000      0.0000000     -0.0597700     26.9815386
+
+   CENTER OF MASS COORDINATES
+
+           CMX            CMY            CMZ
+        0.0000000      0.0000000      0.0000000
+
+   INERTIA TENSOR
+
+             1           2           3
+  ------------------------------------------
+   1     2.6769573
+   2     0.0000000   2.6769573
+   3     0.0000000   0.0000000   0.0000000
+
+   PRINCIPAL MOMENTS OF INERTIA
+
+              IN AMU.A+2        IN G.CM+2         IN CM-1           IN MHZ
+                                (*D+39)
+   1          0.26770D+01       0.44453D+00       0.62973D+01       0.18879D+06
+   2          0.26770D+01       0.44453D+00       0.62973D+01       0.18879D+06
+   3          0.00000D+00       0.00000D+00       0.00000D+00       0.00000D+00
+
+ INTERNUCLEAR DISTANCE MATRIX (IN A)
+
+             1           2
+  ------------------------------
+   1     0.0000000
+   2     1.6599359   0.0000000
+
+   BOND ANGLES (CENTRAL ATOM FIRST)
+
+   J   I   K    DEGREES     I   J   K    DEGREES    K   I   J    DEGREES   
+
+ <>
+
+          ------------------------------------------------------------
+                             MEMORY ALLOCATION SCHEME 
+          ------------------------------------------------------------
+
+ INTEGER DEFAULT ALLOCATION
+   ALLOCATION: BLOCK START-     1   FINISH-    15   TOTAL-    14
+
+ REAL DEFAULT ALLOCATION
+   ALLOCATION: BLOCK START-    15   FINISH-  4858   TOTAL-  4843
+
+ CUBIC AND QUARTIC ALLOCATION
+   ALLOCATION: BLOCK START-  4858   FINISH-  5050   TOTAL-   192
+
+   ALLOCATION: BLOCK START-  5050   FINISH-  5055   TOTAL-     5
+
+ VIBFX ALLOCATION
+   ALLOCATION: BLOCK START-  5055   FINISH-  5166   TOTAL-   111
+
+ LTENSR ALLOCATION
+   ALLOCATION: BLOCK START-  5055   FINISH-  5088   TOTAL-    33
+
+ SQHAMP ALLOCATION
+   ALLOCATION: BLOCK START-  5055   FINISH-  5056   TOTAL-     1
+
+ UMATRX ALLOCATION
+   ALLOCATION: BLOCK START-  5055   FINISH-  5058   TOTAL-     3
+
+ ZETA ALLOCATION
+   ALLOCATION: BLOCK START-  5055   FINISH-  5078   TOTAL-    23
+
+ TRNSFM ALLOCATION
+   ALLOCATION: BLOCK START-  5166   FINISH-  5175   TOTAL-     9
+
+ FORCE3/FORCE4 ALLOCATION
+   ALLOCATION: BLOCK START-  5175   FINISH-  5284   TOTAL-   109
+
+ XCALC/XCALS ALLOCATION
+   ALLOCATION: BLOCK START-  5175   FINISH-  5176   TOTAL-     1
+
+ ROTA/ROTS ALLOCATION
+   ALLOCATION: BLOCK START-  5175   FINISH-  5427   TOTAL-   252
+
+ INTEN ALLOCATION
+   ALLOCATION: BLOCK START-  5427   FINISH-  5427   TOTAL-     0
+
+ DIPTRN ALLOCATION
+   ALLOCATION: BLOCK START-  5427   FINISH-  5438   TOTAL-    11
+
+ ATUNIT ALLOCATION
+   ALLOCATION: BLOCK START-  5438   FINISH-  6394   TOTAL-   956
+
+ ITERATE ALLOCATION
+   ALLOCATION: BLOCK START-  6394   FINISH-  8119   TOTAL-  1725
+
+ RAMANQ ALLOCATION
+   ALLOCATION: BLOCK START-  8119   FINISH-  8119   TOTAL-     0
+
+ INTENR ALLOCATION
+   ALLOCATION: BLOCK START-  8119   FINISH-  8119   TOTAL-     0
+
+ HRAMAN ALLOCATION
+   ALLOCATION: BLOCK START-  8119   FINISH-  8119   TOTAL-     0
+
+ LSQRS ALLOCATION
+   ALLOCATION: BLOCK START-  8119   FINISH-  8132   TOTAL-    13
+
+ TMATRX ALLOCATION
+   ALLOCATION: BLOCK START-  8132   FINISH-  8138   TOTAL-     6
+
+ SEXTIC ALLOCATION
+   ALLOCATION: BLOCK START-  8138   FINISH-  8171   TOTAL-    33
+
+ WCALS ALLOCATION
+   ALLOCATION: BLOCK START-  8171   FINISH-  8172   TOTAL-     1
+
+
+   INTEGER MEMORY REQUIRED -      15 Word   ALLOCATED - 3500000 Word
+
+
+   REAL MEMORY REQUIRED    -   32752 Word   ALLOCATED -******** Word
+
+
+
+   THE NORMAL COORDINATE ANALYSIS BY FX MATRIX METHOD
+
+
+
+   SECULAR EQUATIONS
+   FXM MATRIX
+
+             1           2           3           4           5           6
+  ------------------------------------------------------------------------------
+   1     0.0000152
+   2     0.0000000   0.0000152
+   3     0.0000000   0.0000000   1.6547860
+   4    -0.0000029   0.0000000   0.0000000   0.0000006
+   5     0.0000000  -0.0000029   0.0000000   0.0000000   0.0000006
+   6     0.0000000   0.0000000  -0.3198166   0.0000000   0.0000000   0.0618102
+
+
+   *****************************
+   ***VIBRATIONAL FREQUENCIES***
+   *****************************
+
+
+   LXM MATRIX
+
+             1           2           3           4           5           6
+           1706.89        5.18        5.17        0.18        0.16        0.10
+  ------------------------------------------------------------------------------
+   1     0.0000000   0.0000000  -0.9824010   0.0000000  -0.1867841   0.0000000
+   2     0.0000000   0.9823940   0.0000000   0.1868211   0.0000000  -0.0000000
+   3     0.9818312   0.0000000   0.0000000  -0.0000000   0.0000000  -0.1897562
+   4     0.0000000  -0.0000000   0.1867841   0.0000000  -0.9824010   0.0000000
+   5     0.0000000  -0.1868211   0.0000000   0.9823940   0.0000000  -0.0000000
+   6    -0.1897562   0.0000000   0.0000000  -0.0000000   0.0000000  -0.9818312
+
+
+   LX MATRIX
+
+             1           2           3           4           5           6
+           1706.89        5.18        5.17        0.18        0.16        0.10
+  ------------------------------------------------------------------------------
+   1     0.0000000   0.0000000  -0.9785797   0.0000000  -0.1860576   0.0000000
+   2     0.0000000   0.9785727   0.0000000   0.1860944   0.0000000  -0.0000000
+   3     0.9780122   0.0000000   0.0000000  -0.0000000   0.0000000  -0.1890181
+   4     0.0000000  -0.0000000   0.0359589   0.0000000  -0.1891278   0.0000000
+   5     0.0000000  -0.0359660   0.0000000   0.1891265   0.0000000  -0.0000000
+   6    -0.0365311   0.0000000   0.0000000  -0.0000000   0.0000000  -0.1890181
+
+
+ *****************************************************************
+       LINEAR COMBINATIONS OF THE DEGENERATE MODES OF THE 
+       LXM AND LX MATRICES HAVE OCCURRED.  THE NEW MATRICES
+       APPEAR AS FOLLOWS :
+ *****************************************************************
+
+
+
+   LXM MATRIX
+
+             1
+           1706.89
+  ------------------
+   1     0.0000000
+   2     0.0000000
+   3     0.9818312
+   4     0.0000000
+   5     0.0000000
+   6    -0.1897562
+
+
+   LX MATRIX
+
+             1
+           1706.89
+  ------------------
+   1     0.0000000
+   2     0.0000000
+   3     0.9780122
+   4     0.0000000
+   5     0.0000000
+   6    -0.0365311
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   1
+
+              1
+   ------------------
+    1    0.00000000
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   2
+
+              1
+   ------------------
+    1    0.00000000
+
+ ZETA MATRIX FOR COORDINATE DIRECTION :   3
+
+              1
+   ------------------
+    1    0.00000000
+
+ THE WILSON A MATRIX IN AMU 1/2 A 
+ (ROWS ARE VIB DEG OF FREEDOM, AND COLS COORD PRODUCTS),
+
+              1           2           3           4           5           6
+   ------------------------------------------------------------------------------
+    1    3.27228197  0.00000000  3.27228197  0.00000000  0.00000000  0.00000000
+
+ QUARTIC CENTRIFUGAL DISTORTION CONSTANTS TAU PRIME 
+
+                       CM -1                    MHz
+
+
+ TAUP aaaa         -0.0013717564           -41.1242212802
+ TAUP bbbb         -0.0013717564           -41.1242212802
+ TAUP cccc          0.0000000000             0.0000000000
+
+ TAUP aabb         -0.0013717564           -41.1242212802
+ TAUP aacc          0.0000000000             0.0000000000
+ TAUP bbcc          0.0000000000             0.0000000000
+
+ LINEAR MOLECULES 
+           CM-1                MHz
+ De   0.0003429391       10.2810553201
+
+
+   *************************************************
+   ***THIRD DERIVATIVES W.R.T. NORMAL COORDINATES***
+   *************************************************
+
+
+   F3(QI*QJ*QK) MATRIX (IN CM-1), IVIB =     1
+
+             1
+  ------------------
+   1      -920.318
+
+
+   THE FOURTH ORDER ANHARMONICITY ANALYSIS
+
+
+
+   **************************************************
+   ***FOURTH DERIVATIVES W.R.T. NORMAL COORDINATES***
+   **************************************************
+
+
+
+   F4(QI*QJ*QK*QL) MATRIX (IN CM-1), IVIB =     1      JVIB =     1
+
+             1
+  ------------------
+   1       444.262
+
+
+ *******************
+  RESONANCE TESTING
+ *******************
+
+ TOLERANCES FOR RESONANCE TESTING 
+ CTOL  =    200.000
+ ZTOL  =      0.250
+ FTOL1 =    200.000
+ F3TOL =     10.000
+ DLTOL =   1000.000
+ DFTOL =    200.000
+ DDTOL =    300.000
+
+
+ MODE LABELING INFORMATION 
+ N1DM  =     1
+ N2DM  =     0
+ N3DM  =     0
+
+ NON-DEGENERATE MODES :
+    1
+
+ ***********************************************************
+               CORIOLIS RESONANCES          WI = WJ
+ ***********************************************************
+        I    J      WI        WJ       DIFF     ZETA  DeltaALPHA
+
+  NO MODES FOUND TO BE IN CORIOLIS RESONANCE 
+
+
+ *******************************************************************************
+       FERMI RESONANCE           TYPE 1          2WI = WJ
+ *******************************************************************************
+     I  I    J       WI         WJ         DIFF      PHI IIJ  EST.PERTURB.
+
+  THIS TYPE OF FERMI RESONANCE NOT FOUND 
+
+
+ *******************************************************************************
+          FERMI RESONANCE           TYPE 2          WA = WB + WC
+ *******************************************************************************
+     I  J  K       WI        WJ        WK        PHI IJK   WJ+WK-WI  EST.PERTRB.
+
+  THIS TYPE OF FERMI RESONANCE NOT FOUND 
+
+
+ *****************************************************
+     DARLING-DENNISON RESONANCES          2WI = 2WJ
+ *****************************************************
+    I      J      WI         WJ         DIFF
+
+  NO MODES FOUND TO BE IN DARLING-DENNISON RESONANCE
+
+ <>
+
+ T  MATRIX  (COEFFS OF q2J2 OPERATORS) IN CM-1 
+
+
+ AXES :  IXYZ =    1 JXYZ =    1
+             1
+  ------------------
+   1    -0.1522670
+
+ AXES :  IXYZ =    2 JXYZ =    1
+             1
+  ------------------
+   1     0.0000000
+
+ AXES :  IXYZ =    2 JXYZ =    2
+             1
+  ------------------
+   1    -0.1522670
+
+ ALPHA MATRIX FOR LINEAR MOLECULES 
+
+
+ROTATIONAL CONSTANTS IN CM-1 (MHz) 
+
+        6.2973100944        6.2973100944        0.0000000000
+       ( 188788.607 )      ( 188788.607 )      (      0.000 ) 
+
+ ALPHA FOR PRINCIPAL AXIS  B  IN CM-1   (MHZ) 
+ (Be =    6.29731 IN CM-1)
+
+    1        0.1522669812          (  4564.849 )
+
+ VIBRATIONAL CORRECTION TO THE ROTATIONAL CONSTANTS
+
+
+                                ********
+                                 AXIS B 
+                                ********
+
+ CORRECTION       (MHz)     BVB IN CM-1     BVB IN MHz               VIBRATIONAL STATE 
+
+ -0.0761335    -2282.425      6.2211766     186506.183     NON-DEG (Vs) :    0
+                                                           DEGEN   (Vt) :
+
+ -0.2284005    -6847.274      6.0689096     181941.333     NON-DEG (Vs) :    1
+                                                           DEGEN   (Vt) :
+
+  IZZ = IXX + IYY FOR LINEAR MOLECULES 
+
+***************************************** 
+ SEXTIC CENTRIFUGAL DISTORTION CONSTANTS 
+***************************************** 
+
+           1           1           1           1           1
+           1           2           1           2           3
+           2           1           3           2           1
+           2           2           3           3           3
+
+ SEXTIC DISTORTION CONSTANTS 
+                       IN CM-1                  IN Hz
+ PHI aaa          0.1697075222D-07         0.5087703522D+03
+ PHI bbb          0.1697075222D-07         0.5087703522D+03
+ PHI ccc          0.0000000000D+00         0.0000000000D+00
+
+ PHI aab          0.0000000000D+00         0.0000000000D+00
+ PHI abb          0.0000000000D+00         0.0000000000D+00
+ PHI aac          0.0000000000D+00         0.0000000000D+00
+ PHI bbc          0.0000000000D+00         0.0000000000D+00
+ PHI acc          0.0000000000D+00         0.0000000000D+00
+ PHI bcc          0.0000000000D+00         0.0000000000D+00
+ PHI abc          0.0000000000D+00         0.0000000000D+00
+
+
+ REPRESENTATION =     3
+ WHERE :   1 =   I r
+           2 =  II r 
+           3 = III r 
+           4 =   I l 
+           5 =  II l 
+           6 = III l 
+
+
+ LINEAR MOLECULES 
+           CM-1                Hz
+ He   0.0000000170      508.7703522461
+ THIS IS X1CALS 
+
+                              ******************************
+                               ANHARMONIC CONSTANTS IN CM-1
+                              ******************************
+
+
+
+ FOR LINEAR MOLECULES PLEASE ENSURE THAT ta IS ALONG
+ THE X-COORDINATE AND tb IS ALONG THE Y.  MOLECULAR
+ AXIS IS ASSUMED TO BE THE Z-COORDINATE
+ ABOUT TO DO E0 
+ THE DUNHAM COEF. NB ONLY RELEVANT IN THERMODYCS     
+ ************************* 
+ ASYM TOP CONTRIB IS   0.91121037344854727     
+ LINEAR CONTRIB IS      0.0000000000000000     
+ SYM TOP CONTRIB IS     0.0000000000000000     
+ E_o IS    0.91121037344854727     
+ ************************* 
+
+                               NON-DEGENERATE/NON-DEGENERATE X CONSTANTS
+
+
+****************************************************
+ CONTRIBUTIONS TO THE DIAGONAL ANHARMONIC CONSTANTS 
+****************************************************
+
+
+     R  R       QUARTIC           CUBIC            X
+
+     1  1        27.7664030    -51.6890603      -23.923
+
+                          **********************
+                           BAND CENTER ANALYSIS
+                          **********************
+  MODE         HARMONIC        FUNDAMENTAL       DIFFERENCE
+
+    1          1706.890         1659.045           47.845
+
+                         ************************************************
+                          VIBRATIONAL ENERGY AND PROPERTIES IN RESONANCE
+                         ************************************************
+
+
+  Note: zero point energy (ZPE) includes E_0  
+
+
+ STATE NO.     ENERGY (CM-1)         ABOVE ZPT                    VIBRATIONAL STATE
+
+
+     1            848.3755              0.0000       NON-DEG (Vs) :    0
+                                                     DEGEN   (Vt) :
+                                                     DEGEN   (Vl) :
+
+     2           2507.4200           1659.0446       NON-DEG (Vs) :    1
+                                                     DEGEN   (Vt) :
+                                                     DEGEN   (Vl) :
+
+     3           4118.6193           3270.2438       NON-DEG (Vs) :    2
+                                                     DEGEN   (Vt) :
+                                                     DEGEN   (Vl) :
+ <>
+
+ ************************************************ 
+
+         ROTATIONAL ENERGY LEVEL ANALYSIS 
+
+ ************************************************ 
+
+   VIBRATIONAL STATE 
+   NON-DEG (Vt) :    0
+   DEGEN   (Vs) :    0
+   DEGEN   (Vl) :    0
+
+   VIBRATIONALLY AVERAGED ROTATIONAL CONSTANTS
+
+
+ ROTATIONAL CONSTANTS (CM-1)
+        BXS               BYS               BZS
+     -0.0761335         0.0000000        -0.0761335
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    0
+    K             CM-1               MHz
+
+    0            0.00000               0.000
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    1
+    K             CM-1               MHz
+
+    0           -0.15227           -4564.849
+    1           -0.15227           -4564.849
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    2
+    K             CM-1               MHz
+
+    0           -0.45680          -13694.548
+    1           -0.45680          -13694.548
+    2           -0.45680          -13694.548
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    3
+    K             CM-1               MHz
+
+    0           -0.91360          -27389.096
+    1           -0.91360          -27389.096
+    2           -0.91360          -27389.096
+    3           -0.91360          -27389.096
+
+   VIBRATIONAL STATE 
+   NON-DEG (Vt) :    1
+   DEGEN   (Vs) :    0
+   DEGEN   (Vl) :    0
+
+   VIBRATIONALLY AVERAGED ROTATIONAL CONSTANTS
+
+
+ ROTATIONAL CONSTANTS (CM-1)
+        BXS               BYS               BZS
+     -0.2284005         0.0000000        -0.2284005
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    0
+    K             CM-1               MHz
+
+    0            0.00000               0.000
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    1
+    K             CM-1               MHz
+
+    0           -0.45680          -13694.548
+    1           -0.45680          -13694.548
+
+ Q-BRANCH SPECTRUM   Evib =      1659.04455 CM-1 (STATE NO.     2 )
+    K             CM-1               MHz
+
+    0         1658.74002        49727774.680
+    1         1658.74002        49727774.680
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    2
+    K             CM-1               MHz
+
+    0           -1.37040          -41083.643
+    1           -1.37040          -41083.643
+    2           -1.37040          -41083.643
+
+ Q-BRANCH SPECTRUM   Evib =      1659.04455 CM-1 (STATE NO.     2 )
+    K             CM-1               MHz
+
+    0         1658.13095        49709515.283
+    1         1658.13095        49709515.283
+    2         1658.13095        49709515.283
+
+ ROTATIONAL ENERGIES FOR AN OBLATE TOP   J =    3
+    K             CM-1               MHz
+
+    0           -2.74081          -82167.287
+    1           -2.74081          -82167.287
+    2           -2.74081          -82167.287
+    3           -2.74081          -82167.287
+
+ Q-BRANCH SPECTRUM   Evib =      1659.04455 CM-1 (STATE NO.     2 )
+    K             CM-1               MHz
+
+    0         1657.21735        49682126.187
+    1         1657.21735        49682126.187
+    2         1657.21735        49682126.187
+    3         1657.21735        49682126.187
+
+ THE J=K Q-BRANCH SPECTRUM FOR STATE NO.    2
+   J=K            CM-1               MHz
+
+    0            0.00000               0.000
+    1         1658.74002        49727774.680
+    2         1658.13095        49709515.283
+    3         1657.21735        49682126.187

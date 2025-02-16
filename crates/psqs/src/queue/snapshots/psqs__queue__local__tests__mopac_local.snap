@@ -1,0 +1,10 @@
+---
+source: src/queue/local.rs
+expression: got
+---
+export MOPAC_CMD=/opt/mopac/mopac
+export LD_LIBRARY_PATH=/opt/mopac/
+$MOPAC_CMD opt0.inp.mop
+$MOPAC_CMD opt1.inp.mop
+$MOPAC_CMD opt2.inp.mop
+$MOPAC_CMD opt3.inp.mop

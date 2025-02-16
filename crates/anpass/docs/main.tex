@@ -1,0 +1,398 @@
+\documentclass{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{parskip}
+
+\usepackage{listings}
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single
+}
+\usepackage{physics}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  filecolor=magenta,
+  urlcolor=cyan,
+  pdftitle={Overleaf Example},
+  pdfpagemode=FullScreen,
+}
+
+
+\begin{document}
+
+ANPASS is a program for performing least-squares analysis. It was originally
+written in Fortran but has since been translated to Go and then to Rust by Brent
+R. Westbrook. This documentation corresponds to the Rust version only. In
+principle, ANPASS can be used to solve any polynomial or even linear regression
+problem, but in practice it is only used for determining the force constants in
+quartic force fields. As such, this will be the running example of usage in this
+document.
+
+\section{Overview}
+\label{sec:over}
+
+A quartic force field (QFF) is a fourth-order Taylor series expansion of the
+internuclear potential energy portion of the Watson Hamiltonian of the form
+
+\begin{equation}
+  V = \frac{1}{2}\sum_{ij} F_{ij}\Delta_i\Delta_j +
+  \frac{1}{6}\sum_{ijk} F_{ijk}\Delta_i\Delta_j \Delta_k+
+  \frac{1}{24}\sum_{ijkl} F_{ijkl}\Delta_i\Delta_j\Delta_k\Delta_l
+\end{equation}
+
+This can be rephrased as the matrix equation $\vb X \vb F= \vb V$, where $\vb F$
+is the (initially unknown) vector of force constants that minimizes the least
+squares difference $|\vb X \vb F - \vb V|$, $\vb V$ is a vector of potential
+energies, and $\vb X$ is itself a matrix composed of the elements $X_{ik}$ given
+by the expression
+
+\begin{equation}
+  X_{ik} = \prod_j^N x_{ij}^{e_{jk}}
+\end{equation}
+
+In turn, the $x_{ij}$ for the QFF example are the $j$th components of the $i$th
+displacement, and the $e_{jk}$ are the $k$th exponent in the $j$th row of
+exponents. This is similar to the basic polynomial regression problem given by
+
+\begin{equation}
+  A =
+  \begin{bmatrix}
+    x_1^m & \dots & x_1^2 & x_1 & 1 \\
+    x_2^m & \dots & x_2^2 & x_2 & 1 \\
+    \vdots & \ddots & \vdots & \vdots & \vdots \\
+    x_n^m & \dots & x_n^2 & x_n & 1 \\
+  \end{bmatrix}
+\end{equation}
+
+\noindent
+except that $N = 1$ in the basic form, and $k$ is
+$\begin{bmatrix}m & m-1 & \dots & 0\end{bmatrix}$ instead of varying in
+arbitrary ways. In other words, the exponents are given by the vector
+$\begin{bmatrix}m & m-1 & \dots & 0\end{bmatrix}$ instead of the matrix with
+elements $e_{jk}$, and the $x_{ij}$ are really the vector of elements $x_i$.
+
+With this formulation, ANPASS can be used to solve the $m$th-order regression
+problem. For example, a linear regression problem for $i$ data points is
+represented by $e = \begin{bmatrix}1 & 0\end{bmatrix}$. The one caveat to this
+is that the resulting function is only printed in the file \verb|fort.9903| in
+the units expected for a QFF, so if you want the raw values back, divide your
+coefficient by 4.359813653. A full example of such a fitting is given in
+Appendix A.
+
+\section{Input format}
+
+The layout of the ANPASS input file is as follows:
+
+\subsection{Header}
+
+\begin{lstlisting}
+!INPUT
+TITLE
+ H2O 2A1 F12-TZ
+PRINT
+   99
+INDEPENDENT VARIABLES
+   3
+DATA POINTS
+  69   -2
+(3F12.8,f20.12)
+\end{lstlisting}
+
+\noindent
+The only line read by the Rust version is the last. This line is parsed by the
+regular expression:
+
+\begin{lstlisting}
+"(?i)^\s*\((\d+)f[0-9.]+,f[0-9.]+\)\s*$
+\end{lstlisting}%$
+
+\noindent
+which looks for a line of this general form and also captures the first number
+before an \verb|f|. This first number is used as the number of columns of
+displacements in the next section and signals the beginning of that section.
+
+\subsection{Displacements}
+
+This section is composed of displacements in the first $N-1$ columns, followed
+by an optional column of energies. If the number of columns minus one is equal
+to the number parsed in the aforementioned regular expression, the first $N-1$
+columns are taken as displacements, while the last column is taken as the
+corresponding energy. Otherwise, all $N$ columns are taken as part of the
+displacement matrix. This allows for only the displacements to be input as part
+of a template.
+
+\begin{lstlisting}
+ -0.00500000 -0.00500000 -0.01000000      0.000128387078
+ -0.00500000 -0.00500000  0.00000000      0.000027809414
+ -0.00500000 -0.00500000  0.01000000      0.000128387078
+ -0.00500000 -0.01000000  0.00000000      0.000035977201
+ -0.00500000 -0.01500000  0.00000000      0.000048243883
+ -0.00500000  0.00000000 -0.01000000      0.000124321064
+ -0.00500000  0.00000000  0.00000000      0.000023720402
+ -0.00500000  0.00000000  0.01000000      0.000124321065
+ -0.00500000  0.00500000 -0.01000000      0.000124313373
+\end{lstlisting}
+
+\subsection{Unknowns}
+
+This section simply lists the number of columns in the matrix that follows. This
+is necessary since the exponents are wrapped after 16 columns, so it would be
+possible for all of them to blend into a single row. This section looks like:
+
+\begin{lstlisting}
+UNKNOWNS
+  22
+\end{lstlisting}
+
+\subsection{Exponents}
+
+This section gives the exponents for the polynomial equation to be fit. It has
+the form given in the listing below.
+
+\begin{lstlisting}
+FUNCTION
+   0    1    0    2    1    0    0    3    2    1    0    1    0    4    3    2
+   1    0    2    1    0    0
+   0    0    1    0    1    2    0    0    1    2    3    0    1    0    1    2
+   3    4    0    1    2    0
+   0    0    0    0    0    0    2    0    0    0    0    2    2    0    0    0
+   0    0    2    2    2    4
+\end{lstlisting}
+
+\subsection{Stationary point}
+
+This section requests a refitting of the energies to a known stationary point.
+It looks like:
+
+\begin{lstlisting}
+STATIONARY POINT
+     -0.000045311426     -0.000027076533      0.000000000000     -0.000000002131
+\end{lstlisting}
+
+\noindent{ Like the Displacement section above, the first $N-1$ columns are
+  displacements used to bias the displacements in that section, while the last
+  column is an energy used to bias each of the energies before performing the
+  refitting. If this section is not present, a stationary point search is
+  undertaken and a stationary point will be printed in the output. }
+
+\section{Fitting}
+\label{sec:fit}
+
+The first task of ANPASS is to find the vector $F$ (of force constants in the
+QFF problem) that minimizes $|XF - V|$. This minimization process is often
+referred to as ``fitting'' since the discrete data points in the input are being
+fit to the continuous function described by the $X$ matrix. With the matrix
+formulation further described in Section~\ref{sec:over}, the fitting process
+simply requires solving the
+\href{https://en.wikipedia.org/wiki/Ordinary_least_squares}{ordinary least
+  squares} equation given in Eqn.~\ref{eq:ols}.
+
+\begin{equation}
+  \label{eq:ols}
+  F = (X^\intercal X)^{-1}X^\intercal V
+\end{equation}
+
+Since $X^\intercal X$ is always positive semidefinite, the Cholesky
+decomposition can be used to compute its inverse. The rest of the solution is
+then straightforward.
+
+\section{Stationary Point}
+
+\href{https://en.wikipedia.org/wiki/Newton\%27s_method_in_optimization}{Newton's
+  method} is used to find the stationary point of the function described by the
+force constants, $\vb F$, and the exponents, $\vb E$. The basic idea of Newton's
+method is to find the stationary point by an iterative approach:
+
+\begin{equation}
+  \label{eq:newton}
+  x_{k+1} = x_k - \frac{f'(x_k)}{f''(x_k)}
+\end{equation}
+
+In words, update the current guess at the stationary point, $x_k$, by
+subtracting the ratio of the first derivative at that guess, $f'(x_k)$, and the
+second derivative at the same point, $f''(x_k)$.
+
+In this case, $\vb x$ is actually a vector, and so is the first derivative
+($f'(x_k)$) or gradient, $\vb g$. The elements of $\vb g$ are computed as shown
+in Eqn.~\ref{eq:grad}, where $N$ is the number of unknowns (columns in $\vb E$),
+and $M$ is the number of variables (rows in $\vb E$ or columns in $\vb X$).
+
+\begin{equation}
+  \label{eq:grad}
+  g_i = \sum_j^N \bigg(
+  e_{ij} F_j x_i^{e_{ij} - 1} \prod_{k \neq i}^M x_k^{e_{kj}}
+  \bigg)
+\end{equation}
+
+Intuitively, this is the same as a derivative of a more conventional polynomial.
+For example, the derivative of $f = 4x^2yz$ with respect to $x$ is
+$\frac{\partial f}{\partial x} = 2\cdot 4xyz$. Mapping this on to
+Eqn.~\ref{eq:grad} shows that $2 \rightarrow e_{ij}$, $4 \rightarrow F_j$,
+$x_i \rightarrow x$, and the other $x_k \rightarrow y$ and $z$. Thus,
+$g_i = \frac{\partial f}{\partial x_i}$.
+
+Similarly, the second derivative, written as $f''(x_k)$ in Eqn.~\ref{eq:newton},
+corresponds to the Hessian matrix, $\vb H$, with diagonal elements shown in
+Eqn.~\ref{eq:hess-diag} and off-diagonal elements shown in
+Eqn.~\ref{eq:hess-off-diag}. As in the case of the gradient, the subscript $i$
+runs from 1 to $M$. Note that $\vb H$ is symmetric, so the second subscript,
+$l$, for the off-diagonal elements, only runs to $i - 1$.
+
+\begin{equation}
+  \label{eq:hess-diag}
+  H_{ii} = \sum_j^N
+  \bigg(
+  (e_{ij} - 1) e_{ij} F_j x_i^{e_{ij}-2} \prod_{k \neq i}^M x_k^{e_{kj}}
+  \bigg)
+\end{equation}
+
+\begin{equation}
+  \label{eq:hess-off-diag}
+  H_{il} = H_{li} = \sum_j^N
+  \bigg(
+  e_{ij} e_{lj} F_j x_i^{e_{ij}-1} x_l^{e_{lj} -1}
+  \prod_{k \neq i, k \neq l} x_k^{e_{kj}}
+  \bigg)
+\end{equation}
+
+Again, these both resemble the forms for normal second derivatives of
+polynomials, $\frac{\partial^2}{\partial x^2}$ in the first case and
+$\frac{\partial^2}{\partial x \partial y}$ in the second case, for example.
+
+With the gradient and Hessian in hand, all that remains is to invert the Hessian
+matrix, multiply this inverse by the gradient, and subtract the resulting vector
+from the previous guess for the solution:
+
+\begin{equation}
+  \label{eq:step}
+  \vb x_{k+1} = \vb x_k - \gamma \vb H^{-1} \vb g
+\end{equation}
+
+Comparing Eqn.~\ref{eq:step} to Eqn.~\ref{eq:newton}, it becomes clear that
+there is an additional factor, $\gamma$. This represents an adjustable step size
+in the direction found by Newton's method. In ANPASS $\gamma = 0.5$, but other
+choices may work as well. Additionally, ANPASS chooses an initial guess of
+$\vec 0$ for the value of $\vb x_0$.
+
+Once every element of $\delta = \gamma \vb H^{-1} \vb g$ is less than the
+desired cutoff (1.1 $\times 10^{-8}$ in this case), the algorithm terminates. As
+a safeguard against infinite looping, the algorithm also terminates after 100
+iterations if convergence is not reached. Upon successful termination, the
+stationary point is characterized to determine whether it is a maximum, minimum,
+or saddle point. This is straightforward given the final Hessian matrix. If all
+of the eigenvalues are negative, the stationary point is a maximum; if all of
+the eigenvalues are positive, the stationary point is a minimum; and if there is
+a mix of positive and negative eigenvalues, the stationary point is a saddle
+point.
+
+\section{Re-fitting}
+
+With the coefficients, $\vb F$, and the stationary point, $\vb x$, determined,
+the function can be re-fit to the new stationary point by evaluating the
+function at $\vb x$ and biasing each of the displacements and energies by
+subtracting $\vb x$ from each displacement and the energy at that displacement,
+$V(\vb x)$, from each corresponding energy. Finally, these biased values can be
+fit again, using the same procedure described in Section~\ref{sec:fit}.
+
+\section{Output}
+\label{sec:out}
+
+The force constants resulting from the re-fitting are then written out in the
+format expected by INTDER. In particular, the INTDER force constant $I_{abcd}$
+is given by Eqn.~\ref{eq:force}, where $f$ is 1.0 if $e_{ji}$ is 0 or 1, 2.0 if
+$e_{ji}$ is 2, 6.0 if $e_{ji}$ is 3, and 24.0 if $e_{ji}$ is 4. In other words,
+$f$ is the coefficient of the term in the Taylor series expansion of order
+$e_{ji}$. $\alpha$ is the conversion factor to get the force constants into the
+proper units, 4.359813653.
+
+\begin{equation}
+  \label{eq:force}
+  I_{abcd} = \alpha F_i \prod_j^M f
+\end{equation}
+
+After constructing the force constants in this manner, they are written to the
+file \verb|fort.9903|, again as expected by INTDER. It has the straightforward
+form shown in the listing below.
+
+\begin{lstlisting}
+    0    0    0    0      0.000000000008
+    1    0    0    0      0.000000094903
+    2    0    0    0      0.000000008695
+    1    1    0    0      8.360863692412
+    2    1    0    0      0.364250381719
+    2    2    0    0      0.705590041837
+    3    3    0    0      8.562725561910
+    1    1    1    0    -41.638868371768
+    2    1    1    0     -0.611029974345
+    2    2    1    0     -0.447356783198
+    2    2    2    0     -0.701565547377
+    3    3    1    0    -41.484904978169
+    3    3    2    0      0.392943158463
+    1    1    1    1    181.917347385520
+    2    1    1    1     -0.292134838234
+    2    2    1    1      0.372522603575
+    2    2    2    1      1.034069183159
+    2    2    2    2     -0.655831803345
+    3    3    1    1    182.206178031047
+    3    3    2    1     -1.233550191335
+    3    3    2    2     -0.820459302767
+    3    3    3    3    183.621273959614
+\end{lstlisting}
+
+\appendix
+
+\section{Linear regression example}
+
+The complete input for the linear regression example described in the Overview
+is shown below. The Fortran version fails to run on this example, and the Go
+version panics because it can't find a stationary point (since lines don't have
+stationary points). However, the Go version will still write \verb|fort.9903|,
+which contains the coefficients of the line.
+
+\begin{lstlisting}[caption={anpass.in}]
+!INPUT
+TITLE
+ H2O 2A1 F12-TZ
+PRINT
+   99
+INDEPENDENT VARIABLES
+   3
+DATA POINTS
+  11   -2
+(1F12.8,f20.12)
+  0.00000000      2.300000000000
+  1.00000000      3.400000000000
+  2.00000000      7.600000000000
+  3.00000000      8.100000000000
+  4.00000000      9.400000000000
+  5.00000000     13.600000000000
+  6.00000000     14.500000000000
+  7.00000000     15.900000000000
+  8.00000000     18.600000000000
+  9.00000000     21.700000000000
+ 10.00000000     21.800000000000
+UNKNOWNS
+   2
+FUNCTION
+   1    0
+END OF DATA
+!FIT
+!STATIONARY POINT
+!END
+\end{lstlisting}
+
+\begin{lstlisting}[caption={fort.9903}]
+    1    0    0    0      8.894019852120
+    0    0    0    0      9.789763384464
+\end{lstlisting}
+
+\noindent
+Again, the results found here have been converted to the units needed for a QFF,
+so dividing them both by 4.359813653 gives the desired equation
+$y = 2.04x + 2.24$.
+
+\end{document}

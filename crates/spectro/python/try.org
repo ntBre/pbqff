@@ -1,0 +1,27 @@
+# -*- org-confirm-babel-evaluate: nil; -*-
+
+#+name: c3hcn_moi
+| 159.1101420 |         0.0 |        0.0 |
+|   0.0000000 | 144.3669747 |        0.0 |
+|   0.0000000 |  -0.0068560 | 14.7431673 |
+
+#+name: h2o_sic_moi
+| 1.77427271 | 0.00000000 | 0.00000000 |
+| 0.00000000 | 0.61790666 | 0.00000000 |
+| 0.00000000 | 0.00000000 | 1.15636605 |
+
+#+begin_src python :results output :var data=h2o_sic_moi
+  import numpy as np
+  # set precision to fixed 8 decimals and suppress scientific notation
+  np.set_printoptions(precision=8, suppress=True, floatmode='fixed')
+  moi = np.array(data)
+  vals, axes = np.linalg.eigh(moi)
+  print(axes)
+  print(vals)
+#+end_src
+
+#+RESULTS:
+: [[0.00000000 0.00000000 1.00000000]
+:  [1.00000000 0.00000000 0.00000000]
+:  [0.00000000 1.00000000 0.00000000]]
+: [0.61790666 1.15636605 1.77427271]

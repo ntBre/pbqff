@@ -1,0 +1,10 @@
+[package]
+name = "taylor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+symm = { workspace = true }
+nalgebra = { workspace = true }
+anpass = { workspace = true }
+serde = { workspace = true }
