@@ -4,7 +4,6 @@ use std::{
     collections::{HashMap, HashSet},
     iter::{Enumerate, Fuse, Peekable},
     slice::ChunksMut,
-    sync::LazyLock,
     thread,
 };
 
@@ -12,6 +11,7 @@ use crate::{
     geom::Geom,
     program::{Job, Procedure, Program, ProgramResult},
     queue::drain::{dump::Dump, resub::ResubOutput},
+    NO_RESUB,
 };
 
 use super::Queue;
@@ -33,9 +33,6 @@ mod timer;
 use libc::{timeval, RUSAGE_SELF};
 use resub::Resub;
 use serde::{Deserialize, Serialize};
-
-static NO_RESUB: LazyLock<bool> =
-    LazyLock::new(|| std::env::var("NO_RESUB").is_ok());
 
 pub enum Check {
     Some { check_int: usize, check_dir: String },
