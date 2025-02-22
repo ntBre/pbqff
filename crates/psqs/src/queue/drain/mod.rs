@@ -346,7 +346,7 @@ pub(crate) trait Drain {
         Self::Item: Serialize,
     {
         let c = Checkpoint { dst, jobs };
-        eprintln!("writing checkpoint to {checkpoint}");
+        log::info!("writing checkpoint to {checkpoint}");
         let f = std::fs::File::create(checkpoint).unwrap();
         serde_json::to_writer_pretty(f, &c).unwrap();
     }
