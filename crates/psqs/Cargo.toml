@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 symm = { workspace = true }
 
+jiff = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
 env_logger = { workspace = true }
@@ -13,7 +14,6 @@ regex = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
 tempfile = { workspace = true }
-chrono = { workspace = true }
 rayon = { workspace = true }
 test-case = { workspace = true }
 
