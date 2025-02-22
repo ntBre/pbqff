@@ -20,11 +20,11 @@ tensor = { git = "https://github.com/ntBre/tensor" }
 
 approx = "0.5.1"
 assert_cmd = "2.0.16"
-chrono = "0.4.23"
 clap = { version = "4.5.30", features = ["derive"] }
 criterion = "0.5.0"
 env_logger = "0.11.3"
 insta = { version = "1.41.1", features = ["filters"] }
+jiff = { version = "0.2.1" }
 libc = "0.2.169"
 log = "0.4.22"
 nalgebra = "0.33.2"

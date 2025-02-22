@@ -458,7 +458,7 @@ where
     P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
     Q: Queue<P> + ?Sized + Sync,
 {
-    let date = chrono::Local::now().format("%Y-%m-%d %H:%M:%S");
+    let date = jiff::Zoned::now().strftime("%Y-%m-%d %H:%M:%S");
     eprintln!(
         "[iter {iter} {date} {:.1} CPU s] {remaining} jobs remaining",
         get_cpu_time()
