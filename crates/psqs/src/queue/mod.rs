@@ -10,6 +10,7 @@ use std::{
 use crate::{
     geom::Geom,
     program::{Procedure, Program, ProgramError},
+    NO_RESUB,
 };
 use crate::{
     program::{Job, ProgramResult},
@@ -56,6 +57,9 @@ where
                         "failed to submit {filename} with `{}`",
                         String::from_utf8_lossy(&s.stderr)
                     );
+                    if *NO_RESUB {
+                        std::process::exit(1);
+                    }
                     std::thread::sleep(Duration::from_secs(1));
                 }
                 Err(e) => panic!("{e:?}"),
