@@ -5,11 +5,13 @@ on:
     branches: [master]
   pull_request:
   workflow_dispatch:
-  
+
 name: test
 jobs:
   required:
     runs-on: ubuntu-latest
+    env:
+        PSQS_NO_RESUB: 1
     name: ubuntu / ${{ matrix.toolchain }}
     strategy:
       matrix:
