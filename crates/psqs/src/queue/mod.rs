@@ -52,7 +52,7 @@ where
                             .unwrap_or("")
                             .to_string();
                     }
-                    eprintln!(
+                    log::warn!(
                         "failed to submit {filename} with `{}`",
                         String::from_utf8_lossy(&s.stderr)
                     );
