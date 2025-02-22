@@ -33,6 +33,7 @@ mod timer;
 use libc::{timeval, RUSAGE_SELF};
 use resub::Resub;
 use serde::{Deserialize, Serialize};
+use tempfile::NamedTempFile;
 
 static NO_RESUB: LazyLock<bool> =
     LazyLock::new(|| std::env::var("NO_RESUB").is_ok());
@@ -337,6 +338,11 @@ pub(crate) trait Drain {
         jobs
     }
 
+    /// Create a [`Checkpoint`] from `dst` and `jobs` and write it to
+    /// `checkpoint`.
+    ///
+    /// To avoid problems with interrupted writes, this functions creates an
+    /// intermediate temporary file first and renames it to `checkpoint`.
     fn write_checkpoint<P>(
         checkpoint: &str,
         dst: Vec<Self::Item>,
@@ -347,8 +353,19 @@ pub(crate) trait Drain {
     {
         let c = Checkpoint { dst, jobs };
         log::info!("writing checkpoint to {checkpoint}");
-        let f = std::fs::File::create(checkpoint).unwrap();
-        serde_json::to_writer_pretty(f, &c).unwrap();
+        let Ok(tmp) = NamedTempFile::new() else {
+            log::error!("failed to create temporary file for checkpoint");
+            return;
+        };
+        if serde_json::to_writer_pretty(&tmp, &c).is_err() {
+            log::error!("failed to write checkpoint to temporary file");
+            return;
+        }
+        std::fs::rename(tmp.path(), checkpoint).unwrap_or_else(|e| {
+            log::error!(
+                "failed to rename temporary file to {checkpoint} with {e:?}"
+            )
+        });
     }
 
     fn do_checkpoint<P>(
