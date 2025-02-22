@@ -80,19 +80,6 @@ impl<
             let path = Path::new(&filename);
             let dir = path.parent().unwrap().to_str().unwrap();
             let base = path.file_stem().unwrap().to_str().unwrap();
-            {
-                let ext = path.extension().unwrap().to_str().unwrap();
-                let inp_file = format!("{dir}/{base}_redo.{ext}");
-                match std::fs::copy(&filename, &inp_file) {
-                    Ok(_) => (),
-                    Err(e) => {
-                        panic!(
-                            "failed to copy {} to {} with `{}`",
-                            &filename, inp_file, e
-                        )
-                    }
-                };
-            }
             // nothing but the copy needs the name with extension
             let inp_name = format!("{dir}/{base}_redo");
             job.program.set_filename(&inp_name);
