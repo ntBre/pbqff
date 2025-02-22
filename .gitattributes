@@ -1,1 +1,2 @@
+*.rs linguist-language=Rust
 crates/psqs/testfiles/**/*.aux linguist-vendored
