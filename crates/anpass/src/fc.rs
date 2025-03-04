@@ -8,10 +8,7 @@ impl FromStr for Fc {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let s = s.split_whitespace().collect::<Vec<_>>();
-        let e = Err(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "failed to parse Fc from string",
-        ));
+        let e = Err(std::io::Error::other("failed to parse Fc from string"));
         if s.len() != 5 {
             e
         } else {

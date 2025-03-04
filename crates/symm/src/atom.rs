@@ -1,6 +1,6 @@
 use std::{
     fmt::Display,
-    io::{self, ErrorKind},
+    io,
     ops::{Add, AddAssign, Neg},
     str::FromStr,
 };
@@ -101,15 +101,11 @@ impl FromStr for Atom {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let fields: Vec<_> = s.split_whitespace().collect();
         if fields.len() != 4 {
-            return Err(io::Error::new(
-                ErrorKind::Other,
-                "wrong number of fields in Atom",
-            ));
+            return Err(io::Error::other("wrong number of fields in Atom"));
         }
         let coord = fields[1..].iter().map(|s| s.parse());
         if coord.clone().any(|s| s.is_err()) {
-            return Err(io::Error::new(
-                ErrorKind::Other,
+            return Err(io::Error::other(
                 "failed to parse coordinate field as f64",
             ));
         }
