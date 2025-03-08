@@ -132,15 +132,15 @@ where
     /// take a name of a Program input file with the extension attached, replace
     /// the extension (ext) with _redo.ext and write _redo.SCRIPT_EXT, then
     /// submit the redo script
-    fn resubmit(&self, filename: &str) -> Resubmit {
-        let path = Path::new(filename);
+    fn resubmit(&self, path: impl AsRef<Path>) -> Resubmit {
+        let path = path.as_ref();
         let dir = path.parent().unwrap().to_str().unwrap();
         let base = path.file_stem().unwrap().to_str().unwrap();
         {
             let ext = path.extension().unwrap().to_str().unwrap();
             let inp_file = format!("{dir}/{base}_redo.{ext}");
-            if let Err(e) = std::fs::copy(filename, &inp_file) {
-                panic!("failed to copy {filename} to {inp_file} with `{e}`")
+            if let Err(e) = std::fs::copy(path, &inp_file) {
+                panic!("failed to copy {path:?} to {inp_file} with `{e}`")
             }
         }
         // nothing but the copy needs the name with extension

@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 symm = { workspace = true }
 
+anyhow = { workspace = true }
 jiff = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
