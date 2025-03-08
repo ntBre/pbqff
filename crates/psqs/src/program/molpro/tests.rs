@@ -117,54 +117,57 @@ pub(crate) mod write_input {
 }
 
 mod read_output {
-    use crate::program::ProgramResult;
-    use symm::Atom;
+    use insta::assert_debug_snapshot;
 
     use super::*;
 
     #[test]
     fn opt() {
         let got = Molpro::read_output("testfiles/molpro/opt").unwrap();
-        let want = ProgramResult {
+        assert_debug_snapshot!(got, @r"
+        ProgramResult {
             energy: -76.369839620286,
-            cart_geom: Some(vec![
-                //
-                Atom::new_from_label(
-                    "O",
-                    0.0000000000,
-                    0.0000000000,
-                    -0.0657441581,
-                ),
-                Atom::new_from_label(
-                    "H",
-                    0.0000000000,
-                    0.7574590773,
-                    0.5217905246,
-                ),
-                Atom::new_from_label(
-                    "H",
-                    0.0000000000,
-                    -0.7574590773,
-                    0.5217905246,
-                ),
-            ]),
+            cart_geom: Some(
+                [
+                    Atom {
+                        atomic_number: 8,
+                        x: 0.0,
+                        y: 0.0,
+                        z: -0.0657441581,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: 0.7574590773,
+                        z: 0.5217905246,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: -0.7574590773,
+                        z: 0.5217905246,
+                        weight: None,
+                    },
+                ],
+            ),
             time: 27.13,
-        };
-
-        assert_eq!(got, want);
+        }
+        ");
     }
 
     #[test]
     fn dzccr() {
         let got = Molpro::read_output("testfiles/molpro/dzccr");
         let got = got.unwrap_or_else(|e| panic!("{e:#?}"));
-        let want = ProgramResult {
-            energy: -76.470698498340,
+        assert_debug_snapshot!(got, @r"
+        ProgramResult {
+            energy: -76.47069849834,
             cart_geom: None,
             time: 4.73,
-        };
-
-        assert_eq!(got, want);
+        }
+        ");
     }
 
     #[test]
