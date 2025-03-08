@@ -69,21 +69,6 @@ pub(crate) mod write_input {
     use tempfile::NamedTempFile;
     use test_case::test_case;
 
-    #[macro_export]
-    macro_rules! check {
-        ($want_file: expr) => {
-            check!($want_file, "/tmp/opt.inp");
-        };
-        ($want_file: expr, $got_file: expr) => {
-            let want_file = $want_file;
-            let got = read_to_string($got_file).expect("file not found");
-            let want = read_to_string(want_file).unwrap();
-            if got != want {
-                panic!("\ngot:\n{}\nwant:\n{}", got, want);
-            }
-        };
-    }
-
     #[test_case(Procedure::Opt, Procedure::Opt)]
     #[test_case(Procedure::Opt, Procedure::SinglePt)]
     #[test_case(Procedure::SinglePt, Procedure::Opt)]
