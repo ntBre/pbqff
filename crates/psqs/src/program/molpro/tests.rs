@@ -50,6 +50,7 @@ hf,accuracy=16,energy=1.0d-10
     )
 }
 
+#[derive(Copy, Clone, Debug)]
 enum Type {
     Opt,
     Spt,
@@ -86,6 +87,7 @@ HCC =               147.81488230
 pub(crate) mod write_input {
     use super::*;
 
+    use insta::assert_snapshot;
     use tempfile::NamedTempFile;
     use test_case::test_case;
 
@@ -104,15 +106,19 @@ pub(crate) mod write_input {
         };
     }
 
-    #[test_case(Type::Opt, Procedure::Opt, "testfiles/molpro/opt.want")]
-    #[test_case(Type::Opt, Procedure::SinglePt, "testfiles/molpro/single.want")]
-    #[test_case(Type::Spt, Procedure::Opt, "testfiles/molpro/opt.want")]
-    #[test_case(Type::Spt, Procedure::SinglePt, "testfiles/molpro/single.want")]
-    fn opt_opt(ty: Type, proc: Procedure, want: &str) {
+    #[test_case(Type::Opt, Procedure::Opt)]
+    #[test_case(Type::Opt, Procedure::SinglePt)]
+    #[test_case(Type::Spt, Procedure::Opt)]
+    #[test_case(Type::Spt, Procedure::SinglePt)]
+    fn opt_opt(ty: Type, proc: Procedure) {
         let dir = NamedTempFile::new().unwrap();
         let mut m = test_molpro(ty, &dir);
         m.write_input(proc);
-        check!(want, &*dir.path().with_extension("inp").to_string_lossy());
+        let snapshot = format!("{ty:?}_{proc:?}");
+        assert_snapshot!(
+            snapshot,
+            read_to_string(dir.path().with_extension("inp")).unwrap()
+        );
     }
 }
 
