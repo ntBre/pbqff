@@ -50,19 +50,14 @@ hf,accuracy=16,energy=1.0d-10
     )
 }
 
-#[derive(Copy, Clone, Debug)]
-enum Type {
-    Opt,
-    Spt,
-}
-
-fn test_molpro(t: Type, path: impl AsRef<Path>) -> Molpro {
+fn test_molpro(template_kind: Procedure, path: impl AsRef<Path>) -> Molpro {
     let path = path.as_ref();
     Molpro::new(
         path.to_string_lossy().to_string(),
-        match t {
-            Type::Opt => opt_templ(),
-            Type::Spt => single_templ(),
+        match template_kind {
+            Procedure::Opt => opt_templ(),
+            Procedure::SinglePt => single_templ(),
+            _ => panic!("invalid procedure for testing"),
         },
         0,
         Geom::from_str(
@@ -106,15 +101,15 @@ pub(crate) mod write_input {
         };
     }
 
-    #[test_case(Type::Opt, Procedure::Opt)]
-    #[test_case(Type::Opt, Procedure::SinglePt)]
-    #[test_case(Type::Spt, Procedure::Opt)]
-    #[test_case(Type::Spt, Procedure::SinglePt)]
-    fn opt_opt(ty: Type, proc: Procedure) {
+    #[test_case(Procedure::Opt, Procedure::Opt)]
+    #[test_case(Procedure::Opt, Procedure::SinglePt)]
+    #[test_case(Procedure::SinglePt, Procedure::Opt)]
+    #[test_case(Procedure::SinglePt, Procedure::SinglePt)]
+    fn opt_opt(template_kind: Procedure, proc: Procedure) {
         let dir = NamedTempFile::new().unwrap();
-        let mut m = test_molpro(ty, &dir);
+        let mut m = test_molpro(template_kind, &dir);
         m.write_input(proc);
-        let snapshot = format!("{ty:?}_{proc:?}");
+        let snapshot = format!("{template_kind:?}_{proc:?}");
         assert_snapshot!(
             snapshot,
             read_to_string(dir.path().with_extension("inp")).unwrap()
