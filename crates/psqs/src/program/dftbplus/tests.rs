@@ -1,11 +1,32 @@
 use std::str::FromStr;
 
 use insta::{assert_debug_snapshot, assert_snapshot};
+use tempfile::TempDir;
 
 use super::*;
 
+fn test_program(filename: String, template: Template) -> DFTBPlus {
+    DFTBPlus {
+        filename,
+        template,
+        charge: 0,
+        geom: Geom::from_str(
+            "    3
+            Geometry Step: 9
+            O      0.00000000     -0.71603315      0.00000000
+            H      0.00000000     -0.14200298      0.77844804
+            H     -0.00000000     -0.14200298     -0.77844804
+            ",
+        )
+        .unwrap(),
+    }
+}
+
 #[test]
-fn write_input() {
+fn write_basic_input() {
+    let temp = TempDir::new().unwrap();
+    let dirname = temp.path().to_string_lossy().to_string();
+    let output = temp.path().join("dftb_in.hsd");
     let template = Template::from(
         "
 Geometry = xyzFormat {
@@ -39,24 +60,11 @@ ParserOptions {
 ",
     );
 
-    let mut d = DFTBPlus {
-        filename: "/tmp".into(),
-        template,
-        charge: 0,
-        geom: Geom::from_str(
-            "    3
-Geometry Step: 9
-    O      0.00000000     -0.71603315      0.00000000
-    H      0.00000000     -0.14200298      0.77844804
-    H     -0.00000000     -0.14200298     -0.77844804
-",
-        )
-        .unwrap(),
-    };
+    let mut d = test_program(dirname, template);
 
     d.write_input(Procedure::Opt);
 
-    assert_snapshot!(read_to_string("/tmp/dftb_in.hsd").unwrap(), @r#"
+    assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
 
@@ -108,7 +116,7 @@ Geometry Step: 9
 
     d.write_input(Procedure::SinglePt);
 
-    assert_snapshot!(read_to_string("/tmp/dftb_in.hsd").unwrap(), @r#"
+    assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
 
@@ -144,8 +152,13 @@ Geometry Step: 9
       ParserVersion = 12
     }
     "#);
+}
 
-    // test that we can also handle a provided geometry driver
+#[test]
+fn write_input_with_geometry_driver() {
+    let temp = TempDir::new().unwrap();
+    let dirname = temp.path().to_string_lossy().to_string();
+    let output = temp.path().join("dftb_in.hsd");
     let template = Template::from(
         "
 Geometry = xyzFormat {
@@ -192,23 +205,10 @@ Driver = GeometryOptimization {
 ",
     );
 
-    let mut d = DFTBPlus {
-        filename: "/tmp".into(),
-        template,
-        charge: 0,
-        geom: Geom::from_str(
-            "    3
-Geometry Step: 9
-    O      0.00000000     -0.71603315      0.00000000
-    H      0.00000000     -0.14200298      0.77844804
-    H     -0.00000000     -0.14200298     -0.77844804
-",
-        )
-        .unwrap(),
-    };
+    let mut d = test_program(dirname, template);
 
     d.write_input(Procedure::Opt);
-    assert_snapshot!(read_to_string("/tmp/dftb_in.hsd").unwrap(), @r#"
+    assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
 
@@ -259,7 +259,7 @@ Geometry Step: 9
     "#);
 
     d.write_input(Procedure::SinglePt);
-    assert_snapshot!(read_to_string("/tmp/dftb_in.hsd").unwrap(), @r#"
+    assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
 
