@@ -6,26 +6,9 @@ use crate::{
 };
 
 fn opt_templ() -> Template {
-    Template::from(
-        "
-memory,1,g
-
-gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
-gthresh,optgrad=1.d-8,optstep=1.d-8;
-nocompress;
-
-geometry={
-{{.geom}}
-basis={
-default,cc-pVTZ-f12
-}
-set,charge={{.charge}}
-set,spin=0
-hf,accuracy=16,energy=1.0d-10
-{CCSD(T)-F12,thrden=1.0d-8,thrvar=1.0d-10}
-{optg,grms=1.d-8,srms=1.d-8}
-",
-    )
+    let mut single = single_templ();
+    single.header.push_str("{optg,grms=1.d-8,srms=1.d-8}");
+    single
 }
 
 fn single_templ() -> Template {
