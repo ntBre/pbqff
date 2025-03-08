@@ -9,6 +9,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::fs::{read_to_string, File};
 use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 use std::sync::OnceLock;
 
 /// kcal/mol per hartree
@@ -250,11 +251,12 @@ impl Mopac {
     }
 
     /// write the `params` to `filename`
-    pub fn write_params(params: &Params, filename: &str) {
-        let mut file = match File::create(filename) {
+    pub fn write_params(params: &Params, path: impl AsRef<Path>) {
+        let path = path.as_ref();
+        let mut file = match File::create(path) {
             Ok(f) => f,
             Err(e) => {
-                eprintln!("failed to create {filename} with {e}");
+                eprintln!("failed to create {path:?} with {e}");
                 std::process::exit(1);
             }
         };

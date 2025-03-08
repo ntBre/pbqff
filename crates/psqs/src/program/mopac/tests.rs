@@ -1,13 +1,52 @@
 use std::collections::HashSet;
 use std::fs;
+use std::ops::{Deref, DerefMut};
+
+use insta::{assert_debug_snapshot, assert_snapshot};
+use tempfile::TempDir;
 
 use crate::string;
 
-use crate::queue::{self, Queue, SubQueue, Submit};
+use crate::queue::{Queue, SubQueue, Submit};
 
 use super::*;
 
-fn test_mopac() -> Mopac {
+struct TestMopac {
+    tempdir: TempDir,
+    mopac: Mopac,
+}
+
+impl TestMopac {
+    #[must_use]
+    fn with_params(mut self, params: Option<Params>) -> Self {
+        self.mopac.params = params;
+        self
+    }
+
+    /// Set [`Mopac::param_dir`] to `Some(self.tempdir)`.
+    #[must_use]
+    fn with_param_dir(mut self) -> Self {
+        self.param_dir =
+            Some(self.tempdir.path().to_string_lossy().to_string());
+        self
+    }
+}
+
+impl Deref for TestMopac {
+    type Target = Mopac;
+
+    fn deref(&self) -> &Self::Target {
+        &self.mopac
+    }
+}
+
+impl DerefMut for TestMopac {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.mopac
+    }
+}
+
+fn test_mopac() -> TestMopac {
     let names = vec![
         "USS", "ZS", "BETAS", "GSS", "USS", "UPP", "ZS", "ZP", "BETAS",
         "BETAP", "GSS", "GPP", "GSP", "GP2", "HSP",
@@ -24,8 +63,9 @@ fn test_mopac() -> Mopac {
         -7.471929000000, 13.335519000000, 10.778326000000,
         11.528134000000, 9.486212000000, 0.717322000000,
     ];
-    Mopac::new_full(
-        String::from("/tmp/test"),
+    let tempdir = TempDir::new().unwrap();
+    let mopac = Mopac::new_full(
+        tempdir.path().join("test").to_string_lossy().to_string(),
         Some(Params::from(
             names.iter().map(|s| s.to_string()).collect(),
             atoms.iter().map(|s| s.to_string()).collect(),
@@ -34,18 +74,16 @@ fn test_mopac() -> Mopac {
         Geom::Xyz(Vec::new()),
         0,
         Template::from("scfcrt=1.D-21 aux(precision=14) PM6 A0"),
-    )
+    );
+
+    TestMopac { tempdir, mopac }
 }
 
 #[test]
 fn test_write_input() {
-    let mut tm = Mopac {
-        params: None,
-        ..test_mopac()
-    };
-    tm.param_dir = Some("/tmp".to_string());
+    let mut tm = test_mopac().with_params(None);
     tm.write_input(Procedure::SinglePt);
-    let got = fs::read_to_string("/tmp/test.mop").expect("file not found");
+    let got = fs::read_to_string(tm.infile()).expect("file not found");
     let want = "scfcrt=1.D-21 aux(precision=14) PM6 A0 charge=0 1SCF XYZ
 Comment line 1
 Comment line 2
@@ -53,97 +91,147 @@ Comment line 2
 "
     .to_string();
     assert_eq!(got, want);
-    fs::remove_file("/tmp/test.mop").unwrap();
 }
 
 #[test]
 fn test_write_input_with_params() {
-    let mut tm = test_mopac();
-    tm.param_dir = Some("/tmp".to_string());
+    let mut tm = test_mopac().with_param_dir();
     tm.write_input(Procedure::SinglePt);
-    let got = fs::read_to_string("/tmp/test.mop").expect("file not found");
-    let want = format!(
-        "scfcrt=1.D-21 aux(precision=14) PM6 A0 charge=0 1SCF \
-	     external={} XYZ
-Comment line 1
-Comment line 2
 
-",
-        tm.param_file.unwrap(),
-    );
-    assert_eq!(got, want);
-    fs::remove_file("/tmp/test.mop").unwrap();
+    insta::with_settings!({filters => vec![(
+        tm.param_file.as_ref().unwrap().as_str(), "[PARAM_FILE]",
+    )]}, {
+        assert_snapshot!(read_to_string(tm.infile()).expect("file not found"), @r"
+        scfcrt=1.D-21 aux(precision=14) PM6 A0 charge=0 1SCF external=[PARAM_FILE] XYZ
+        Comment line 1
+        Comment line 2
+        ");
+    });
 }
 
 #[test]
 fn test_write_params() {
     let tm = test_mopac();
-    Mopac::write_params(&tm.params.unwrap(), &String::from("/tmp/params.dat"));
-    let got = fs::read_to_string("/tmp/params.dat").expect("file not found");
-    let want = "USS H -11.246958000000
-ZS H 1.268641000000
-BETAS H -8.352984000000
-GSS H 14.448686000000
-USS C -51.089653000000
-UPP C -39.937920000000
-ZS C 2.047558000000
-ZP C 1.702841000000
-BETAS C -15.385236000000
-BETAP C -7.471929000000
-GSS C 13.335519000000
-GPP C 10.778326000000
-GSP C 11.528134000000
-GP2 C 9.486212000000
-HSP C 0.717322000000
-";
-    assert_eq!(got, want);
-    fs::remove_file("/tmp/params.dat").unwrap();
+    let param_file = tm.tempdir.path().join("params.dat");
+    Mopac::write_params(tm.params.as_ref().unwrap(), &param_file);
+
+    assert_snapshot!(read_to_string(&param_file).expect("file not found"), @r"
+    USS H -11.246958000000
+    ZS H 1.268641000000
+    BETAS H -8.352984000000
+    GSS H 14.448686000000
+    USS C -51.089653000000
+    UPP C -39.937920000000
+    ZS C 2.047558000000
+    ZP C 1.702841000000
+    BETAS C -15.385236000000
+    BETAP C -7.471929000000
+    GSS C 13.335519000000
+    GPP C 10.778326000000
+    GSP C 11.528134000000
+    GP2 C 9.486212000000
+    HSP C 0.717322000000
+    ");
 }
 
 #[test]
 fn test_read_output() {
-    let res = Mopac::read_output("testfiles/job").unwrap();
-    let got = res.energy;
-    let want = 9.712_794_745_916_472e1 / KCALHT;
-    assert!((got - want).abs() < 1e-20);
-
-    assert_eq!(res.time, 0.015625);
+    assert_debug_snapshot!(Mopac::read_output("testfiles/job"), @r"
+    Ok(
+        ProgramResult {
+            energy: 0.15478330901845888,
+            cart_geom: Some(
+                [
+                    Atom {
+                        atomic_number: 6,
+                        x: 0.0,
+                        y: 0.001986048947850556,
+                        z: -0.8876484030621448,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 6,
+                        x: 0.0,
+                        y: 0.6656848670392688,
+                        z: 0.36485436700254253,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 6,
+                        x: 0.0,
+                        y: -0.6648176873614392,
+                        z: 0.3712115291247976,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: 1.6004641296483408,
+                        z: 0.9066925741481017,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: -1.6033173582740208,
+                        z: 0.9065798886662334,
+                        weight: None,
+                    },
+                ],
+            ),
+            time: 0.015625,
+        },
+    )
+    ");
 
     // opt success
-    let got = Mopac::read_output("testfiles/opt").unwrap().cart_geom;
-    let want = vec![
-        Atom::new_from_label(
-            "C",
-            0.000000000000000000,
-            0.000000000000000000,
-            0.000000000000000000,
-        ),
-        Atom::new_from_label(
-            "C",
-            1.436_199_643_883_821_2,
-            0.000000000000000000,
-            0.000000000000000000,
-        ),
-        Atom::new_from_label(
-            "C",
-            0.799_331_622_330_450_3,
-            1.193_205_084_901_411_7,
-            0.000000000000000000,
-        ),
-        Atom::new_from_label(
-            "H",
-            2.360_710_453_618_393,
-            -0.506_038_360_297_709_7,
-            0.000000000000026804,
-        ),
-        Atom::new_from_label(
-            "H",
-            0.893_457_241_509_136_9,
-            2.242_936_206_295_408_6,
-            -0.000000000000026804,
-        ),
-    ];
-    assert_eq!(got, Some(want));
+    assert_debug_snapshot!(Mopac::read_output("testfiles/opt"), @r"
+    Ok(
+        ProgramResult {
+            energy: 0.20175470737510037,
+            cart_geom: Some(
+                [
+                    Atom {
+                        atomic_number: 6,
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 6,
+                        x: 1.4361996438838212,
+                        y: 0.0,
+                        z: 0.0,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 6,
+                        x: 0.7993316223304503,
+                        y: 1.1932050849014117,
+                        z: 0.0,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 2.360710453618393,
+                        y: -0.5060383602977097,
+                        z: 2.6804e-14,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.8934572415091369,
+                        y: 2.2429362062954086,
+                        z: -2.6804e-14,
+                        weight: None,
+                    },
+                ],
+            ),
+            time: 0.03125,
+        },
+    )
+    ");
 
     // failure (no termination message) in output - now catches noaux error
     // instead
@@ -227,36 +315,45 @@ impl SubQueue<Mopac> for TestQueue {
 
 #[test]
 fn test_submit() {
+    let tmp = TempDir::new().unwrap();
+    let pbs = tmp.path().join("main.pbs");
+    let path = pbs.to_string_lossy();
     let tq = TestQueue;
     tq.write_submit_script(
         string!["input1.mop", "input2.mop", "input3.mop"],
-        "/tmp/main.pbs",
+        &path,
     );
-    let got = tq.submit("/tmp/main.pbs");
+    let got = tq.submit(&path);
     let want = "input3.mop";
     assert_eq!(got, want);
 }
 
 #[test]
-fn test_resubmit() {
-    use std::path::Path;
-    let tq = TestQueue;
-    std::fs::copy("testfiles/job.mop", "/tmp/job.mop").unwrap();
-    let got = tq.resubmit("/tmp/job.mop");
-    assert!(Path::new("/tmp/job_redo.mop").exists());
-    assert!(Path::new("/tmp/job_redo.pbs").exists());
-    assert_eq!(
-        read_to_string("/tmp/job.mop").unwrap(),
-        read_to_string("/tmp/job_redo.mop").unwrap()
-    );
-    let want = queue::Resubmit {
-        inp_file: String::from("/tmp/job_redo"),
-        pbs_file: String::from("/tmp/job_redo.pbs"),
-        job_id: String::from("/tmp/job_redo"),
-    };
-    assert_eq!(got, want);
+fn test_resubmit() -> anyhow::Result<()> {
+    let tmp = TempDir::new()?;
+    let mop = tmp.path().join("job.mop");
+    let redo_mop = tmp.path().join("job_redo.mop");
+    let redo_pbs = tmp.path().join("job_redo.pbs");
 
-    for f in ["/tmp/job.mop", "/tmp/job_redo.mop", "/tmp/job_redo.pbs"] {
-        std::fs::remove_file(f).unwrap();
-    }
+    std::fs::copy("testfiles/job.mop", &mop)?;
+
+    let got = TestQueue.resubmit(&mop);
+
+    assert!(redo_mop.exists());
+    assert!(redo_pbs.exists());
+    assert_eq!(read_to_string(&mop)?, read_to_string(&redo_mop)?);
+
+    insta::with_settings!({filters => vec![
+        (tmp.path().to_str().unwrap(), "[TMP]"),
+    ]}, {
+        assert_debug_snapshot!(got, @r#"
+        Resubmit {
+            inp_file: "[TMP]/job_redo",
+            pbs_file: "[TMP]/job_redo.pbs",
+            job_id: "[TMP]/job_redo",
+        }
+        "#);
+    });
+
+    Ok(())
 }

@@ -289,35 +289,45 @@ impl Queue<Cfour> for Local {
 mod tests {
     use std::str::FromStr;
 
+    use insta::{assert_debug_snapshot, assert_snapshot};
     use tempfile::tempdir;
-
-    use crate::check;
 
     use super::*;
 
     #[test]
     fn read_output() {
         let got = Cfour::read_output("testfiles/cfour").unwrap();
-        let want = ProgramResult {
+        assert_debug_snapshot!(got, @r"
+        ProgramResult {
             energy: -76.33801063048065,
-            cart_geom: Some(vec![
-                Atom::new(8, -0.0000000000, 0.0000000000, 0.06580655821884736),
-                Atom::new(
-                    1,
-                    0.0000000000,
-                    -0.7531598119360652,
-                    -0.522198915512423,
-                ),
-                Atom::new(
-                    1,
-                    0.0000000000,
-                    0.7531598119360652,
-                    -0.5221989155124239,
-                ),
-            ]),
+            cart_geom: Some(
+                [
+                    Atom {
+                        atomic_number: 8,
+                        x: -0.0,
+                        y: 0.0,
+                        z: 0.06580655821884736,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: -0.7531598119360652,
+                        z: -0.5221989155124239,
+                        weight: None,
+                    },
+                    Atom {
+                        atomic_number: 1,
+                        x: 0.0,
+                        y: 0.7531598119360652,
+                        z: -0.5221989155124239,
+                        weight: None,
+                    },
+                ],
+            ),
             time: 55.263,
-        };
-        assert_eq!(got, want);
+        }
+        ");
     }
 
     #[test]
@@ -350,9 +360,17 @@ H         0.000000000         0.753160027        -0.522199064
         };
 
         d.write_input(Procedure::SinglePt);
-        check!("testfiles/cfour/ZMAT.want", &*zmat.to_string_lossy());
 
-        drop(tmp);
+        assert_snapshot!(read_to_string(zmat).unwrap(), @r"
+        comment line
+        O      -0.0000000000   0.0000000000   0.0658065770
+        H       0.0000000000  -0.7531600270  -0.5221990640
+        H       0.0000000000   0.7531600270  -0.5221990640
+
+
+        *CFOUR(CALC=CCSD,BASIS=PVTZ,MEMORY_SIZE=8,MEM_UNIT=GB,REF=RHF,MULT=1
+        COORD=CARTESIAN)
+        ");
     }
 
     #[test]
@@ -382,6 +400,17 @@ H         0.000000000         0.753160027        -0.522199064
         };
 
         d.write_input(Procedure::SinglePt);
-        check!("testfiles/cfour/charged.want", "/tmp/ZMAT");
+
+        assert_snapshot!(read_to_string("/tmp/ZMAT").unwrap(), @r"
+        comment line
+        O      -0.0000000000   0.0000000000   0.0658065770
+        H       0.0000000000  -0.7531600270  -0.5221990640
+        H       0.0000000000   0.7531600270  -0.5221990640
+
+
+        *CFOUR(CALC=CCSD,BASIS=PVTZ,MEMORY_SIZE=8,MEM_UNIT=GB,REF=RHF,MULT=1
+        CHARGE=0
+        COORD=CARTESIAN)
+        ");
     }
 }

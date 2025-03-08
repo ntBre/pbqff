@@ -1,4 +1,7 @@
-
+---
+source: crates/psqs/src/program/molpro/tests.rs
+expression: "read_to_string(dir.path().with_extension(\"inp\")).unwrap()"
+---
 memory,1,g
 
 gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
@@ -25,4 +28,3 @@ set,charge=0
 set,spin=0
 hf,accuracy=16,energy=1.0d-10
 {CCSD(T)-F12,thrden=1.0d-8,thrvar=1.0d-10}
-{optg,grms=1.d-8,srms=1.d-8}

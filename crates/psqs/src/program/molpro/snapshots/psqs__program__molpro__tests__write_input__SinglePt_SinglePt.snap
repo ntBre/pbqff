@@ -1,4 +1,7 @@
-
+---
+source: crates/psqs/src/program/molpro/tests.rs
+expression: "read_to_string(dir.path().with_extension(\"inp\")).unwrap()"
+---
 memory,1,g
 
 gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;
