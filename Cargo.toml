@@ -27,7 +27,7 @@ env_logger = "0.11.7"
 insta = { version = "1.42.2", features = ["filters"] }
 jiff = { version = "0.2.5" }
 libc = "0.2.171"
-log = "0.4.26"
+log = "0.4.27"
 nalgebra = "0.33.2"
 ndarray = { version = "0.15.6", features = ["approx-0_5"] }
 rayon = "1.5.3"
