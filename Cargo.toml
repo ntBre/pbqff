@@ -25,7 +25,7 @@ clap = { version = "4.5.36", features = ["derive"] }
 criterion = "0.5.0"
 env_logger = "0.11.8"
 insta = { version = "1.42.2", features = ["filters"] }
-jiff = { version = "0.2.8" }
+jiff = { version = "0.2.9" }
 libc = "0.2.172"
 log = "0.4.27"
 nalgebra = "0.33.2"
