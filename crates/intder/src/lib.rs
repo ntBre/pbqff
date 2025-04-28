@@ -1350,7 +1350,7 @@ impl Intder {
         let f2 = f2.as_slice();
         let pairs = [(f2, "fort.15"), (f3, "fort.30"), (f4, "fort.40")];
         for (fcs, file) in pairs {
-            let filename = format!("{dir}/{}", file);
+            let filename = format!("{dir}/{file}");
             let mut f = match File::create(&filename) {
                 Ok(f) => f,
                 Err(e) => panic!("failed to create `{filename}` for `{e}`"),

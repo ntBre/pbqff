@@ -64,7 +64,7 @@ fn main() -> Result<(), std::io::Error> {
     if args.json {
         let config = Config::load(&args.infile);
         match serde_json::to_string(&config) {
-            Ok(s) => println!("{}", s),
+            Ok(s) => println!("{s}"),
             Err(e) => {
                 die!("failed to deserialize {} with {e}", args.infile);
             }
