@@ -136,7 +136,7 @@ pub fn to_wavenumbers(freqs: &Dvec) -> Dvec {
         freqs.len(),
         freqs.iter().map(|f| {
             if *f < 0.0 {
-                -1.0 * WAVE * f64::sqrt(-f)
+                -WAVE * f64::sqrt(-f)
             } else {
                 WAVE * f64::sqrt(*f)
             }

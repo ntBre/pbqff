@@ -99,12 +99,12 @@ pub(crate) fn resona(
 
     // construct the resonance matrix, then call symm_eigen_decomp to get the
     // eigenvalues and eigenvectors
-    println!("\nResonance matrix:{:.3}", resmat);
+    println!("\nResonance matrix:{resmat:.3}");
 
     let (vals, vecs) = symm_eigen_decomp(resmat.clone(), false);
 
     println!("Eigenvalues:{:.2}", vals.transpose());
-    println!("Eigenvectors:{:.7}", vecs);
+    println!("Eigenvectors:{vecs:.7}");
 
     Some(resmat)
 }

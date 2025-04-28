@@ -80,7 +80,7 @@ impl Display for Output {
                     icombn: _,
                 },
         } = self;
-        writeln!(f, "Geometry: {:.8}", geom)?;
+        writeln!(f, "Geometry: {geom:.8}")?;
         writeln!(
             f,
             "Vibrational Frequencies (cm-1):\n{:>5}{:>8}{:>8}{:>8}{:>8}",
@@ -120,9 +120,9 @@ impl Display for Output {
             }
         }
 
-        writeln!(f, "\nQuartic Distortion Constants (cm-1):\n{}", quartic)?;
+        writeln!(f, "\nQuartic Distortion Constants (cm-1):\n{quartic}")?;
 
-        writeln!(f, "Sextic Distortion Constants (cm-1):\n{}", sextic)?;
+        writeln!(f, "Sextic Distortion Constants (cm-1):\n{sextic}")?;
 
         writeln!(f, "\nCoriolis Resonances:")?;
         for Coriolis { i, j, axis } in coriolis {

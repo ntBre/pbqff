@@ -568,7 +568,7 @@ impl Spectro {
                             FRAC_PI_2
                         } else if iz2y == 0 {
                             f64::atan(
-                                -1.0 * lxm[(ncomp2, imode1)]
+                                -lxm[(ncomp2, imode1)]
                                     / lxm[(ncomp1, imode2)],
                             )
                         } else {
@@ -581,7 +581,7 @@ impl Spectro {
                         let ncomp3 = ncomp1 + 2;
                         if lxm[(ncomp3, imode2)].abs() > TOLER {
                             f64::atan(
-                                -1.0 * lxm[(ncomp3, imode1)]
+                                -lxm[(ncomp3, imode1)]
                                     / lxm[(ncomp3, imode2)],
                             )
                         } else if lxm[(ncomp3, imode1)].abs() > TOLER {
@@ -696,8 +696,7 @@ impl Spectro {
 
                                 test -= f64::cos(alpha * s)
                                     * lxm[(ncomp23, imode2)];
-                                let test2 = -1.0
-                                    * lxm[(ncomp23, imode1)]
+                                let test2 = -lxm[(ncomp23, imode1)]
                                     * f64::sin(-alpha * s);
                                 let test3 = (test.abs() - test2.abs())
                                     / lxm[(ncomp3, imode2)];

@@ -204,7 +204,7 @@ pub trait FiniteDifference {
         } in targets
         {
             if DEBUG == "fcs" {
-                eprintln!("source index: {}", source_index);
+                eprintln!("source index: {source_index}");
             }
             let energy = energies[source_index];
             for idx in &indices {
@@ -342,13 +342,13 @@ pub trait FiniteDifference {
         } else {
             vec![
                 proto!(self, names, coords, step_size, 1. * scale, i, j, k),
-                proto!(self, names, coords, step_size, -1. * scale, i, -j, k),
-                proto!(self, names, coords, step_size, -1. * scale, -i, j, k),
+                proto!(self, names, coords, step_size, -scale, i, -j, k),
+                proto!(self, names, coords, step_size, -scale, -i, j, k),
                 proto!(self, names, coords, step_size, 1. * scale, -i, -j, k),
-                proto!(self, names, coords, step_size, -1. * scale, i, j, -k),
+                proto!(self, names, coords, step_size, -scale, i, j, -k),
                 proto!(self, names, coords, step_size, 1. * scale, i, -j, -k),
                 proto!(self, names, coords, step_size, 1. * scale, -i, j, -k),
-                proto!(self, names, coords, step_size, -1. * scale, -i, -j, -k),
+                proto!(self, names, coords, step_size, -scale, -i, -j, -k),
             ]
         }
     }
@@ -372,8 +372,8 @@ pub trait FiniteDifference {
                 proto!(self, names, coords, step, 1. * scale, i, i, i, l),
                 proto!(self, names, coords, step, -3. * scale, i, l),
                 proto!(self, names, coords, step, 3. * scale, -i, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, -i, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, i, -l),
+                proto!(self, names, coords, step, -scale, -i, -i, -i, l),
+                proto!(self, names, coords, step, -scale, i, i, i, -l),
                 proto!(self, names, coords, step, 3. * scale, i, -l),
                 proto!(self, names, coords, step, -3. * scale, -i, -l),
                 proto!(self, names, coords, step, 1. * scale, -i, -i, -i, -l),
@@ -399,12 +399,12 @@ pub trait FiniteDifference {
                 proto!(self, names, coords, step, 1. * scale, i, i, k, l),
                 proto!(self, names, coords, step, -2. * scale, k, l),
                 proto!(self, names, coords, step, 1. * scale, -i, -i, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, -k, l),
+                proto!(self, names, coords, step, -scale, i, i, -k, l),
                 proto!(self, names, coords, step, 2. * scale, -k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, -k, l),
-                proto!(self, names, coords, step, -1. * scale, i, i, k, -l),
+                proto!(self, names, coords, step, -scale, -i, -i, -k, l),
+                proto!(self, names, coords, step, -scale, i, i, k, -l),
                 proto!(self, names, coords, step, 2. * scale, k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, -i, k, -l),
+                proto!(self, names, coords, step, -scale, -i, -i, k, -l),
                 proto!(self, names, coords, step, 1. * scale, i, i, -k, -l),
                 proto!(self, names, coords, step, -2. * scale, -k, -l),
                 proto!(self, names, coords, step, 1. * scale, -i, -i, -k, -l),
@@ -451,20 +451,20 @@ pub trait FiniteDifference {
         } else {
             vec![
                 proto!(self, names, coords, step, 1. * scale, i, j, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, -j, k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, j, k, l),
+                proto!(self, names, coords, step, -scale, i, -j, k, l),
+                proto!(self, names, coords, step, -scale, -i, j, k, l),
                 proto!(self, names, coords, step, 1. * scale, -i, -j, k, l),
-                proto!(self, names, coords, step, -1. * scale, i, j, -k, l),
+                proto!(self, names, coords, step, -scale, i, j, -k, l),
                 proto!(self, names, coords, step, 1. * scale, i, -j, -k, l),
                 proto!(self, names, coords, step, 1. * scale, -i, j, -k, l),
-                proto!(self, names, coords, step, -1. * scale, -i, -j, -k, l),
-                proto!(self, names, coords, step, -1. * scale, i, j, k, -l),
+                proto!(self, names, coords, step, -scale, -i, -j, -k, l),
+                proto!(self, names, coords, step, -scale, i, j, k, -l),
                 proto!(self, names, coords, step, 1. * scale, i, -j, k, -l),
                 proto!(self, names, coords, step, 1. * scale, -i, j, k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, -j, k, -l),
+                proto!(self, names, coords, step, -scale, -i, -j, k, -l),
                 proto!(self, names, coords, step, 1. * scale, i, j, -k, -l),
-                proto!(self, names, coords, step, -1. * scale, i, -j, -k, -l),
-                proto!(self, names, coords, step, -1. * scale, -i, j, -k, -l),
+                proto!(self, names, coords, step, -scale, i, -j, -k, -l),
+                proto!(self, names, coords, step, -scale, -i, j, -k, -l),
                 proto!(self, names, coords, step, 1. * scale, -i, -j, -k, -l),
             ]
         }

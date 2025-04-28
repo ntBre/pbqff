@@ -93,8 +93,8 @@ fn main() -> std::io::Result<()> {
         pg
     };
 
-    println!("Normalized Geometry:\n{:20.12}", mol);
-    println!("Point Group = {}", pg);
+    println!("Normalized Geometry:\n{mol:20.12}");
+    println!("Point Group = {pg}");
 
     let nsic = intder.symmetry_internals.len();
     // generate a displacement for each SIC
@@ -202,7 +202,7 @@ fn main() -> std::io::Result<()> {
                                 intder.atoms[*d].label,
                                 d + 1
                             ),
-			    _ => panic!("tell brent to support {}", l),
+			    _ => panic!("tell brent to support {l}"),
                             // intder::Siic::Lin1(_, _, _, _) => todo!(),
                             // intder::Siic::Out(_, _, _, _) => todo!(),
                         }
@@ -228,7 +228,7 @@ fn main() -> std::io::Result<()> {
 
         let mut f = std::fs::File::create("intder.in")?;
         use std::io::Write;
-        writeln!(f, "{}", intder)?;
+        writeln!(f, "{intder}")?;
 
         let anpass = taylor.to_anpass(
             &taylor_disps,
@@ -236,7 +236,7 @@ fn main() -> std::io::Result<()> {
             cfg.step_size,
         );
         let mut f = std::fs::File::create("anpass.in")?;
-        writeln!(f, "{}", anpass)?;
+        writeln!(f, "{anpass}")?;
     }
 
     Ok(())
