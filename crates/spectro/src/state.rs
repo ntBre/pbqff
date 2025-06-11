@@ -83,6 +83,7 @@ impl State {
 }
 
 // this is actually awful but it works
+#[allow(unused)]
 pub struct I1states(pub Vec<Vec<usize>>);
 
 impl Display for I1states {
@@ -95,6 +96,7 @@ impl Display for I1states {
 }
 
 // this is actually awful but it works
+#[allow(unused)]
 pub struct I2states(pub Vec<Vec<(usize, usize)>>);
 
 impl Display for I2states {
