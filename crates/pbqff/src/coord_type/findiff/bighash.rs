@@ -263,7 +263,7 @@ impl BigHash {
     }
 
     pub(crate) fn get_mut(&mut self, orig: &Molecule) -> Option<&mut Target> {
-        use symm::PointGroup::{C2v, Cs, C1, C2};
+        use symm::PointGroup::{C1, C2, C2v, Cs};
         // first check the original structure
         let mol = &Self::to_keys(orig);
         if self.map.contains_key(mol) {

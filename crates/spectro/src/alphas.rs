@@ -7,7 +7,7 @@ use crate::f3qcm::F3qcm;
 use crate::resonance::Coriolis;
 use crate::rotor::Rotor;
 use crate::state::{State, StatePartition};
-use crate::{make_icorol, mode::Mode, Dmat, Dvec, Spectro, Tensor3};
+use crate::{Dmat, Dvec, Spectro, Tensor3, make_icorol, mode::Mode};
 
 impl Spectro {
     pub(crate) fn alphas(

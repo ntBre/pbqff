@@ -4,10 +4,10 @@ use std::{collections::HashSet, process::Command};
 
 use serde::{Deserialize, Serialize};
 
+use crate::program::Program;
 use crate::program::dftbplus::DFTBPlus;
 use crate::program::molpro::Molpro;
 use crate::program::mopac::Mopac;
-use crate::program::Program;
 use crate::queue::Queue;
 
 use super::{SubQueue, Submit};

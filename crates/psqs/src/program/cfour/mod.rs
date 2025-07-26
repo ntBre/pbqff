@@ -1,20 +1,20 @@
 use std::{
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     path::Path,
     sync::OnceLock,
 };
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use symm::{Atom, ANGBOHR};
+use symm::{ANGBOHR, Atom};
 
 use crate::{
     geom::Geom,
-    queue::{local::Local, pbs::Pbs, slurm::Slurm, Queue, Submit},
+    queue::{Queue, Submit, local::Local, pbs::Pbs, slurm::Slurm},
 };
 
 use super::{
-    parse_energy, Procedure, Program, ProgramError, ProgramResult, Template,
+    Procedure, Program, ProgramError, ProgramResult, Template, parse_energy,
 };
 
 #[derive(Clone, Deserialize, Serialize)]

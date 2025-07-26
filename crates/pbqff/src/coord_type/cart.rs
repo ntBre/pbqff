@@ -16,9 +16,9 @@ use crate::{
 };
 
 use super::{
-    findiff::bighash::BigHash,
-    findiff::{bighash::Target, zip_atoms, FiniteDifference},
     CoordType, Load, SPECTRO_HEADER,
+    findiff::bighash::BigHash,
+    findiff::{FiniteDifference, bighash::Target, zip_atoms},
 };
 
 /// debugging options. currently supported options: disp, fcs, none

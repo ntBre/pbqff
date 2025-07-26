@@ -8,10 +8,10 @@ use std::{
 };
 
 use crate::{
+    NO_RESUB,
     geom::Geom,
     program::{Job, Procedure, Program, ProgramResult},
     queue::drain::{dump::Dump, resub::ResubOutput},
-    NO_RESUB,
 };
 
 use super::Queue;
@@ -30,7 +30,7 @@ mod dump;
 mod resub;
 mod timer;
 
-use libc::{timeval, RUSAGE_SELF};
+use libc::{RUSAGE_SELF, timeval};
 use resub::Resub;
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
@@ -301,17 +301,17 @@ pub(crate) trait Drain {
                 check_int,
                 check_dir,
             } = &check
+                && *check_int > 0
+                && iter % check_int == 0
             {
-                if *check_int > 0 && iter % check_int == 0 {
-                    Self::do_checkpoint(
-                        &cur_jobs,
-                        last_chunk,
-                        &jobs_init,
-                        queue.chunk_size(),
-                        check_dir,
-                        dst,
-                    );
-                }
+                Self::do_checkpoint(
+                    &cur_jobs,
+                    last_chunk,
+                    &jobs_init,
+                    queue.chunk_size(),
+                    check_dir,
+                    dst,
+                );
             }
             iter += 1;
         }

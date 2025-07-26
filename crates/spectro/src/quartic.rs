@@ -1,9 +1,9 @@
 use std::{fmt::Display, ops::Sub};
 
 use crate::{
+    Dmat, Dvec, Spectro,
     rotor::Rotor,
     utils::{make_tau, princ_cart, tau_prime},
-    Dmat, Dvec, Spectro,
 };
 
 /// struct containing all of the quartic distortion constants and probably some

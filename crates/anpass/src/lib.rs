@@ -111,7 +111,7 @@ INDEPENDENT VARIABLES"
         writeln!(f, "FUNCTION")?;
         for row in 0..rows {
             for col in 0..cols {
-                if col > 0 && col % 16 == 0 {
+                if col > 0 && col.is_multiple_of(16) {
                     writeln!(f)?;
                 }
                 write!(f, "{:5}", self.exponents[(row, col)])?;
@@ -599,7 +599,9 @@ fn solve_least_squares(xtx: Dmat, xt: Dmat, y: &Dvec, x: Dmat) -> (Dvec, Dmat) {
         let xtx = &xt * &x;
         if DEBUG {
             eprintln!("mat = \n{xtx:.8}");
-            eprintln!("Cholesky decomposition failed in solve_least_squares, trying LU");
+            eprintln!(
+                "Cholesky decomposition failed in solve_least_squares, trying LU"
+            );
         }
         let inv = na::LU::new(xtx)
             .try_inverse()

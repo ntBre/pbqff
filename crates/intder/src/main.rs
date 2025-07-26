@@ -7,7 +7,9 @@ fn parse_args<I: Iterator<Item = String>>(args: &mut I) -> Option<String> {
     let mut hold = Vec::new();
     for arg in args {
         if arg == "-v" {
-            std::env::set_var("INTDER_DEBUG", "1");
+            unsafe {
+                std::env::set_var("INTDER_DEBUG", "1");
+            }
         } else {
             hold.push(arg);
         }

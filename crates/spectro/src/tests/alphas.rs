@@ -1,13 +1,13 @@
 use super::{check_mat, load_dmat};
 use crate::{
+    Dmat, Spectro,
     consts::FACT2,
     load_fc2, load_fc3,
     resonance::Restst,
     tests::force3,
     utils::{linalg::symm_eigen_decomp, to_wavenumbers},
-    Dmat, Spectro,
 };
-use crate::{f3qcm::F3qcm, utils::load_vec, Tensor3};
+use crate::{Tensor3, f3qcm::F3qcm, utils::load_vec};
 use nalgebra::dvector;
 use std::collections::HashMap;
 use std::path::Path;

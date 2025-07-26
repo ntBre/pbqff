@@ -407,11 +407,7 @@ fn get_fc4(v: &[f64], i: usize, j: usize, k: usize, l: usize) -> f64 {
 /// the opposite of the Kronecker delta, 0 when equal, 1 otherwise
 #[inline]
 fn delta(i: usize, j: usize) -> f64 {
-    if i == j {
-        0.0
-    } else {
-        1.0
-    }
+    if i == j { 0.0 } else { 1.0 }
 }
 
 #[derive(Debug)]
@@ -763,15 +759,15 @@ impl Intder {
         self.print_geom();
         println!();
         println!(
-        "VALUES OF SIMPLE INTERNAL COORDINATES (ANG. or DEG.) FOR REFERENCE \
+            "VALUES OF SIMPLE INTERNAL COORDINATES (ANG. or DEG.) FOR REFERENCE \
 	     GEOMETRY\n"
-    );
+        );
         self.print_simple_values(&simple_vals);
         println!();
         println!(
-        "VALUES OF SYMMETRY INTERNAL COORDINATES (ANG. or RAD.) FOR REFERENCE \
+            "VALUES OF SYMMETRY INTERNAL COORDINATES (ANG. or RAD.) FOR REFERENCE \
 	     GEOMETRY\n"
-    );
+        );
         self.print_symmetry_values(&sic_vals);
         println!();
         println!();

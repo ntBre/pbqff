@@ -3,11 +3,11 @@ use std::path::{Path, PathBuf};
 use approx::assert_abs_diff_eq;
 
 use crate::{
+    Dmat, Spectro,
     consts::FACT2,
     load_fc2, load_fc3, load_fc4,
     resonance::Restst,
     utils::{linalg::symm_eigen_decomp, to_wavenumbers},
-    Dmat, Spectro,
 };
 
 use super::{force3, force4};

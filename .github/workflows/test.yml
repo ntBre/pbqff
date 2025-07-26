@@ -15,7 +15,7 @@ jobs:
     name: ubuntu / ${{ matrix.toolchain }}
     strategy:
       matrix:
-        toolchain: [nightly]
+        toolchain: ["1.88"]
     steps:
       - uses: actions/checkout@v4
         with:

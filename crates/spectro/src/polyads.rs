@@ -1,13 +1,13 @@
 #![allow(unused)]
 
 use super::{Dmat, Dvec, Tensor3};
+use crate::Mode;
 use crate::f3qcm::F3qcm;
 use crate::f4qcm::F4qcm;
 use crate::resonance::Fermi1;
 use crate::resonance::Fermi2;
 use crate::utils::find4;
 use crate::utils::linalg::symm_eigen_decomp;
-use crate::Mode;
 use nalgebra::DMatrix;
 use nalgebra::SymmetricEigen;
 use std::collections::HashSet;
@@ -312,7 +312,9 @@ pub(crate) fn genrsa(
                         let nk1 = iirst[(k, istate)];
                         let nk2 = iirst[(k, jstate)];
                         if nk1 != nk2 {
-                            panic!("!!!Internal error in genrsa!!! nk1={nk1} nk2={nk2}");
+                            panic!(
+                                "!!!Internal error in genrsa!!! nk1={nk1} nk2={nk2}"
+                            );
                         }
                         val3 +=
                             2. * res2a(

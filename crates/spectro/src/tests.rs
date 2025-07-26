@@ -6,7 +6,7 @@ use crate::utils::linalg::symm_eigen_decomp;
 use crate::*;
 use approx::{abs_diff_eq, abs_diff_ne, assert_abs_diff_eq};
 use na::allocator::Allocator;
-use na::{dmatrix, DefaultAllocator, Matrix, Storage};
+use na::{DefaultAllocator, Matrix, Storage, dmatrix};
 use nalgebra as na;
 use std::fs::read_to_string;
 use std::io::{BufRead, BufReader};

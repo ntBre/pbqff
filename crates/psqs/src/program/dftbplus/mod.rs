@@ -1,5 +1,5 @@
 use std::{
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     path::Path,
     sync::OnceLock,
 };
@@ -11,7 +11,7 @@ use symm::Atom;
 
 use crate::{geom::Geom, program::Procedure};
 
-use super::{parse_energy, Program, ProgramError, ProgramResult, Template};
+use super::{Program, ProgramError, ProgramResult, Template, parse_energy};
 
 #[cfg(test)]
 mod tests;

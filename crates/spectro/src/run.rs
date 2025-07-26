@@ -1,15 +1,15 @@
 use serde::{Deserialize, Serialize};
 use symm::Irrep;
 
-use super::{make_sym_funds, Output, Spectro};
+use super::{Output, Spectro, make_sym_funds};
 use crate::sextic::Sextic;
 use crate::utils::{
     force3, force4, linalg::symm_eigen_decomp, make_funds, to_wavenumbers,
 };
-use crate::{consts::FACT2, quartic::Quartic, resonance::Restst};
 use crate::{
-    load_fc2, load_fc3, load_fc4, Derivative, Dmat, Dvec, F3qcm, F4qcm, Mode,
+    Derivative, Dmat, Dvec, F3qcm, F4qcm, Mode, load_fc2, load_fc3, load_fc4,
 };
+use crate::{consts::FACT2, quartic::Quartic, resonance::Restst};
 use std::error::Error;
 use std::path::Path;
 

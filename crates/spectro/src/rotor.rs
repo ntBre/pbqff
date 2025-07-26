@@ -2,7 +2,7 @@
 
 use crate::f3qcm::F3qcm;
 use crate::resonance::{Coriolis, Darling, Fermi1, Fermi2};
-use crate::{mode::Mode, Dvec};
+use crate::{Dvec, mode::Mode};
 type Tensor3 = tensor::tensor3::Tensor3<f64>;
 
 pub use symm::rotor::*;

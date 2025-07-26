@@ -7,12 +7,12 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
+    Dvec, Spectro, Tensor3,
     f3qcm::F3qcm,
     mode::Mode,
     rotor::{coriolis, darling, fermi1, fermi2},
     state::State,
     utils::{close, ioff},
-    Dvec, Spectro, Tensor3,
 };
 
 #[derive(

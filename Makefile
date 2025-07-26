@@ -7,13 +7,13 @@ TESTFLAGS += --include-ignored
 endif
 
 test:
-	RUST_BACKTRACE=1 cargo test ${TESTFLAGS} ${ARGS}
+	RUST_BACKTRACE=1 cargo test --all-features ${TESTFLAGS} ${ARGS}
 
 clean:
 	cargo clean
 
 clippy:
-	cargo +nightly clippy --all-features --all-targets --workspace
+	cargo clippy --all-features --all-targets --workspace
 
 cover:
 	cargo tarpaulin --color=never --skip-clean ${TESTFLAGS} ${ARGS}

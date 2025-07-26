@@ -8,9 +8,9 @@ use std::{
 };
 
 use crate::{
+    NO_RESUB,
     geom::Geom,
     program::{Procedure, Program, ProgramError},
-    NO_RESUB,
 };
 use crate::{
     program::{Job, ProgramResult},
@@ -234,7 +234,9 @@ where
                 e
             );
             if *no_resub {
-                eprintln!("resubmission disabled by SEMP_RESUB environment variable, exiting");
+                eprintln!(
+                    "resubmission disabled by SEMP_RESUB environment variable, exiting"
+                );
                 std::process::exit(1);
             }
             let resub = format!(

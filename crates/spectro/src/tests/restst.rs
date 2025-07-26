@@ -102,9 +102,9 @@ fn inner(tests: &[Test]) {
 
 #[test]
 fn asym() {
+    use Mode::*;
     use resonance::Axis::*;
     use state::State::*;
-    use Mode::*;
     let tests = [
         Test::new(
             "h2o",

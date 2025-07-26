@@ -1,15 +1,15 @@
 use std::{
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     sync::OnceLock,
 };
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use crate::geom::{geom_string, Geom};
+use crate::geom::{Geom, geom_string};
 
 use super::{
-    parse_energy, Procedure, Program, ProgramError, ProgramResult, Template,
+    Procedure, Program, ProgramError, ProgramResult, Template, parse_energy,
 };
 
 #[cfg(test)]

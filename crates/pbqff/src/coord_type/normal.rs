@@ -9,7 +9,7 @@
 use std::{error::Error, io::Write, path::Path};
 
 use anpass::Dmat;
-pub use anpass::{fc::Fc, Bias};
+pub use anpass::{Bias, fc::Fc};
 use intder::Intder;
 pub use intder::{fc3_index, fc4_index};
 use nalgebra::DVector;
@@ -25,20 +25,21 @@ use taylor::Taylor;
 
 use crate::{
     config::Config,
-    coord_type::{write_file, CHK_NAME},
+    coord_type::{CHK_NAME, write_file},
     make_check,
 };
 
 use super::{
+    Cart, CoordType, Derivative, FirstPart, Load, Nderiv, PTS_DIR,
+    SPECTRO_HEADER,
     cart::FirstOutput,
     findiff::{
-        atom_parts,
+        FiniteDifference, Idx, Proto, atom_parts,
         bighash::{BigHash, Target},
-        proto, zip_atoms, FiniteDifference, Idx, Proto,
+        proto, zip_atoms,
     },
     fitted::{AtomicNumbers, Fitted},
-    make_rel, Cart, CoordType, Derivative, FirstPart, Load, Nderiv, PTS_DIR,
-    SPECTRO_HEADER,
+    make_rel,
 };
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, PartialEq)]
@@ -785,7 +786,7 @@ impl FiniteDifference for Normal {
             make4d_2_2(i, k, j, l) // unreachable
         } else if i == l && j == k {
             make4d_2_2(i, l, j, k) // unreachable
-                                   // 2 and 1 and 1, first two are the equal ones
+        // 2 and 1 and 1, first two are the equal ones
         } else if i == j {
             make4d_2_1_1(i, j, k, l)
         } else if i == k {

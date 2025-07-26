@@ -3,7 +3,7 @@
 
 use self::bighash::{BigHash, Target};
 
-use super::{cart::DEBUG, CartGeom, Derivative};
+use super::{CartGeom, Derivative, cart::DEBUG};
 use bighash::Index;
 use intder::ANGBOHR;
 use psqs::geom::Geom;
@@ -435,7 +435,7 @@ pub trait FiniteDifference {
             make4d_2_2(i, k, j, l) // unreachable
         } else if i == l && j == k {
             make4d_2_2(i, l, j, k) // unreachable
-                                   // 2 and 1 and 1, first two are the equal ones
+        // 2 and 1 and 1, first two are the equal ones
         } else if i == j {
             make4d_2_1_1(i, j, k, l)
         } else if i == k {

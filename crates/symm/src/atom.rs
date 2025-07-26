@@ -8,7 +8,7 @@ use std::{
 use approx::AbsDiffEq;
 use serde::{Deserialize, Serialize};
 
-use crate::{weights::WEIGHTS, Vec3};
+use crate::{Vec3, weights::WEIGHTS};
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct Atom {
