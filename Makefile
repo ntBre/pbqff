@@ -7,7 +7,7 @@ TESTFLAGS += --include-ignored
 endif
 
 test:
-	RUST_BACKTRACE=1 cargo test ${TESTFLAGS} ${ARGS}
+	RUST_BACKTRACE=1 cargo test --all-features ${TESTFLAGS} ${ARGS}
 
 clean:
 	cargo clean
