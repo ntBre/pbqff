@@ -111,7 +111,7 @@ INDEPENDENT VARIABLES"
         writeln!(f, "FUNCTION")?;
         for row in 0..rows {
             for col in 0..cols {
-                if col > 0 && col % 16 == 0 {
+                if col > 0 && col.is_multiple_of(16) {
                     writeln!(f)?;
                 }
                 write!(f, "{:5}", self.exponents[(row, col)])?;
