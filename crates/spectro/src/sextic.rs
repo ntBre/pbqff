@@ -7,10 +7,10 @@ use tensor::Tensor4;
 type Tensor3 = tensor::tensor3::Tensor3<f64>;
 
 use crate::{
+    Dmat, Dvec, Spectro,
     consts::SQLAM,
     f3qcm::F3qcm,
     utils::{ioff, make_tau, princ_cart, tau_prime},
-    Dmat, Dvec, Spectro,
 };
 
 /// struct holding the sextic distortion constants. For an asymmetric top, the

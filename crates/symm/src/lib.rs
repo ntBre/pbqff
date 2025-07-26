@@ -1,7 +1,7 @@
 use approx::AbsDiffEq;
 pub use atom::*;
 pub use irrep::*;
-use na::{vector, SymmetricEigen};
+use na::{SymmetricEigen, vector};
 pub use point_group::*;
 use rotor::Rotor;
 use serde::{Deserialize, Serialize};
@@ -317,8 +317,8 @@ impl Molecule {
     }
 
     pub fn point_group_approx(&self, eps: f64) -> point_group::PointGroup {
-        use point_group::PointGroup::*;
         use Axis::*;
+        use point_group::PointGroup::*;
         let mut axes = Vec::new();
         let mut planes = Vec::new();
         for ax in [X, Y, Z] {
@@ -445,7 +445,7 @@ impl Molecule {
                         return C2v {
                             axis: aa,
                             planes: planes.try_into().unwrap(),
-                        }
+                        };
                     }
                     _ => panic!("unknown axis orders {:?}", (ao, bo)),
                 };
@@ -600,8 +600,8 @@ impl Molecule {
         pg: &point_group::PointGroup,
         eps: f64,
     ) -> Result<Irrep, SymmetryError> {
-        use point_group::PointGroup::*;
         use Irrep::*;
+        use point_group::PointGroup::*;
         match pg {
             C1 => Ok(A),
             C2 { axis } => match self.axis_irrep(axis, 180.0, eps) {

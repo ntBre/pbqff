@@ -12,13 +12,13 @@ use tensor::Tensor4;
 type Tensor3 = tensor::tensor3::Tensor3<f64>;
 
 use crate::{
+    Dmat, Dvec, Spectro,
     consts::{FACT3, FACT4, FUNIT3, FUNIT4, ICTOP, IPTOC, WAVE},
     f3qcm::F3qcm,
     f4qcm::F4qcm,
     ifrm1::Ifrm1,
     mode::Mode,
     state::State,
-    Dmat, Dvec, Spectro,
 };
 
 // separate for macro

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{dsplat, geom::Geom, htens::Htens, DMat, Siic, Vec3};
+use crate::{DMat, Siic, Vec3, dsplat, geom::Geom, htens::Htens};
 
 #[derive(Debug)]
 pub struct Hmat {

@@ -22,7 +22,7 @@ use symm::{Atom, Axis, Molecule};
 use tensor::Tensor4;
 use utils::*;
 
-pub use run::{compute_irreps, compute_irreps_in, SpectroFinish};
+pub use run::{SpectroFinish, compute_irreps, compute_irreps_in};
 
 mod alphas;
 mod dummy;

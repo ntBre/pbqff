@@ -1,17 +1,17 @@
 use std::{
     collections::HashMap,
     fmt::Debug,
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     io::{BufRead, BufReader},
     path::Path,
 };
 
 use crate::Spectro;
+use crate::{Dmat, Tensor3, utils::*};
 use crate::{
     consts::CONST,
     dummy::{Dummy, DummyVal},
 };
-use crate::{utils::*, Dmat, Tensor3};
 use log::{debug, warn};
 use nalgebra::vector;
 use symm::{Atom, Axis, Molecule, Plane};
@@ -122,8 +122,8 @@ impl Spectro {
                     eprintln!("geometry = {:.8}", self.geom);
                     eprintln!("setting principal axis to {axis}");
                     eprintln!(
-                    "aligning with axis = {axis}, plane = {plane}, order = 2",
-                );
+                        "aligning with axis = {axis}, plane = {plane}, order = 2",
+                    );
                 }
                 self.axis = axis;
                 helper(self, axis, plane, 2)

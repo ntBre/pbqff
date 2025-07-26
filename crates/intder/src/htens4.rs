@@ -1,8 +1,9 @@
 use crate::{
+    Siic,
     geom::Geom,
-    hmat::{hijs1, hijs2, Hmat},
-    htens::{hijks1, hijks2, Htens},
-    splat, Siic,
+    hmat::{Hmat, hijs1, hijs2},
+    htens::{Htens, hijks1, hijks2},
+    splat,
 };
 type Tensor4 = ndarray::Array4<f64>;
 type Tensor5 = ndarray::Array5<f64>;

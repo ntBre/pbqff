@@ -3,11 +3,11 @@ use std::{fs::read_to_string, path::Path};
 use approx::{abs_diff_ne, assert_abs_diff_eq};
 
 use crate::{
+    Spectro,
     consts::FACT2,
     load_fc2,
     quartic::Quartic,
     utils::{linalg::symm_eigen_decomp, to_wavenumbers},
-    Spectro,
 };
 
 #[derive(Clone)]

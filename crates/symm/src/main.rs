@@ -1,6 +1,6 @@
 use std::{
     error::Error,
-    io::{stdin, Read},
+    io::{Read, stdin},
     str::FromStr,
 };
 

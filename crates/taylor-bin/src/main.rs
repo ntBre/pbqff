@@ -179,8 +179,7 @@ fn main() -> std::io::Result<()> {
                                 intder.atoms[*b].label,
                                 b + 1
                             ),
-                            intder::Siic::Bend(a, b, c) =>
-				format!(
+                            intder::Siic::Bend(a, b, c) => format!(
                                 "\\angle(\\text{{{}}}_{}-\\text{{{}}}_{}-\\text{{{}}}_{})",
                                 intder.atoms[*a].label,
                                 a + 1,
@@ -189,9 +188,8 @@ fn main() -> std::io::Result<()> {
                                 intder.atoms[*c].label,
                                 c + 1
                             ),
-                            intder::Siic::Torsion(a, b, c, d) =>
-				format!(
-                                    "\\tau(\\text{{{}}}_{}-\\text{{{}}}_{}\
+                            intder::Siic::Torsion(a, b, c, d) => format!(
+                                "\\tau(\\text{{{}}}_{}-\\text{{{}}}_{}\
 				     -\\text{{{}}}_{}-\\text{{{}}}_{})",
                                 intder.atoms[*a].label,
                                 a + 1,
@@ -202,7 +200,7 @@ fn main() -> std::io::Result<()> {
                                 intder.atoms[*d].label,
                                 d + 1
                             ),
-			    _ => panic!("tell brent to support {l}"),
+                            _ => panic!("tell brent to support {l}"),
                             // intder::Siic::Lin1(_, _, _, _) => todo!(),
                             // intder::Siic::Out(_, _, _, _) => todo!(),
                         }

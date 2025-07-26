@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use crate::point_group::PointGroup::*;
 use crate::Axis::*;
+use crate::point_group::PointGroup::*;
 use crate::*;
 
 struct Test<'a> {

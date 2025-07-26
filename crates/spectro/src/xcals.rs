@@ -3,6 +3,7 @@
 type Tensor3 = tensor::tensor3::Tensor3<f64>;
 
 use crate::{
+    Dmat, Dvec, Spectro,
     f3qcm::F3qcm,
     f4qcm::F4qcm,
     ifrm1::Ifrm1,
@@ -10,7 +11,6 @@ use crate::{
     mode::Mode,
     resonance::{Fermi1, Fermi2},
     utils::make_e0,
-    Dmat, Dvec, Spectro,
 };
 
 /// make the second component of E0 for symmetric tops

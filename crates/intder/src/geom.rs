@@ -1,4 +1,4 @@
-use crate::{hmat::Hmat, DVec, Siic, Vec3, ANGBOHR};
+use crate::{ANGBOHR, DVec, Siic, Vec3, hmat::Hmat};
 use nalgebra as na;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Display, ops::Index};

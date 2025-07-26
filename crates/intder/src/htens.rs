@@ -1,9 +1,8 @@
 use crate::{
-    foreach,
+    DMat, Siic, Tensor3, foreach,
     geom::Geom,
-    hmat::{hijs1, Hmat},
-    htens4::{h4th1, h4th2, Htens4},
-    DMat, Siic, Tensor3,
+    hmat::{Hmat, hijs1},
+    htens4::{Htens4, h4th1, h4th2},
 };
 
 use self::utils::fill3b;

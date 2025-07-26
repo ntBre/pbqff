@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
-use crate::dummy::DummyVal;
 use crate::Curvil::*;
+use crate::dummy::DummyVal;
 use crate::*;
 
 use approx::assert_abs_diff_eq;

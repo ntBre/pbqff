@@ -1,11 +1,11 @@
 use super::{Dmat, Dvec, Spectro};
 use crate::{
+    Mode,
     f3qcm::F3qcm,
     ioff,
     resonance::Restst,
     rsfrm1, rsfrm2,
     state::{State, StatePartition},
-    Mode,
 };
 use std::cmp::{max, min};
 

@@ -1,9 +1,9 @@
 use crate::{
-    plane::Plane,
-    point_group::PointGroup,
     Axis::*,
     Irrep::{self, *},
     Molecule,
+    plane::Plane,
+    point_group::PointGroup,
 };
 use std::str::FromStr;
 

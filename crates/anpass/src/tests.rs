@@ -4,10 +4,10 @@ use std::io::BufReader;
 use approx::assert_abs_diff_eq;
 use nalgebra as na;
 
-use crate::fc::Fc;
 use crate::Anpass;
 use crate::Bias;
 use crate::StatKind;
+use crate::fc::Fc;
 
 type Dmat = na::DMatrix<f64>;
 type Dvec = na::DVector<f64>;
