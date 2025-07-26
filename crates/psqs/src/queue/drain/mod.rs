@@ -301,17 +301,17 @@ pub(crate) trait Drain {
                 check_int,
                 check_dir,
             } = &check
+                && *check_int > 0
+                && iter % check_int == 0
             {
-                if *check_int > 0 && iter % check_int == 0 {
-                    Self::do_checkpoint(
-                        &cur_jobs,
-                        last_chunk,
-                        &jobs_init,
-                        queue.chunk_size(),
-                        check_dir,
-                        dst,
-                    );
-                }
+                Self::do_checkpoint(
+                    &cur_jobs,
+                    last_chunk,
+                    &jobs_init,
+                    queue.chunk_size(),
+                    check_dir,
+                    dst,
+                );
             }
             iter += 1;
         }
