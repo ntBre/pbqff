@@ -3,7 +3,8 @@ members = ["crates/*"]
 resolver = "2"
 
 [workspace.package]
-edition = "2021"
+edition = "2024"
+rust-version = "1.88"
 
 [workspace.dependencies]
 anpass = { path = "crates/anpass" }
