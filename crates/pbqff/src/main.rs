@@ -1,10 +1,10 @@
 use std::{fs::File, os::unix::prelude::AsRawFd, path::Path};
 
 use pbqff::{
-    cleanup,
+    Intder, cleanup,
     config::{self, Config},
-    coord_type::{normal::Normal, Cart, CoordType, Load, Sic},
-    die, Intder,
+    coord_type::{Cart, CoordType, Load, Sic, normal::Normal},
+    die,
 };
 use psqs::{
     program::{cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},

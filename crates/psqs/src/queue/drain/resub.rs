@@ -49,10 +49,10 @@ impl<P: Program + Clone + Send + Sync> ResubOutput<P> {
 }
 
 impl<
-        'a,
-        P: Program + Clone + Send + Sync + Serialize + for<'d> Deserialize<'d>,
-        Q: Queue<P> + ?Sized,
-    > Resub<'a, P, Q>
+    'a,
+    P: Program + Clone + Send + Sync + Serialize + for<'d> Deserialize<'d>,
+    Q: Queue<P> + ?Sized,
+> Resub<'a, P, Q>
 {
     pub(crate) fn new(queue: &'a Q, dir: &'a str, proc: Procedure) -> Self {
         Self {

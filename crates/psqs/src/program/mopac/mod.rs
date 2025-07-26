@@ -1,4 +1,4 @@
-use crate::geom::{geom_string, Geom};
+use crate::geom::{Geom, geom_string};
 use crate::program::{Program, ProgramError};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
@@ -6,7 +6,7 @@ use symm::Atom;
 
 use super::{Job, Procedure, ProgramResult, Template};
 use std::collections::hash_map::DefaultHasher;
-use std::fs::{read_to_string, File};
+use std::fs::{File, read_to_string};
 use std::hash::{Hash, Hasher};
 use std::io::{BufRead, BufReader, Write};
 use std::path::Path;

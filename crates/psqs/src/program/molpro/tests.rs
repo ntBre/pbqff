@@ -2,7 +2,7 @@ use std::{fs::read_to_string, path::Path, str::FromStr};
 
 use crate::{
     geom::Geom,
-    program::{molpro::Molpro, Procedure, Program, Template},
+    program::{Procedure, Program, Template, molpro::Molpro},
 };
 
 fn opt_templ() -> Template {

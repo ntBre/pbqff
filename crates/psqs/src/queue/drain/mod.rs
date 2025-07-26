@@ -8,10 +8,10 @@ use std::{
 };
 
 use crate::{
+    NO_RESUB,
     geom::Geom,
     program::{Job, Procedure, Program, ProgramResult},
     queue::drain::{dump::Dump, resub::ResubOutput},
-    NO_RESUB,
 };
 
 use super::Queue;
@@ -30,7 +30,7 @@ mod dump;
 mod resub;
 mod timer;
 
-use libc::{timeval, RUSAGE_SELF};
+use libc::{RUSAGE_SELF, timeval};
 use resub::Resub;
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;

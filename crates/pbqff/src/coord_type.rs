@@ -10,7 +10,7 @@ use crate::{config::Config, die};
 
 pub use cart::{Cart, CartGeom, Derivative, FirstPart, Nderiv};
 pub use sic::Sic;
-pub(crate) use sic::{make_rel, write_file, FreqError};
+pub(crate) use sic::{FreqError, make_rel, write_file};
 pub mod cart;
 pub mod findiff;
 pub mod fitted;

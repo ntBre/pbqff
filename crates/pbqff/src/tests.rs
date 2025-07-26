@@ -15,17 +15,17 @@ use spectro::Spectro;
 use symm::Molecule;
 
 use crate::config::Config;
-use crate::coord_type::findiff::bighash::BigHash;
-use crate::coord_type::findiff::FiniteDifference;
-use crate::coord_type::normal;
-use crate::coord_type::normal::DerivType;
-use crate::coord_type::normal::Normal;
-use crate::coord_type::normal::Resume;
 use crate::coord_type::Cart;
 use crate::coord_type::CoordType;
 use crate::coord_type::Derivative;
 use crate::coord_type::Load;
 use crate::coord_type::Sic;
+use crate::coord_type::findiff::FiniteDifference;
+use crate::coord_type::findiff::bighash::BigHash;
+use crate::coord_type::normal;
+use crate::coord_type::normal::DerivType;
+use crate::coord_type::normal::Normal;
+use crate::coord_type::normal::Resume;
 
 fn tempdir() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()

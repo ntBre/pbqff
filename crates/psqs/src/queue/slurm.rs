@@ -2,8 +2,8 @@ use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
 
-use crate::program::mopac::Mopac;
 use crate::program::Program;
+use crate::program::mopac::Mopac;
 use crate::program::{dftbplus::DFTBPlus, molpro::Molpro};
 use crate::queue::Queue;
 

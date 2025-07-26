@@ -3,7 +3,7 @@ use std::collections::HashSet;
 
 use crate::program::dftbplus::DFTBPlus;
 use crate::program::molpro::Molpro;
-use crate::program::{mopac::Mopac, Program};
+use crate::program::{Program, mopac::Mopac};
 use crate::queue::Queue;
 
 use super::{SubQueue, Submit};

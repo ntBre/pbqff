@@ -1,8 +1,8 @@
 use psqs::{
     geom::Geom,
     program::{
-        mopac::{Mopac, Params},
         Procedure, Program, Template,
+        mopac::{Mopac, Params},
     },
 };
 

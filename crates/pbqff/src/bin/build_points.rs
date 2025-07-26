@@ -1,14 +1,14 @@
 use pbqff::{
     config::Config,
     coord_type::{
-        findiff::{bighash::BigHash, FiniteDifference},
         Cart, Derivative,
+        findiff::{FiniteDifference, bighash::BigHash},
     },
     optimize,
 };
 use psqs::{
     geom::Geom,
-    program::{mopac::Mopac, Template},
+    program::{Template, mopac::Mopac},
     queue::local::Local,
 };
 use symm::Molecule;

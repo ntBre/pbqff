@@ -599,7 +599,9 @@ fn solve_least_squares(xtx: Dmat, xt: Dmat, y: &Dvec, x: Dmat) -> (Dvec, Dmat) {
         let xtx = &xt * &x;
         if DEBUG {
             eprintln!("mat = \n{xtx:.8}");
-            eprintln!("Cholesky decomposition failed in solve_least_squares, trying LU");
+            eprintln!(
+                "Cholesky decomposition failed in solve_least_squares, trying LU"
+            );
         }
         let inv = na::LU::new(xtx)
             .try_inverse()

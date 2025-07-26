@@ -1,4 +1,4 @@
-use psqs::program::{mopac::Mopac, Program};
+use psqs::program::{Program, mopac::Mopac};
 
 fn main() {
     let mut res = Vec::new();

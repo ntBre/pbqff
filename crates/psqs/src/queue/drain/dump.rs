@@ -1,7 +1,7 @@
 use std::{
     sync::{
-        mpsc::{self, Sender, SyncSender},
         LazyLock,
+        mpsc::{self, Sender, SyncSender},
     },
     thread::{self, JoinHandle},
 };

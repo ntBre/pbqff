@@ -1,5 +1,5 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use psqs::program::{mopac::Mopac, Program, Template};
+use criterion::{Criterion, criterion_group, criterion_main};
+use psqs::program::{Program, Template, mopac::Mopac};
 use symm::molecule;
 
 pub fn write_input(c: &mut Criterion) {
