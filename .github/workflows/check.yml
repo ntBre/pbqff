@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        toolchain: [nightly]
+        toolchain: ["1.88"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -48,13 +48,13 @@ jobs:
           args: --all-targets --all-features --workspace -- -D warnings
   doc:
     runs-on: ubuntu-latest
-    name: nightly / doc
+    name: doc
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - name: Install nightly
-        uses: dtolnay/rust-toolchain@nightly
+      - name: Install toolchain
+        uses: dtolnay/rust-toolchain@1.88
       - name: cargo doc
         run: cargo doc --no-deps --all-features
         env:
@@ -62,7 +62,7 @@ jobs:
   install:
     strategy:
       matrix:
-        toolchain: [nightly]
+        toolchain: ["1.88"]
         os: [ubuntu-latest, macos-latest]
         include:
           - os: macos-latest
