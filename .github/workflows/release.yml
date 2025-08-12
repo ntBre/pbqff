@@ -41,7 +41,7 @@ jobs:
     - name: Configure Rustup
       run: rustup target add ${{ matrix.target }}
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
     - name: Build
       run: cargo build --release --features vers --target ${{ matrix.target }}
     - name: Package
