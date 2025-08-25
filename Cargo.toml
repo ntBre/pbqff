@@ -31,7 +31,7 @@ libc = "0.2.175"
 log = "0.4.27"
 nalgebra = "0.33.2"
 ndarray = { version = "0.15.6", features = ["approx-0_5"] }
-rayon = "1.5.3"
+rayon = "1.11.0"
 regex = { version = "1.11.2" }
 rustc-hash = "2.1.0"
 serde = { version = "1.0", features = ["derive"] }
