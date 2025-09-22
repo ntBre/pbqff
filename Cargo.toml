@@ -19,7 +19,7 @@ taylor = { path = "crates/taylor" }
 # anyway
 tensor = { git = "https://github.com/ntBre/tensor" }
 
-anyhow = "1.0.99"
+anyhow = "1.0.100"
 approx = "0.5.1"
 assert_cmd = "2.0.17"
 clap = { version = "4.5.48", features = ["derive"] }
