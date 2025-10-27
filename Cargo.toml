@@ -29,7 +29,7 @@ insta = { version = "1.43.2", features = ["filters"] }
 jiff = { version = "0.2.15" }
 libc = "0.2.175"
 log = "0.4.28"
-nalgebra = "0.33.2"
+nalgebra = "0.34.1"
 ndarray = { version = "0.15.6", features = ["approx-0_5"] }
 rayon = "1.11.0"
 regex = { version = "1.12.2" }
