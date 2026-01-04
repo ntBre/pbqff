@@ -548,15 +548,12 @@ impl Intder {
                 );
             } else if geom.is_match(&line) {
                 let mut sp = line.split_ascii_whitespace().peekable();
-                if let Some(s) = sp.peek() {
-                    if let Some(c) = s.chars().next() {
-                        if c.is_alphabetic() {
-                            let atom = sp.next().unwrap();
-                            intder
-                                .atoms
-                                .push(Atom::new(atom, DEFAULT_WEIGHTS[atom]));
-                        }
-                    }
+                if let Some(s) = sp.peek()
+                    && let Some(c) = s.chars().next()
+                    && c.is_alphabetic()
+                {
+                    let atom = sp.next().unwrap();
+                    intder.atoms.push(Atom::new(atom, DEFAULT_WEIGHTS[atom]));
                 }
                 if let [x, y, z] = sp
                     .map(|x| x.parse::<f64>().unwrap())
