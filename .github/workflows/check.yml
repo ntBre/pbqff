@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     name: fmt
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
           persist-credentials: false
@@ -28,7 +28,7 @@ jobs:
     strategy:
       fail-fast: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
           persist-credentials: false
@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     name: doc
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
           persist-credentials: false
@@ -59,7 +59,7 @@ jobs:
             prefix: /usr/bin
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
         with:
           submodules: true
           persist-credentials: false
