@@ -93,20 +93,3 @@ man/rpbqff.1: man/rpbqff.head man/config.man man/example.man $(pbqff)/testfiles/
 scripts: qffbuddy/qffbuddy*
 	scp -C $? ${WOODS}':bin/'
 	date > scripts
-
-profile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
-	valgrind --tool=callgrind --callgrind-out-file=callgrind.out	\
-		--collect-jumps=yes --simulate-cache=yes		\
-		target/release/$(1)
-
-profile.cart:
-	$(call profile,cart)
-
-profile.build_points:
-	$(call profile,build_points)
-
-memprofile = RUSTFLAGS='-g' cargo build --release --bin $(1); \
-                heaptrack -o /tmp/heaptrack.pbqff.%p.zst target/release/$(1)
-
-memprofile.cart:
-	$(call memprofile,cart)
