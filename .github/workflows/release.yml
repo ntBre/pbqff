@@ -38,6 +38,8 @@ jobs:
       run: rustup target add ${{ matrix.target }}
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Build
       run: cargo build --release --features vers --target ${{ matrix.target }}
     - name: Package
