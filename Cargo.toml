@@ -5,6 +5,7 @@ resolver = "2"
 [workspace.package]
 edition = "2024"
 rust-version = "1.92"
+repository = "https://github.com/ntBre/pbqff"
 
 [workspace.dependencies]
 anpass = { path = "crates/anpass" }
