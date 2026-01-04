@@ -33,8 +33,7 @@ jobs:
       - name: "Install Rust toolchain"
         run: rustup component add clippy
       - name: cargo clippy
-        with:
-          run: cargo clippy --all-targets --all-features --workspace -- -D warnings
+        run: cargo clippy --all-targets --all-features --workspace -- -D warnings
   doc:
     runs-on: ubuntu-latest
     name: doc
