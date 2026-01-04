@@ -43,3 +43,8 @@ toml = "0.9.10"
 
 [profile.test]
 opt-level = 3  # mostly for anpass
+
+# The profile that 'dist' will build with
+[profile.dist]
+inherits = "release"
+lto = "thin"
