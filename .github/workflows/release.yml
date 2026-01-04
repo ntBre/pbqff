@@ -34,14 +34,12 @@ jobs:
             name: pbqff-darwin-x86_64.tar.gz
     runs-on: ${{ matrix.os }}
     steps:
-    - name: Install ${{ matrix.toolchain }}
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.toolchain }}
     - name: Configure Rustup
       run: rustup target add ${{ matrix.target }}
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - name: Build
       run: cargo build --release --features vers --target ${{ matrix.target }}
     - name: Package
