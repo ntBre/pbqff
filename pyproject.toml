@@ -1,0 +1,10 @@
+[project]
+name = "pbqff"
+version = "0.0.3"
+
+[tool.rooster]
+changelog_ignore_labels = ["internal", "ci", "dependencies"]
+version_files = [
+    "pyproject.toml",
+    "crates/pbqff/Cargo.toml",
+]
