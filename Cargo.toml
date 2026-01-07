@@ -23,7 +23,7 @@ tensor = { git = "https://github.com/ntBre/tensor" }
 anyhow = "1.0.100"
 approx = "0.5.1"
 assert_cmd = "2.1.1"
-clap = { version = "4.5.49", features = ["derive"] }
+clap = { version = "4.5.53", features = ["derive"] }
 criterion = "0.8.1"
 env_logger = "0.11.8"
 insta = { version = "1.45.1", features = ["filters"] }
