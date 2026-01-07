@@ -1,6 +1,6 @@
 use std::{fs::read_to_string, path::Path};
 
-use assert_cmd::Command;
+use assert_cmd::cargo::cargo_bin_cmd;
 use insta::{assert_snapshot, with_settings};
 use tempfile::tempdir;
 use test_case::test_case;
@@ -17,7 +17,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
         let filename = p.file_name().unwrap();
         std::fs::copy(file, dir.path().join(filename))?;
     }
-    let mut cmd = Command::cargo_bin("pbqff").unwrap();
+    let mut cmd = cargo_bin_cmd!("pbqff");
     let assert = cmd.arg("pbqff.toml").current_dir(&dir).assert();
     let output = assert.get_output();
 
