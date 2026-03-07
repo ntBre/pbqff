@@ -23,7 +23,6 @@ use tensor::Tensor4;
 use utils::*;
 
 pub use run::{SpectroFinish, compute_irreps, compute_irreps_in};
-pub use utils::{find3, find4};
 
 mod alphas;
 mod dummy;

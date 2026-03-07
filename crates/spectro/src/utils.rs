@@ -108,7 +108,7 @@ fn sort_indices<const N: usize>(mut indices: [usize; N]) -> [usize; N] {
 /// to get the length of the cubic force constant vector for water you have to
 /// do `find3r(2, 2, 2) + 1`, where 2 is `nvib-1`
 #[inline]
-pub fn find3(i: usize, j: usize, k: usize) -> usize {
+pub(crate) fn find3(i: usize, j: usize, k: usize) -> usize {
     let [i, j, k] = sort_indices([i + 1, j + 1, k + 1]);
     i + (j - 1) * j / 2 + (k - 1) * k * (k + 1) / 6 - 1
 }
@@ -116,7 +116,7 @@ pub fn find3(i: usize, j: usize, k: usize) -> usize {
 /// quartic force constant indexing formula. it relies on the fortran numbering,
 /// so I need to add one initially and then subtract one at the end
 #[inline]
-pub fn find4(i: usize, j: usize, k: usize, l: usize) -> usize {
+pub(crate) fn find4(i: usize, j: usize, k: usize, l: usize) -> usize {
     let [i, j, k, l] = sort_indices([i + 1, j + 1, k + 1, l + 1]);
     i + (j - 1) * j / 2
         + (k - 1) * k * (k + 1) / 6

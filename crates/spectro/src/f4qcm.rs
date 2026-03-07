@@ -16,11 +16,10 @@ impl F4qcm {
     }
 }
 
-/// Construct a new [`F4qcm`] with capacity for `n` modes.
 #[macro_export]
 macro_rules! f4qcm {
     ($elem:expr; $n:expr) => {
-        $crate::F4qcm::new(vec![$elem; $n])
+        F4qcm::new(vec![$elem; $n])
     };
 }
 
