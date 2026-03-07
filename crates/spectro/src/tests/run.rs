@@ -29,18 +29,8 @@ fn load_want(filename: PathBuf, sym: bool) -> Output {
         funds: want.funds,
         corrs: want.corrs,
         rots,
-        rot_equil: Default::default(),
-        irreps: Default::default(),
-        quartic: Default::default(),
-        sextic: Default::default(),
-        zpt: Default::default(),
-        geom: Default::default(),
-        lxm: Default::default(),
-        lx: Default::default(),
-        linear: Default::default(),
-        resonances: Default::default(),
-        f3qcm: None,
-        f4qcm: None,
+        // these are all untested here
+        ..Output::default()
     }
 }
 

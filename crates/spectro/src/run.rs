@@ -199,9 +199,8 @@ impl Spectro {
         let irreps = compute_irreps(&self.geom, &lxm, self.nvib, 1e-4);
 
         if deriv.is_harmonic() {
-            let harms = freq.as_slice()[..self.nvib].to_vec();
             return Output {
-                harms,
+                harms: freq.as_slice()[..self.nvib].to_vec(),
                 irreps,
                 rot_equil: self.rotcon.clone(),
                 geom: self.geom.clone(),

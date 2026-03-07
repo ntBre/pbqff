@@ -7,14 +7,6 @@ use crate::utils::find3;
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct F3qcm(Vec<f64>);
 
-/// Construct a new [`F3qcm`] with capacity for `n` modes.
-#[macro_export]
-macro_rules! f3qcm {
-    ($elem:expr; $n:expr) => {
-        $crate::F3qcm::new(vec![$elem; $n])
-    };
-}
-
 impl F3qcm {
     pub(crate) fn with_capacity(cap: usize) -> Self {
         Self(Vec::with_capacity(cap))
