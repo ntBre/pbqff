@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::find4;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Clone, Debug, PartialEq, Deserialize, Serialize)]
 pub struct F4qcm(Vec<f64>);
 
 impl F4qcm {
@@ -16,10 +16,21 @@ impl F4qcm {
     }
 }
 
+/// Construct a new [`F4qcm`] with capacity for `n` modes.
 #[macro_export]
 macro_rules! f4qcm {
     ($elem:expr; $n:expr) => {
-        F4qcm::new(vec![$elem; $n])
+        $crate::F4qcm::new(vec![
+            $elem;
+            {
+                if $n == 0 {
+                    0
+                } else {
+                    let n = $n - 1;
+                    $crate::find4(n, n, n, n) + 1
+                }
+            }
+        ])
     };
 }
 

@@ -7,7 +7,8 @@ use crate::utils::{
     force3, force4, linalg::symm_eigen_decomp, make_funds, to_wavenumbers,
 };
 use crate::{
-    Derivative, Dmat, Dvec, F3qcm, F4qcm, Mode, load_fc2, load_fc3, load_fc4,
+    Derivative, Dmat, Dvec, F3qcm, F4qcm, Mode, f3qcm, f4qcm, load_fc2,
+    load_fc3, load_fc4,
 };
 use crate::{consts::FACT2, quartic::Quartic, resonance::Restst};
 use std::error::Error;
@@ -199,15 +200,25 @@ impl Spectro {
         let irreps = compute_irreps(&self.geom, &lxm, self.nvib, 1e-4);
 
         if deriv.is_harmonic() {
+            let harms = freq.as_slice()[..self.nvib].to_vec();
+            let nharms = harms.len();
             return Output {
-                harms: freq.as_slice()[..self.nvib].to_vec(),
+                harms,
                 irreps,
                 rot_equil: self.rotcon.clone(),
                 geom: self.geom.clone(),
                 lxm: to_vec(lxm),
                 lx: to_vec(lx),
                 linear: self.rotor.is_linear(),
-                ..Default::default()
+                funds: Default::default(),
+                corrs: Default::default(),
+                rots: Default::default(),
+                quartic: Default::default(),
+                sextic: Default::default(),
+                zpt: Default::default(),
+                resonances: Default::default(),
+                f3qcm: f3qcm![0.0; nharms],
+                f4qcm: f4qcm![0.0; nharms],
             };
         }
 
@@ -343,6 +354,8 @@ impl Spectro {
             lx: to_vec(lx),
             linear: self.rotor.is_linear(),
             resonances: restst,
+            f3qcm,
+            f4qcm,
         }
     }
 

@@ -12,6 +12,7 @@ use psqs::program::mopac::Mopac;
 use psqs::queue::local::Local;
 use spectro::Output;
 use spectro::Spectro;
+use spectro::{f3qcm, f4qcm};
 use symm::Molecule;
 
 use crate::config::Config;
@@ -389,7 +390,24 @@ H       0.8934572640   2.2429362586  -0.0000000000",
     let resume = Resume::new(
         Normal::findiff(true),
         geoms.len(),
-        Output::default(),
+        Output {
+            harms: Default::default(),
+            funds: Default::default(),
+            corrs: Default::default(),
+            rots: Default::default(),
+            rot_equil: Default::default(),
+            irreps: Default::default(),
+            quartic: Default::default(),
+            sextic: Default::default(),
+            zpt: Default::default(),
+            geom: Default::default(),
+            lxm: Default::default(),
+            lx: Default::default(),
+            linear: Default::default(),
+            resonances: Default::default(),
+            f3qcm: f3qcm![0.0; 0],
+            f4qcm: f4qcm![0.0; 0],
+        },
         Spectro::default(),
         DerivType::Findiff { targets, fcs, n },
     );

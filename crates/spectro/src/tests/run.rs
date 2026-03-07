@@ -24,13 +24,24 @@ fn load_want(filename: PathBuf, sym: bool) -> Output {
     } else {
         rots_asym(&want)
     };
+    let nharms = want.harms.len();
     Output {
         harms: want.harms,
         funds: want.funds,
         corrs: want.corrs,
         rots,
-        // these are all untested here
-        ..Output::default()
+        rot_equil: Default::default(),
+        irreps: Default::default(),
+        quartic: Default::default(),
+        sextic: Default::default(),
+        zpt: Default::default(),
+        geom: Default::default(),
+        lxm: Default::default(),
+        lx: Default::default(),
+        linear: Default::default(),
+        resonances: Default::default(),
+        f3qcm: f3qcm![0.0; nharms],
+        f4qcm: f4qcm![0.0; nharms],
     }
 }
 
