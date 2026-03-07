@@ -95,6 +95,17 @@ Type 2 Fermi Resonances:
     6    4    2
     8    2    0
 
+Harmonic force constants (cm-1)
+    1    1   <float>
+    2    2   <float>
+    3    3   <float>
+    4    4   <float>
+    5    5   <float>
+    6    6    <float>
+    7    7    <float>
+    8    8    <float>
+    9    9    <float>
+
 Non-zero cubic force constants (cm-1)
     1    1    1   <float>
     2    2    1   <float>

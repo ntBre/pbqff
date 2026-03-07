@@ -233,7 +233,8 @@ pub fn force4(
         }
     }
     // now can I include the loop above in here - the holy grail
-    let mut f4qcm = f4qcm![0.0; nvib];
+    let n = nvib - 1;
+    let mut f4qcm = f4qcm![0.0; find4(n, n, n, n) + 1];
     for i in 0..nvib {
         let wi = harms[i];
         for j in 0..=i {

@@ -20,17 +20,7 @@ impl F4qcm {
 #[macro_export]
 macro_rules! f4qcm {
     ($elem:expr; $n:expr) => {
-        $crate::F4qcm::new(vec![
-            $elem;
-            {
-                if $n == 0 {
-                    0
-                } else {
-                    let n = $n - 1;
-                    $crate::find4(n, n, n, n) + 1
-                }
-            }
-        ])
+        $crate::F4qcm::new(vec![$elem; $n])
     };
 }
 
