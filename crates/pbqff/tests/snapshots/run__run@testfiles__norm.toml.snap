@@ -39,4 +39,23 @@ Type 1 Fermi Resonances:
 
 Type 2 Fermi Resonances:
 
+Non-zero cubic force constants (cm-1)
+    1    1    1   <float>
+    2    2    1    <float>
+    3    1    1    <float>
+    3    2    2    <float>
+    3    3    1    <float>
+    3    3    3    <float>
+
+Non-zero quartic force constants (cm-1)
+    1    1    1    1   <float>
+    2    2    1    1   <float>
+    2    2    2    2  <float>
+    3    1    1    1   <float>
+    3    2    2    1   <float>
+    3    3    1    1  <float>
+    3    3    2    2  <float>
+    3    3    3    1   <float>
+    3    3    3    3  <float>
+
 normal termination of pbqff

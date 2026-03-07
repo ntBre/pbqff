@@ -4,8 +4,26 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::find3;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct F3qcm(Vec<f64>);
+
+/// Construct a new [`F3qcm`] with capacity for `n` modes.
+#[macro_export]
+macro_rules! f3qcm {
+    ($elem:expr; $n:expr) => {
+        $crate::F3qcm::new(vec![
+            $elem;
+            {
+                if $n == 0 {
+                    0
+                } else {
+                    let n = $n - 1;
+                    $crate::find3(n, n, n) + 1
+                }
+            }
+        ])
+    };
+}
 
 impl F3qcm {
     pub(crate) fn with_capacity(cap: usize) -> Self {
