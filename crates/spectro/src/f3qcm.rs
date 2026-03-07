@@ -11,17 +11,7 @@ pub struct F3qcm(Vec<f64>);
 #[macro_export]
 macro_rules! f3qcm {
     ($elem:expr; $n:expr) => {
-        $crate::F3qcm::new(vec![
-            $elem;
-            {
-                if $n == 0 {
-                    0
-                } else {
-                    let n = $n - 1;
-                    $crate::find3(n, n, n) + 1
-                }
-            }
-        ])
+        $crate::F3qcm::new(vec![$elem; $n])
     };
 }
 

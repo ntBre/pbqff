@@ -12,7 +12,6 @@ use psqs::program::mopac::Mopac;
 use psqs::queue::local::Local;
 use spectro::Output;
 use spectro::Spectro;
-use spectro::{f3qcm, f4qcm};
 use symm::Molecule;
 
 use crate::config::Config;
@@ -405,8 +404,8 @@ H       0.8934572640   2.2429362586  -0.0000000000",
             lx: Default::default(),
             linear: Default::default(),
             resonances: Default::default(),
-            f3qcm: f3qcm![0.0; 0],
-            f4qcm: f4qcm![0.0; 0],
+            f3qcm: None,
+            f4qcm: None,
         },
         Spectro::default(),
         DerivType::Findiff { targets, fcs, n },

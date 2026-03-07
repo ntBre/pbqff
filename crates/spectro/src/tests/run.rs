@@ -24,7 +24,6 @@ fn load_want(filename: PathBuf, sym: bool) -> Output {
     } else {
         rots_asym(&want)
     };
-    let nharms = want.harms.len();
     Output {
         harms: want.harms,
         funds: want.funds,
@@ -40,8 +39,8 @@ fn load_want(filename: PathBuf, sym: bool) -> Output {
         lx: Default::default(),
         linear: Default::default(),
         resonances: Default::default(),
-        f3qcm: f3qcm![0.0; nharms],
-        f4qcm: f4qcm![0.0; nharms],
+        f3qcm: None,
+        f4qcm: None,
     }
 }
 
