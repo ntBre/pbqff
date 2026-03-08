@@ -46,6 +46,10 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
             (r"(?s)(Vibrational Frequencies \(cm-1\):).*?(ZPT)", "$1\n[Freqs]\n$2"),
             (r"(?ms)(^Rotational Constants \(cm-1\):).*?(Coriolis Resonances)", "$1\n[Rotational Constants]\n$2"),
             (r"(?m)^(anpass sum of squared residuals):(.+)$", "$1: [residual]"),
+            (
+                r"(?m)^([ ]*\d+(?:[ ]+\d+){1,3})[ ]+[+-]?\d+\.\d+[ ]*$",
+                "$1    <float>",
+            ),
         ],
         snapshot_suffix => path
 

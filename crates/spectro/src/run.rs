@@ -343,6 +343,8 @@ impl Spectro {
             lx: to_vec(lx),
             linear: self.rotor.is_linear(),
             resonances: restst,
+            f3qcm: Some(f3qcm),
+            f4qcm: Some(f4qcm),
         }
     }
 
