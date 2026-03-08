@@ -44,230 +44,230 @@ Type 2 Fermi Resonances:
     8    2    0
 
 Harmonic force constants (cm-1)
-    1    1   <float>
-    2    2   <float>
-    3    3   <float>
-    4    4   <float>
-    5    5   <float>
-    6    6    <float>
-    7    7    <float>
-    8    8    <float>
-    9    9    <float>
+    1    1 <float>
+    2    2 <float>
+    3    3 <float>
+    4    4 <float>
+    5    5 <float>
+    6    6 <float>
+    7    7 <float>
+    8    8 <float>
+    9    9 <float>
 
 Non-zero cubic force constants (cm-1)
-    1    1    1   <float>
-    2    2    1   <float>
-    3    1    1   <float>
-    3    2    2    <float>
-    3    3    1     <float>
-    3    3    3   <float>
-    4    1    1    <float>
-    4    2    2     <float>
-    4    3    1     <float>
-    4    3    3    <float>
-    4    4    1     <float>
-    4    4    3   <float>
-    4    4    4      <float>
-    5    2    1    <float>
-    5    3    2    <float>
-    5    4    2    <float>
-    5    5    1    <float>
-    5    5    3    <float>
-    5    5    4    <float>
-    6    6    1    <float>
-    6    6    3     <float>
-    6    6    4      <float>
-    7    2    1     <float>
-    7    3    2    <float>
-    7    4    2    <float>
-    7    5    1    <float>
-    7    5    3     <float>
-    7    5    4   <float>
-    7    7    1    <float>
-    7    7    3    <float>
-    7    7    4     <float>
-    8    6    2    <float>
-    8    6    5     <float>
-    8    7    6     <float>
-    8    8    1    <float>
-    8    8    3     <float>
-    8    8    4     <float>
-    9    1    1      <float>
-    9    2    2     <float>
-    9    3    1    <float>
-    9    3    3      <float>
-    9    4    1   <float>
-    9    4    3    <float>
-    9    4    4      <float>
-    9    5    2    <float>
-    9    5    5    <float>
-    9    6    6    <float>
-    9    7    2    <float>
-    9    7    5    <float>
-    9    7    7     <float>
-    9    8    8     <float>
-    9    9    1    <float>
-    9    9    3     <float>
-    9    9    4     <float>
-    9    9    9     <float>
+    1    1    1 <float>
+    2    2    1 <float>
+    3    1    1 <float>
+    3    2    2 <float>
+    3    3    1 <float>
+    3    3    3 <float>
+    4    1    1 <float>
+    4    2    2 <float>
+    4    3    1 <float>
+    4    3    3 <float>
+    4    4    1 <float>
+    4    4    3 <float>
+    4    4    4 <float>
+    5    2    1 <float>
+    5    3    2 <float>
+    5    4    2 <float>
+    5    5    1 <float>
+    5    5    3 <float>
+    5    5    4 <float>
+    6    6    1 <float>
+    6    6    3 <float>
+    6    6    4 <float>
+    7    2    1 <float>
+    7    3    2 <float>
+    7    4    2 <float>
+    7    5    1 <float>
+    7    5    3 <float>
+    7    5    4 <float>
+    7    7    1 <float>
+    7    7    3 <float>
+    7    7    4 <float>
+    8    6    2 <float>
+    8    6    5 <float>
+    8    7    6 <float>
+    8    8    1 <float>
+    8    8    3 <float>
+    8    8    4 <float>
+    9    1    1 <float>
+    9    2    2 <float>
+    9    3    1 <float>
+    9    3    3 <float>
+    9    4    1 <float>
+    9    4    3 <float>
+    9    4    4 <float>
+    9    5    2 <float>
+    9    5    5 <float>
+    9    6    6 <float>
+    9    7    2 <float>
+    9    7    5 <float>
+    9    7    7 <float>
+    9    8    8 <float>
+    9    9    1 <float>
+    9    9    3 <float>
+    9    9    4 <float>
+    9    9    9 <float>
 
 Non-zero quartic force constants (cm-1)
-    1    1    1    1   <float>
-    2    2    1    1   <float>
-    2    2    2    2   <float>
-    3    1    1    1     <float>
-    3    2    2    1     <float>
-    3    3    1    1     <float>
-    3    3    2    2     <float>
-    3    3    3    1   <float>
-    3    3    3    3    <float>
-    4    1    1    1     <float>
-    4    2    2    1     <float>
-    4    3    1    1     <float>
-    4    3    2    2    <float>
-    4    3    3    1    <float>
-    4    3    3    3    <float>
-    4    4    1    1    <float>
-    4    4    2    2   <float>
-    4    4    3    1   <float>
-    4    4    3    3    <float>
-    4    4    4    1    <float>
-    4    4    4    3     <float>
-    4    4    4    4     <float>
-    5    2    1    1     <float>
-    5    2    2    2     <float>
-    5    3    2    1     <float>
-    5    3    3    2     <float>
-    5    4    2    1    <float>
-    5    4    3    2     <float>
-    5    4    4    2    <float>
-    5    5    1    1   <float>
-    5    5    2    2   <float>
-    5    5    3    1    <float>
-    5    5    3    3     <float>
-    5    5    4    1     <float>
-    5    5    4    3   <float>
-    5    5    4    4    <float>
-    5    5    5    2     <float>
-    5    5    5    5    <float>
-    6    6    1    1  <float>
-    6    6    2    2  <float>
-    6    6    3    1   <float>
-    6    6    3    3   <float>
-    6    6    4    1    <float>
-    6    6    4    3    <float>
-    6    6    4    4    <float>
-    6    6    5    2     <float>
-    6    6    5    5    <float>
-    6    6    6    6   <float>
-    7    2    1    1    <float>
-    7    2    2    2    <float>
-    7    3    2    1     <float>
-    7    3    3    2     <float>
-    7    4    2    1    <float>
-    7    4    3    2     <float>
-    7    4    4    2     <float>
-    7    5    1    1   <float>
-    7    5    2    2   <float>
-    7    5    3    1    <float>
-    7    5    3    3    <float>
-    7    5    4    1    <float>
-    7    5    4    3    <float>
-    7    5    4    4   <float>
-    7    5    5    2     <float>
-    7    5    5    5     <float>
-    7    6    6    2     <float>
-    7    6    6    5    <float>
-    7    7    1    1  <float>
-    7    7    2    2  <float>
-    7    7    3    1    <float>
-    7    7    3    3    <float>
-    7    7    4    1     <float>
-    7    7    4    3   <float>
-    7    7    4    4    <float>
-    7    7    5    2     <float>
-    7    7    5    5    <float>
-    7    7    6    6    <float>
-    7    7    7    2    <float>
-    7    7    7    5    <float>
-    7    7    7    7    <float>
-    8    6    2    1  <float>
-    8    6    3    2   <float>
-    8    6    4    2    <float>
-    8    6    5    1     <float>
-    8    6    5    3    <float>
-    8    6    5    4   <float>
-    8    7    6    1     <float>
-    8    7    6    3    <float>
-    8    7    6    4   <float>
-    8    8    1    1  <float>
-    8    8    2    2  <float>
-    8    8    3    1   <float>
-    8    8    3    3    <float>
-    8    8    4    1    <float>
-    8    8    4    3     <float>
-    8    8    4    4     <float>
-    8    8    5    2    <float>
-    8    8    5    5    <float>
-    8    8    6    6   <float>
-    8    8    7    2     <float>
-    8    8    7    5    <float>
-    8    8    7    7    <float>
-    8    8    8    8   <float>
-    9    1    1    1    <float>
-    9    2    2    1    <float>
-    9    3    1    1     <float>
-    9    3    2    2     <float>
-    9    3    3    1     <float>
-    9    3    3    3    <float>
-    9    4    1    1    <float>
-    9    4    2    2    <float>
-    9    4    3    1     <float>
-    9    4    3    3     <float>
-    9    4    4    1     <float>
-    9    4    4    3    <float>
-    9    4    4    4     <float>
-    9    5    2    1   <float>
-    9    5    3    2    <float>
-    9    5    4    2    <float>
-    9    5    5    1    <float>
-    9    5    5    3    <float>
-    9    5    5    4   <float>
-    9    6    6    1     <float>
-    9    6    6    3    <float>
-    9    6    6    4   <float>
-    9    7    2    1  <float>
-    9    7    3    2   <float>
-    9    7    4    2    <float>
-    9    7    5    1     <float>
-    9    7    5    3    <float>
-    9    7    5    4   <float>
-    9    7    7    1    <float>
-    9    7    7    3    <float>
-    9    7    7    4   <float>
-    9    8    6    2     <float>
-    9    8    6    5    <float>
-    9    8    7    6    <float>
-    9    8    8    1    <float>
-    9    8    8    3    <float>
-    9    8    8    4   <float>
-    9    9    1    1  <float>
-    9    9    2    2  <float>
-    9    9    3    1   <float>
-    9    9    3    3    <float>
-    9    9    4    1    <float>
-    9    9    4    3     <float>
-    9    9    4    4    <float>
-    9    9    5    2    <float>
-    9    9    5    5    <float>
-    9    9    6    6    <float>
-    9    9    7    2     <float>
-    9    9    7    5   <float>
-    9    9    7    7   <float>
-    9    9    8    8    <float>
-    9    9    9    1     <float>
-    9    9    9    3   <float>
-    9    9    9    4   <float>
-    9    9    9    9   <float>
+    1    1    1    1 <float>
+    2    2    1    1 <float>
+    2    2    2    2 <float>
+    3    1    1    1 <float>
+    3    2    2    1 <float>
+    3    3    1    1 <float>
+    3    3    2    2 <float>
+    3    3    3    1 <float>
+    3    3    3    3 <float>
+    4    1    1    1 <float>
+    4    2    2    1 <float>
+    4    3    1    1 <float>
+    4    3    2    2 <float>
+    4    3    3    1 <float>
+    4    3    3    3 <float>
+    4    4    1    1 <float>
+    4    4    2    2 <float>
+    4    4    3    1 <float>
+    4    4    3    3 <float>
+    4    4    4    1 <float>
+    4    4    4    3 <float>
+    4    4    4    4 <float>
+    5    2    1    1 <float>
+    5    2    2    2 <float>
+    5    3    2    1 <float>
+    5    3    3    2 <float>
+    5    4    2    1 <float>
+    5    4    3    2 <float>
+    5    4    4    2 <float>
+    5    5    1    1 <float>
+    5    5    2    2 <float>
+    5    5    3    1 <float>
+    5    5    3    3 <float>
+    5    5    4    1 <float>
+    5    5    4    3 <float>
+    5    5    4    4 <float>
+    5    5    5    2 <float>
+    5    5    5    5 <float>
+    6    6    1    1 <float>
+    6    6    2    2 <float>
+    6    6    3    1 <float>
+    6    6    3    3 <float>
+    6    6    4    1 <float>
+    6    6    4    3 <float>
+    6    6    4    4 <float>
+    6    6    5    2 <float>
+    6    6    5    5 <float>
+    6    6    6    6 <float>
+    7    2    1    1 <float>
+    7    2    2    2 <float>
+    7    3    2    1 <float>
+    7    3    3    2 <float>
+    7    4    2    1 <float>
+    7    4    3    2 <float>
+    7    4    4    2 <float>
+    7    5    1    1 <float>
+    7    5    2    2 <float>
+    7    5    3    1 <float>
+    7    5    3    3 <float>
+    7    5    4    1 <float>
+    7    5    4    3 <float>
+    7    5    4    4 <float>
+    7    5    5    2 <float>
+    7    5    5    5 <float>
+    7    6    6    2 <float>
+    7    6    6    5 <float>
+    7    7    1    1 <float>
+    7    7    2    2 <float>
+    7    7    3    1 <float>
+    7    7    3    3 <float>
+    7    7    4    1 <float>
+    7    7    4    3 <float>
+    7    7    4    4 <float>
+    7    7    5    2 <float>
+    7    7    5    5 <float>
+    7    7    6    6 <float>
+    7    7    7    2 <float>
+    7    7    7    5 <float>
+    7    7    7    7 <float>
+    8    6    2    1 <float>
+    8    6    3    2 <float>
+    8    6    4    2 <float>
+    8    6    5    1 <float>
+    8    6    5    3 <float>
+    8    6    5    4 <float>
+    8    7    6    1 <float>
+    8    7    6    3 <float>
+    8    7    6    4 <float>
+    8    8    1    1 <float>
+    8    8    2    2 <float>
+    8    8    3    1 <float>
+    8    8    3    3 <float>
+    8    8    4    1 <float>
+    8    8    4    3 <float>
+    8    8    4    4 <float>
+    8    8    5    2 <float>
+    8    8    5    5 <float>
+    8    8    6    6 <float>
+    8    8    7    2 <float>
+    8    8    7    5 <float>
+    8    8    7    7 <float>
+    8    8    8    8 <float>
+    9    1    1    1 <float>
+    9    2    2    1 <float>
+    9    3    1    1 <float>
+    9    3    2    2 <float>
+    9    3    3    1 <float>
+    9    3    3    3 <float>
+    9    4    1    1 <float>
+    9    4    2    2 <float>
+    9    4    3    1 <float>
+    9    4    3    3 <float>
+    9    4    4    1 <float>
+    9    4    4    3 <float>
+    9    4    4    4 <float>
+    9    5    2    1 <float>
+    9    5    3    2 <float>
+    9    5    4    2 <float>
+    9    5    5    1 <float>
+    9    5    5    3 <float>
+    9    5    5    4 <float>
+    9    6    6    1 <float>
+    9    6    6    3 <float>
+    9    6    6    4 <float>
+    9    7    2    1 <float>
+    9    7    3    2 <float>
+    9    7    4    2 <float>
+    9    7    5    1 <float>
+    9    7    5    3 <float>
+    9    7    5    4 <float>
+    9    7    7    1 <float>
+    9    7    7    3 <float>
+    9    7    7    4 <float>
+    9    8    6    2 <float>
+    9    8    6    5 <float>
+    9    8    7    6 <float>
+    9    8    8    1 <float>
+    9    8    8    3 <float>
+    9    8    8    4 <float>
+    9    9    1    1 <float>
+    9    9    2    2 <float>
+    9    9    3    1 <float>
+    9    9    3    3 <float>
+    9    9    4    1 <float>
+    9    9    4    3 <float>
+    9    9    4    4 <float>
+    9    9    5    2 <float>
+    9    9    5    5 <float>
+    9    9    6    6 <float>
+    9    9    7    2 <float>
+    9    9    7    5 <float>
+    9    9    7    7 <float>
+    9    9    8    8 <float>
+    9    9    9    1 <float>
+    9    9    9    3 <float>
+    9    9    9    4 <float>
+    9    9    9    9 <float>
 
 normal termination of pbqff
