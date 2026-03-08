@@ -48,7 +48,7 @@ fn run(path: &str, other_files: &[&str]) -> std::io::Result<()> {
             (r"(?m)^(anpass sum of squared residuals):(.+)$", "$1: [residual]"),
             (
                 r"(?m)^([ ]*\d+(?:[ ]+\d+){1,3})[ ]+[+-]?\d+\.\d+[ ]*$",
-                "$1 <float>",
+                "$1    <float>",
             ),
         ],
         snapshot_suffix => path
