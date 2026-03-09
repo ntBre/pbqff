@@ -24,7 +24,7 @@ anyhow = "1.0.100"
 approx = "0.5.1"
 assert_cmd = "2.1.2"
 clap = { version = "4.5.53", features = ["derive"] }
-criterion = "0.8.1"
+criterion = "0.8.2"
 env_logger = "0.11.8"
 insta = { version = "1.46.1", features = ["filters"] }
 jiff = { version = "0.2.17" }
