@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use symm::{Irrep, Molecule};
 
 use crate::{
+    F3qcm, F4qcm,
     quartic::Quartic,
     resonance::{Coriolis, Fermi1, Fermi2, Restst},
     rot::Rot,
@@ -11,7 +12,7 @@ use crate::{
 };
 
 /// contains all of the output data from running Spectro
-#[derive(Clone, Debug, Default, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Output {
     /// harmonic frequencies
     pub harms: Vec<f64>,
@@ -49,6 +50,12 @@ pub struct Output {
     pub linear: bool,
 
     pub resonances: Restst,
+
+    #[serde(default)]
+    pub f3qcm: Option<F3qcm>,
+
+    #[serde(default)]
+    pub f4qcm: Option<F4qcm>,
 }
 
 impl Display for Output {
@@ -79,6 +86,8 @@ impl Display for Output {
                     iovrtn: _,
                     icombn: _,
                 },
+            f3qcm,
+            f4qcm,
         } = self;
         writeln!(f, "Geometry: {geom:.8}")?;
         writeln!(
@@ -137,6 +146,54 @@ impl Display for Output {
         writeln!(f, "\nType 2 Fermi Resonances:")?;
         for Fermi2 { i, j, k } in fermi2 {
             writeln!(f, "{i:5}{j:5}{k:5}")?;
+        }
+
+        let nvib = harms.len();
+
+        // Threshold for considering force constants to be zero.
+        const FC_THRESH: f64 = 1e-8;
+
+        writeln!(f, "\nHarmonic force constants (cm-1)")?;
+        for (i, value) in harms.iter().enumerate() {
+            if value.abs() < FC_THRESH {
+                continue;
+            }
+            let mode = i + 1;
+            writeln!(f, "{mode:5}{mode:5} {value:15.8}")?;
+        }
+
+        if let Some(f3qcm) = f3qcm {
+            writeln!(f, "\nNon-zero cubic force constants (cm-1)")?;
+            for i in 0..nvib {
+                for j in 0..=i {
+                    for k in 0..=j {
+                        let value = f3qcm[(i, j, k)];
+                        if value.abs() < FC_THRESH {
+                            continue;
+                        }
+                        let (i, j, k) = (i + 1, j + 1, k + 1);
+                        writeln!(f, "{i:5}{j:5}{k:5} {value:15.8}")?;
+                    }
+                }
+            }
+        }
+
+        if let Some(f4qcm) = f4qcm {
+            writeln!(f, "\nNon-zero quartic force constants (cm-1)")?;
+            for i in 0..nvib {
+                for j in 0..=i {
+                    for k in 0..=j {
+                        for l in 0..=k {
+                            let value = f4qcm[(i, j, k, l)];
+                            if value.abs() < FC_THRESH {
+                                continue;
+                            }
+                            let (i, j, k, l) = (i + 1, j + 1, k + 1, l + 1);
+                            writeln!(f, "{i:5}{j:5}{k:5}{l:5}{value:15.8}")?;
+                        }
+                    }
+                }
+            }
         }
 
         Ok(())

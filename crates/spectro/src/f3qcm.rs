@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::utils::find3;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct F3qcm(Vec<f64>);
 
 impl F3qcm {
