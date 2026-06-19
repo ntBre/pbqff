@@ -4,7 +4,7 @@ members = ["cargo:."]
 # Config for 'dist'
 [dist]
 # The preferred dist version to use in CI (Cargo.toml SemVer syntax)
-cargo-dist-version = "0.30.3"
+cargo-dist-version = "0.32.0"
 # Whether to consider the binaries in a package for distribution (defaults true)
 dist = false
 # CI backends to support
@@ -14,19 +14,13 @@ installers = []
 # Whether CI should trigger releases with dispatches instead of tag pushes
 dispatch-releases = true
 # Target platforms to build apps for (Rust target-triple syntax)
-targets = [
-    "aarch64-apple-darwin",
-    "x86_64-apple-darwin",
-    "aarch64-unknown-linux-gnu",
-    "x86_64-unknown-linux-gnu",
-    "x86_64-unknown-linux-musl"
-]
+targets = ["aarch64-apple-darwin", "aarch64-unknown-linux-gnu", "x86_64-apple-darwin", "x86_64-unknown-linux-gnu", "x86_64-unknown-linux-musl"]
 
 [dist.github-custom-runners]
 global = "ubuntu-latest"
 
 [dist.github-action-commits]
-"actions/checkout" = "8e8c483db84b4bee98b60c0593521ed34d9990e8" # v6.0.1
-"actions/upload-artifact" = "b7c566a772e6b6bfb58ed0dc250532a479d7789f" # v6.0.0
-"actions/download-artifact" = "70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3" # v8.0.0
+"actions/checkout" = "df4cb1c069e1874edd31b4311f1884172cec0e10" # v6.0.3
+"actions/upload-artifact" = "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a" # v7.0.1
+"actions/download-artifact" = "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c" # v8.0.1
 "actions/attest-build-provenance" = "c074443f1aee8d4aeeae555aebba3282517141b2" #v2.2.3
