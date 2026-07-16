@@ -157,18 +157,18 @@ where
             njobs,
         }: Resume,
     ) -> (Spectro, Output) {
+        let root_dir = dir.as_ref();
         let mut energies = vec![0.0; njobs];
-        let freqs_dir = dir.as_ref().join("freqs");
-        let dir = dir.as_ref().join("pts").join("inp");
-        let _ = std::fs::create_dir_all(&dir);
-        let dir = dir.to_str().unwrap().to_owned();
-        let chk = format!("{dir}/chk.json");
+        let freqs_dir = root_dir.join("freqs");
+        let pts_dir = root_dir.join("pts").join("inp");
+        let _ = std::fs::create_dir_all(&pts_dir);
+        let chk = root_dir.join("chk.json");
         let time = queue
             .resume(
-                &dir,
-                &chk,
+                pts_dir.to_str().unwrap(),
+                chk.to_str().unwrap(),
                 &mut energies,
-                make_check(config.check_int, &dir),
+                make_check(config.check_int, root_dir),
             )
             .expect("single-point energies failed");
         eprintln!("total job time: {time:.1} sec");
