@@ -114,14 +114,25 @@ where
         self.dir
     }
 
-    /// run `squeue -u $USER`. form of the output is:
+    /// Run `squeue -u $USER --format "%.18i %.2t" --noheader` and return the
+    /// output.
     ///
-    ///    JOBID PARTITION   NAME     USER ST        TIME  NODES NODELIST(REASON)
-    /// 30627992   compute  c3oh-   mdavis  R 46-17:12:23      1 node2
+    /// The form of the output is:
+    ///
+    /// ```text
+    /// 30627992  R
+    /// ```
+    ///
+    /// where the first field is the JobID, and the second field is its state.
+    ///
+    /// See <https://man.archlinux.org/man/squeue.1.en> for other format
+    /// options.
     fn stat_cmd(&self) -> String {
         let user = std::env::var("USER").expect("couldn't find $USER env var");
         let status = match std::process::Command::new("squeue")
-            .args(["-u", &user])
+            .args(["--user", &user])
+            .args(["--format", "%.18i %.2t"])
+            .arg("--noheader")
             .output()
         {
             Ok(status) => status,
@@ -135,15 +146,14 @@ where
         let mut ret = HashSet::new();
         // wut?
         let lines = <Slurm as SubQueue<P>>::stat_cmd(self);
-        let lines = lines.lines();
-        for line in lines {
-            if !line.contains("JOBID") {
-                let fields: Vec<_> = line.split_whitespace().collect();
-                assert!(fields.len() == 8);
-                // exclude completing jobs to combat stuck completing bug
-                if fields[4] != "CG" {
-                    ret.insert(fields[0].to_string());
-                }
+        for line in lines.lines() {
+            let fields: Vec<_> = line.split_whitespace().collect();
+            let [job_id, state] = fields.as_slice() else {
+                panic!("unexpected line in squeue output: `{line}`");
+            };
+            // exclude completing jobs to combat stuck completing bug
+            if *state != "CG" {
+                ret.insert(job_id.to_string());
             }
         }
         ret
