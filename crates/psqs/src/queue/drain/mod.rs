@@ -3,6 +3,7 @@ use std::{
     borrow::BorrowMut,
     collections::{HashMap, HashSet},
     iter::{Enumerate, Fuse, Peekable},
+    path::Path,
     slice::ChunksMut,
     thread,
 };
@@ -336,11 +337,13 @@ pub(crate) trait Drain {
     }
 
     /// Create a [`Checkpoint`] from `dst` and `jobs` and write it to
-    /// `checkpoint`.
+    /// `check_dir`/`checkpoint`.
     ///
     /// To avoid problems with interrupted writes, this functions creates an
-    /// intermediate temporary file first and renames it to `checkpoint`.
+    /// intermediate temporary file first in `check_dir` and renames it to the
+    /// destination.
     fn write_checkpoint<P>(
+        check_dir: &str,
         checkpoint: &str,
         dst: Vec<Self::Item>,
         jobs: Vec<Job<P>>,
@@ -348,9 +351,10 @@ pub(crate) trait Drain {
         P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Self::Item: Serialize,
     {
+        let checkpoint = Path::new(check_dir).join(checkpoint);
         let c = Checkpoint { dst, jobs };
-        log::info!("writing checkpoint to {checkpoint}");
-        let Ok(tmp) = NamedTempFile::new() else {
+        log::info!("writing checkpoint to {}", checkpoint.display());
+        let Ok(tmp) = NamedTempFile::new_in(check_dir) else {
             log::error!("failed to create temporary file for checkpoint");
             return;
         };
@@ -358,11 +362,12 @@ pub(crate) trait Drain {
             log::error!("failed to write checkpoint to temporary file");
             return;
         }
-        std::fs::rename(tmp.path(), checkpoint).unwrap_or_else(|e| {
+        if let Err(e) = tmp.persist(&checkpoint) {
             log::error!(
-                "failed to rename temporary file to {checkpoint} with {e:?}"
+                "failed to rename temporary file to {} with {e:?}",
+                checkpoint.display()
             )
-        });
+        };
     }
 
     fn do_checkpoint<P>(
@@ -387,11 +392,7 @@ pub(crate) trait Drain {
         cur_jobs.extend(
             jobs_init[(cn * chunk_size).min(jobs_init.len())..].to_vec(),
         );
-        Self::write_checkpoint(
-            &format!("{check_dir}/chk.json"),
-            dst.to_vec(),
-            cur_jobs,
-        );
+        Self::write_checkpoint(check_dir, "chk.json", dst.to_vec(), cur_jobs);
     }
 
     /// Returns the number of chunks received
