@@ -169,8 +169,8 @@ impl Molecule {
         }
     }
 
-    /// a buddy is a mapping from one Vec<Atom> to another. The returned Vec
-    /// contains the indices in `self` that correspond to atoms in `other`.
+    /// a buddy is a mapping from one Vec<atom::Atom> to another. The returned
+    /// Vec contains the indices in `self` that correspond to atoms in `other`.
     /// `eps` is used in the `Atom` `AbsDiffEq` call to check the equality of
     /// two atoms.
     pub fn detect_buddies(&self, other: &Self, eps: f64) -> Vec<Option<usize>> {
@@ -187,7 +187,7 @@ impl Molecule {
         ret
     }
 
-    /// calls [detect_buddies] and then returns Some of the unwrapped Vec if all
+    /// calls [Self::detect_buddies] and then returns Some of the unwrapped Vec if all
     /// of the elements are initialized and None if any of them is None
     pub fn try_detect_buddies(
         &self,
@@ -311,7 +311,7 @@ impl Molecule {
         (pr, axes, rotor)
     }
 
-    /// call [point_group_approx] with the default epsilon of 1e-8
+    /// call [Self::point_group_approx] with the default epsilon of 1e-8
     pub fn point_group(&self) -> point_group::PointGroup {
         self.point_group_approx(1e-8)
     }

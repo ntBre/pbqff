@@ -68,11 +68,11 @@ pub enum Curvil {
 }
 
 /// `Derivative` is an enum representing the three derivative levels that can be
-/// passed to [Spectro::run]. The [Harmonic] variant contains a matrix of
-/// harmonic force constants; the [Cubic] variant contains the same matrix,
-/// followed by a 3-tensor holding the cubic force constants; and the [Quartic]
-/// variant has both of these, as well as a 4-tensor containing the quartic
-/// force constants.
+/// passed to [Spectro::run]. The [Self::Harmonic] variant contains a matrix of
+/// harmonic force constants; the [Self::Cubic] variant contains the same
+/// matrix, followed by a 3-tensor holding the cubic force constants; and the
+/// [Quartic] variant has both of these, as well as a 4-tensor containing the
+/// quartic force constants.
 pub enum Derivative {
     Harmonic(Dmat),
     Cubic(Dmat, Tensor3),

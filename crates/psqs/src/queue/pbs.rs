@@ -108,7 +108,7 @@ impl Queue<Molpro> for Pbs {
         &self.template
     }
 
-    /// This must be consistent with the Submit<Molpro> implementation, which
+    /// This must be consistent with the `Submit<Molpro>` implementation, which
     /// currently changes to the parent directory of the PBS script before
     /// submitting. This also assumes, then, that the PBS script is in the same
     /// directory as the input files, but I think that's a safe assumption.
