@@ -28,7 +28,7 @@ impl Program for Cfour {
         ""
     }
 
-    /// Example [Template]:
+    /// Example [crate::program::Template]:
     /// ```text
     /// comment line
     /// {{.geom}}

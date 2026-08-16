@@ -25,7 +25,7 @@ impl Program for Molpro {
         "inp"
     }
 
-    /// Example [Template]:
+    /// Example [crate::program::Template]:
     /// ```text
     /// memory,1,g
     /// gthresh,energy=1.d-12,zero=1.d-22,oneint=1.d-22,twoint=1.d-22;

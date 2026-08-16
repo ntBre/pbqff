@@ -32,7 +32,7 @@ impl Program for DFTBPlus {
         ""
     }
 
-    /// Example [Template]:
+    /// Example [crate::program::Template]:
     /// ```text
     /// Geometry = xyzFormat {
     /// {{.geom}}

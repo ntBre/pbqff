@@ -1358,7 +1358,7 @@ impl Intder {
     }
 
     /// detect the dummy atoms needed in `self` as the atoms extending from the
-    /// [LIN1]s and add two dummy atoms per LIN1, in the two directions
+    /// [Siic::Lin1]s and add two dummy atoms per LIN1, in the two directions
     /// perpendicular to axis. I think this still assumes the molecule is linear
     /// because it takes the `axis` coordinate of the real geometry and combines
     /// that with 1.111111111 and 0.0 as the coordinate of the dummy atom. This

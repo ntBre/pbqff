@@ -47,7 +47,7 @@ jobs:
       - name: cargo doc
         run: cargo doc --no-deps --all-features
         env:
-          RUSTDOCFLAGS: --cfg docsrs
+          RUSTDOCFLAGS: --cfg docsrs -D warnings
   install:
     strategy:
       matrix:
