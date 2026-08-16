@@ -3,14 +3,16 @@ use std::str::FromStr;
 use insta::{assert_debug_snapshot, assert_snapshot};
 use tempfile::TempDir;
 
+use crate::program::Template;
+
 use super::*;
 
-fn test_program(filename: String, template: Template) -> DFTBPlus {
-    DFTBPlus {
+fn test_job(filename: String, template: Template) -> Job {
+    Job::new(
         filename,
         template,
-        charge: 0,
-        geom: Geom::from_str(
+        0,
+        Geom::from_str(
             "    3
             Geometry Step: 9
             O      0.00000000     -0.71603315      0.00000000
@@ -19,7 +21,8 @@ fn test_program(filename: String, template: Template) -> DFTBPlus {
             ",
         )
         .unwrap(),
-    }
+        0,
+    )
 }
 
 #[test]
@@ -60,9 +63,9 @@ ParserOptions {
 ",
     );
 
-    let mut d = test_program(dirname, template);
+    let job = test_job(dirname, template);
 
-    d.write_input(Procedure::Opt);
+    DFTBPlus.write_input(&job, Procedure::Opt);
 
     assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
@@ -114,7 +117,7 @@ ParserOptions {
     }
     "#);
 
-    d.write_input(Procedure::SinglePt);
+    DFTBPlus.write_input(&job, Procedure::SinglePt);
 
     assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
@@ -205,9 +208,9 @@ Driver = GeometryOptimization {
 ",
     );
 
-    let mut d = test_program(dirname, template);
+    let job = test_job(dirname, template);
 
-    d.write_input(Procedure::Opt);
+    DFTBPlus.write_input(&job, Procedure::Opt);
     assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
@@ -258,7 +261,7 @@ Driver = GeometryOptimization {
     }
     "#);
 
-    d.write_input(Procedure::SinglePt);
+    DFTBPlus.write_input(&job, Procedure::SinglePt);
     assert_snapshot!(read_to_string(&output).unwrap(), @r#"
     Geometry = xyzFormat {
     3
@@ -299,7 +302,7 @@ Driver = GeometryOptimization {
 
 #[test]
 fn read_opt_output() {
-    let got = DFTBPlus::read_output("testfiles/dftb+/opt").unwrap();
+    let got = DFTBPlus.read_output("testfiles/dftb+/opt").unwrap();
     assert_debug_snapshot!(got, @r"
     ProgramResult {
         energy: -4.0779379326,
@@ -335,7 +338,7 @@ fn read_opt_output() {
 
 #[test]
 fn read_single_output() {
-    let got = DFTBPlus::read_output("testfiles/dftb+/single").unwrap();
+    let got = DFTBPlus.read_output("testfiles/dftb+/single").unwrap();
     assert_debug_snapshot!(got, @r"
     ProgramResult {
         energy: -3.9798793068,

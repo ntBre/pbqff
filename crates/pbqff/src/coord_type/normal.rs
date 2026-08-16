@@ -122,20 +122,28 @@ impl Normal {
         pg: PointGroup,
         config: &Config,
         template: Template,
+        program: &P,
         queue: &Q,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
     {
         let (geoms, taylor, _atomic_numbers) = self
             .generate_pts(&dir, w, &o.geom, &pg, config.step_size)
             .unwrap();
         let freqs_dir = dir.as_ref().join("freqs");
         let dir_str = dir.as_ref().to_str().unwrap();
-        let jobs =
-            P::build_jobs(geoms, dir_str, 0, 1.0, 0, config.charge, template);
+        let jobs = program.build_jobs(
+            geoms,
+            dir.as_ref(),
+            0,
+            1.0,
+            0,
+            config.charge,
+            template,
+        );
         writeln!(
             w,
             "{} normal coordinates require {} points",
@@ -166,6 +174,7 @@ impl Normal {
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
             .drain(
+                program,
                 dir_str,
                 jobs,
                 &mut energies,
@@ -230,13 +239,14 @@ impl Normal {
         ref_energy: f64,
         template: &Template,
         w: &mut W,
+        program: &P,
         queue: &Q,
         dir: impl AsRef<Path>,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
     {
         let n = self.ncoords;
         let deriv = Derivative::quartic(n);
@@ -260,7 +270,10 @@ impl Normal {
                 let filename =
                     format!("{}/job.{job_num:08}", pts_dir.display());
                 Job::new(
-                    P::new(filename, template.clone(), config.charge, mol.geom),
+                    filename,
+                    template.clone(),
+                    config.charge,
+                    mol.geom,
                     mol.index,
                 )
             })
@@ -281,6 +294,7 @@ impl Normal {
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
             .drain(
+                program,
                 pts_dir.to_str().unwrap(),
                 jobs,
                 &mut energies,
@@ -348,12 +362,13 @@ impl<W, Q, P> CoordType<W, Q, P> for Normal
 where
     W: Write,
     Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn run(
         mut self,
         dir: impl AsRef<std::path::Path>,
         w: &mut W,
+        program: &P,
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
@@ -367,6 +382,7 @@ where
         } = self
             .cart_part(
                 &FirstPart::from(config.clone()),
+                program,
                 queue,
                 w,
                 dir.as_ref().to_str().unwrap(),
@@ -384,6 +400,7 @@ where
         let _ = std::fs::create_dir(&freqs_dir);
         let ref_energy = if config.template != config.hybrid_template {
             crate::ref_energy(
+                program,
                 queue,
                 Geom::Xyz(s.geom.clone().atoms),
                 config.hybrid_template.clone().into(),
@@ -401,6 +418,7 @@ where
                 ref_energy,
                 &config.hybrid_template.clone().into(),
                 w,
+                program,
                 queue,
                 dir,
             )
@@ -410,7 +428,7 @@ where
                     "hybrid_template not used for fitted normal coordinates"
                 );
             }
-            self.run_fitted(&o, &s, &dir, w, pg, config, tmpl, queue)
+            self.run_fitted(&o, &s, &dir, w, pg, config, tmpl, program, queue)
         };
         Intder::dump_fcs(freqs_dir.to_str().unwrap(), &fc2, &f3qcm, &f4qcm);
         s.write(freqs_dir.join("spectro.in")).unwrap();
@@ -447,6 +465,7 @@ where
         #[allow(unused_assignments)] mut self,
         dir: impl AsRef<std::path::Path>,
         w: &mut W,
+        program: &P,
         queue: &Q,
         config: &Config,
         Resume {
@@ -464,6 +483,7 @@ where
         let mut energies = vec![0.0; njobs];
         let time = queue
             .resume(
+                program,
                 pts_dir.to_str().unwrap(),
                 chk.to_str().unwrap(),
                 &mut energies,
@@ -820,12 +840,13 @@ impl Normal {
     pub fn cart_part<P, Q, W>(
         &self,
         config: &FirstPart,
+        program: &P,
         queue: &Q,
         w: &mut W,
         root_dir: impl AsRef<Path>,
     ) -> Result<CartPart, Box<dyn Error>>
     where
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
         Q: Queue<P> + Sync,
         W: Write,
     {
@@ -848,12 +869,21 @@ impl Normal {
                 resume,
                 w,
                 config,
+                program,
                 queue,
                 Nderiv::Two,
                 &root_dir,
             )?
         } else {
-            Cart.first_part(w, config, queue, Nderiv::Two, &root_dir, &pts_dir)?
+            Cart.first_part(
+                w,
+                config,
+                program,
+                queue,
+                Nderiv::Two,
+                &root_dir,
+                &pts_dir,
+            )?
         };
         let (fc2, _, _) = self.make_fcs(
             target_map,

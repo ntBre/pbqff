@@ -104,12 +104,13 @@ impl<W, Q, P> CoordType<W, Q, P> for Cart
 where
     W: io::Write,
     Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn run(
         self,
         dir: impl AsRef<Path>,
         w: &mut W,
+        program: &P,
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
@@ -124,6 +125,7 @@ where
             .first_part(
                 w,
                 &FirstPart::from(config.clone()),
+                program,
                 queue,
                 Nderiv::Four,
                 &dir,
@@ -157,6 +159,7 @@ where
         self,
         _dir: impl AsRef<Path>,
         _w: &mut W,
+        _program: &P,
         _queue: &Q,
         _config: &Config,
         _resume: Resume,
@@ -229,10 +232,12 @@ impl From<Config> for FirstPart {
 impl Cart {
     /// run the "first part" of the Cartesian QFF, including the optimization if
     /// requested and the generation and running of the single-point energies
+    #[allow(clippy::too_many_arguments)]
     pub fn first_part<W, Q, P>(
         &self,
         w: &mut W,
         config: &FirstPart,
+        program: &P,
         queue: &Q,
         nderiv: Nderiv,
         root_dir: impl AsRef<Path>,
@@ -241,12 +246,13 @@ impl Cart {
     where
         W: io::Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
     {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
             let res = optimize(
                 &root_dir,
+                program,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -262,6 +268,7 @@ impl Cart {
                 die!("expected an XYZ geometry, not Zmat");
             }
             let ref_energy = ref_energy(
+                program,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -310,7 +317,10 @@ impl Cart {
                     .to_string_lossy()
                     .to_string();
                 Job::new(
-                    P::new(filename, template.clone(), config.charge, mol.geom),
+                    filename,
+                    template.clone(),
+                    config.charge,
+                    mol.geom,
                     mol.index,
                 )
             })
@@ -334,6 +344,7 @@ impl Cart {
         let mut energies = vec![0.0; njobs];
         let time = queue
             .drain(
+                program,
                 pts_dir.as_ref().to_str().unwrap(),
                 jobs,
                 &mut energies,
@@ -354,11 +365,13 @@ impl Cart {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn resume_first_part<W, Q, P>(
         &self,
         resume: Resume,
         _w: &mut W,
         config: &FirstPart,
+        program: &P,
         queue: &Q,
         _nderiv: Nderiv,
         root_dir: impl AsRef<Path>,
@@ -366,7 +379,7 @@ impl Cart {
     where
         W: io::Write,
         Q: Queue<P> + Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
     {
         let pts_dir = root_dir.as_ref().join("pts");
         let chk = root_dir.as_ref().join("chk.json");
@@ -375,6 +388,7 @@ impl Cart {
         let mut energies = vec![0.0; resume.njobs];
         let time = queue
             .resume(
+                program,
                 pts_dir.to_str().unwrap(),
                 chk.to_str().unwrap(),
                 &mut energies,

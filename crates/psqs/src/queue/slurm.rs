@@ -1,7 +1,5 @@
 use std::collections::HashSet;
 
-use serde::{Deserialize, Serialize};
-
 use crate::program::Program;
 use crate::program::mopac::Mopac;
 use crate::program::{dftbplus::DFTBPlus, molpro::Molpro};
@@ -41,10 +39,7 @@ impl Slurm {
     }
 }
 
-impl<P: Program + Clone + Serialize + for<'a> Deserialize<'a>> Submit<P>
-    for Slurm
-{
-}
+impl<P: Program> Submit<P> for Slurm {}
 
 impl Queue<Molpro> for Slurm {
     fn template(&self) -> &Option<String> {
@@ -90,7 +85,7 @@ impl Queue<DFTBPlus> for Slurm {
 
 impl<P> SubQueue<P> for Slurm
 where
-    P: Program + Clone + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn submit_command(&self) -> &str {
         "sbatch"

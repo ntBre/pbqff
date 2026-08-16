@@ -2,7 +2,7 @@ use std::{fs::read_to_string, path::Path, str::FromStr};
 
 use crate::{
     geom::Geom,
-    program::{Procedure, Program, Template, molpro::Molpro},
+    program::{Job, Procedure, Program, Template, molpro::Molpro},
 };
 
 fn opt_templ() -> Template {
@@ -33,9 +33,9 @@ hf,accuracy=16,energy=1.0d-10
     )
 }
 
-fn test_molpro(template_kind: Procedure, path: impl AsRef<Path>) -> Molpro {
+fn test_molpro(template_kind: Procedure, path: impl AsRef<Path>) -> Job {
     let path = path.as_ref();
-    Molpro::new(
+    Job::new(
         path.to_string_lossy().to_string(),
         match template_kind {
             Procedure::Opt => opt_templ(),
@@ -57,6 +57,7 @@ HCC =               147.81488230
 ",
         )
         .unwrap(),
+        0,
     )
 }
 
@@ -75,8 +76,8 @@ pub(crate) mod write_input {
     #[test_case(Procedure::SinglePt, Procedure::SinglePt)]
     fn opt_opt(template_kind: Procedure, proc: Procedure) {
         let dir = NamedTempFile::new().unwrap();
-        let mut m = test_molpro(template_kind, &dir);
-        m.write_input(proc);
+        let job = test_molpro(template_kind, &dir);
+        Molpro.write_input(&job, proc);
         let snapshot = format!("{template_kind:?}_{proc:?}");
         assert_snapshot!(
             snapshot,
@@ -92,7 +93,7 @@ mod read_output {
 
     #[test]
     fn opt() {
-        let got = Molpro::read_output("testfiles/molpro/opt").unwrap();
+        let got = Molpro.read_output("testfiles/molpro/opt").unwrap();
         assert_debug_snapshot!(got, @r"
         ProgramResult {
             energy: -76.369839620286,
@@ -128,7 +129,7 @@ mod read_output {
 
     #[test]
     fn dzccr() {
-        let got = Molpro::read_output("testfiles/molpro/dzccr");
+        let got = Molpro.read_output("testfiles/molpro/dzccr");
         let got = got.unwrap_or_else(|e| panic!("{e:#?}"));
         assert_debug_snapshot!(got, @r"
         ProgramResult {
@@ -141,7 +142,7 @@ mod read_output {
 
     #[test]
     fn error() {
-        let got = Molpro::read_output("testfiles/molpro/error");
+        let got = Molpro.read_output("testfiles/molpro/error");
         let Err(e) = got else {
             panic!("expected error got {got:?}");
         };
@@ -150,7 +151,7 @@ mod read_output {
 
     #[test]
     fn ignore_error() {
-        let got = Molpro::read_output("testfiles/molpro/ignore_error");
+        let got = Molpro.read_output("testfiles/molpro/ignore_error");
         assert!(got.is_ok());
     }
 }

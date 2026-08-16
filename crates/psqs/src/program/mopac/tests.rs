@@ -1,11 +1,10 @@
 use std::collections::HashSet;
 use std::fs;
-use std::ops::{Deref, DerefMut};
 
 use insta::{assert_debug_snapshot, assert_snapshot};
 use tempfile::TempDir;
 
-use crate::string;
+use crate::{geom::Geom, program::Template, string};
 
 use crate::queue::{Queue, SubQueue, Submit};
 
@@ -13,37 +12,8 @@ use super::*;
 
 struct TestMopac {
     tempdir: TempDir,
-    mopac: Mopac,
-}
-
-impl TestMopac {
-    #[must_use]
-    fn with_params(mut self, params: Option<Params>) -> Self {
-        self.mopac.params = params;
-        self
-    }
-
-    /// Set [`Mopac::param_dir`] to `Some(self.tempdir)`.
-    #[must_use]
-    fn with_param_dir(mut self) -> Self {
-        self.param_dir =
-            Some(self.tempdir.path().to_string_lossy().to_string());
-        self
-    }
-}
-
-impl Deref for TestMopac {
-    type Target = Mopac;
-
-    fn deref(&self) -> &Self::Target {
-        &self.mopac
-    }
-}
-
-impl DerefMut for TestMopac {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.mopac
-    }
+    job: Job,
+    params: Params,
 }
 
 fn test_mopac() -> TestMopac {
@@ -64,26 +34,32 @@ fn test_mopac() -> TestMopac {
         11.528134000000, 9.486212000000, 0.717322000000,
     ];
     let tempdir = TempDir::new().unwrap();
-    let mopac = Mopac::new_full(
+    let params = Params::from(
+        names.iter().map(|s| s.to_string()).collect(),
+        atoms.iter().map(|s| s.to_string()).collect(),
+        values,
+    );
+    let job = Job::new(
         tempdir.path().join("test").to_string_lossy().to_string(),
-        Some(Params::from(
-            names.iter().map(|s| s.to_string()).collect(),
-            atoms.iter().map(|s| s.to_string()).collect(),
-            values,
-        )),
+        Template::from("scfcrt=1.D-21 aux(precision=14) PM6 A0"),
+        0,
         Geom::Xyz(Vec::new()),
         0,
-        Template::from("scfcrt=1.D-21 aux(precision=14) PM6 A0"),
     );
 
-    TestMopac { tempdir, mopac }
+    TestMopac {
+        tempdir,
+        job,
+        params,
+    }
 }
 
 #[test]
 fn test_write_input() {
-    let mut tm = test_mopac().with_params(None);
-    tm.write_input(Procedure::SinglePt);
-    let got = fs::read_to_string(tm.infile()).expect("file not found");
+    let tm = test_mopac();
+    Mopac.write_input(&tm.job, Procedure::SinglePt);
+    let got =
+        fs::read_to_string(Mopac.infile(&tm.job)).expect("file not found");
     let want = "scfcrt=1.D-21 aux(precision=14) PM6 A0 charge=0 1SCF XYZ
 Comment line 1
 Comment line 2
@@ -94,26 +70,10 @@ Comment line 2
 }
 
 #[test]
-fn test_write_input_with_params() {
-    let mut tm = test_mopac().with_param_dir();
-    tm.write_input(Procedure::SinglePt);
-
-    insta::with_settings!({filters => vec![(
-        tm.param_file.as_ref().unwrap().as_str(), "[PARAM_FILE]",
-    )]}, {
-        assert_snapshot!(read_to_string(tm.infile()).expect("file not found"), @r"
-        scfcrt=1.D-21 aux(precision=14) PM6 A0 charge=0 1SCF external=[PARAM_FILE] XYZ
-        Comment line 1
-        Comment line 2
-        ");
-    });
-}
-
-#[test]
 fn test_write_params() {
     let tm = test_mopac();
     let param_file = tm.tempdir.path().join("params.dat");
-    Mopac::write_params(tm.params.as_ref().unwrap(), &param_file);
+    Mopac::write_params(&tm.params, &param_file);
 
     assert_snapshot!(read_to_string(&param_file).expect("file not found"), @r"
     USS H -11.246958000000
@@ -136,7 +96,7 @@ fn test_write_params() {
 
 #[test]
 fn test_read_output() {
-    assert_debug_snapshot!(Mopac::read_output("testfiles/job"), @r"
+    assert_debug_snapshot!(Mopac.read_output("testfiles/job"), @r"
     Ok(
         ProgramResult {
             energy: 0.15478330901845888,
@@ -185,7 +145,7 @@ fn test_read_output() {
     ");
 
     // opt success
-    assert_debug_snapshot!(Mopac::read_output("testfiles/opt"), @r"
+    assert_debug_snapshot!(Mopac.read_output("testfiles/opt"), @r"
     Ok(
         ProgramResult {
             energy: 0.20175470737510037,
@@ -236,23 +196,24 @@ fn test_read_output() {
     // failure (no termination message) in output - now catches noaux error
     // instead
     let f = String::from("testfiles/nojob");
-    let got = Mopac::read_output(&f);
+    let got = Mopac.read_output(&f);
     assert_eq!(got.err().unwrap(), ProgramError::FileNotFound(f + ".aux"));
 
     // failure in aux
     let f = String::from("testfiles/noaux");
-    let got = Mopac::read_output(&f);
+    let got = Mopac.read_output(&f);
     assert_eq!(got.err().unwrap(), ProgramError::FileNotFound(f + ".aux"));
 
     // this is passing but for some reason on maple it's throwing an error
-    let got = Mopac::read_output("testfiles/bad");
+    let got = Mopac.read_output("testfiles/bad");
     assert!(got.is_ok());
     assert!(got.unwrap().cart_geom.is_some());
 }
 
 #[test]
 fn read_multi_el() {
-    let got = Mopac::read_output("testfiles/mopac/multi_atom_el")
+    let got = Mopac
+        .read_output("testfiles/mopac/multi_atom_el")
         .map(|pr| pr.cart_geom.unwrap().len());
     assert_eq!(got, Ok(46));
 }

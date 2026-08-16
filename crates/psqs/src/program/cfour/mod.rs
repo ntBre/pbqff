@@ -5,54 +5,27 @@ use std::{
 };
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use symm::{ANGBOHR, Atom};
 
-use crate::{
-    geom::Geom,
-    queue::{Queue, Submit, local::Local, pbs::Pbs, slurm::Slurm},
-};
+use crate::queue::{Queue, Submit, local::Local, pbs::Pbs, slurm::Slurm};
 
 use super::{
-    Procedure, Program, ProgramError, ProgramResult, Template, parse_energy,
+    Job, Procedure, Program, ProgramError, ProgramResult, parse_energy,
 };
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct Cfour {
-    /// in this case, `filename` is actually a directory name because every
-    /// CFOUR input file has to have the same name (ZMAT)
-    filename: String,
-    template: Template,
-    charge: isize,
-    geom: Geom,
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Cfour;
 
 static CELL: OnceLock<[Regex; 4]> = OnceLock::new();
 
 impl Program for Cfour {
-    fn filename(&self) -> String {
-        self.filename.clone()
-    }
-
-    fn infile(&self) -> String {
+    fn infile(&self, _job: &Job) -> String {
         todo!()
     }
 
-    fn set_filename(&mut self, filename: &str) {
-        self.filename = filename.into();
-    }
-
-    fn template(&self) -> &Template {
-        &self.template
-    }
-
     /// ZMAT has no extension
-    fn extension(&self) -> String {
-        String::new()
-    }
-
-    fn charge(&self) -> isize {
-        self.charge
+    fn extension(&self) -> &'static str {
+        ""
     }
 
     /// Example [Template]:
@@ -64,23 +37,23 @@ impl Program for Cfour {
     /// {{.charge}}
     /// {{.keywords}})
     /// ```
-    fn write_input(&mut self, proc: Procedure) {
+    fn write_input(&self, job: &Job, proc: Procedure) {
         use std::io::Write;
-        let mut body = self.template().clone().header;
+        let mut body = job.template.clone().header;
         // always just paste in the geometry, assume it's a zmat for
         // optimization and cartesian for single point
         body = body
-            .replace("{{.geom}}", &self.geom.to_string())
-            .replace("{{.charge}}", &format!("CHARGE={}", self.charge));
+            .replace("{{.geom}}", &job.geom.to_string())
+            .replace("{{.charge}}", &format!("CHARGE={}", job.charge));
         match proc {
             Procedure::Opt => {
-                if !self.geom.is_zmat() {
+                if !job.geom.is_zmat() {
                     panic!("CFOUR requires Z-matrix for optimization");
                 }
                 body = body.replace("{{.keywords}}", "COORD=INTERNAL");
             }
             Procedure::SinglePt => {
-                if !self.geom.is_xyz() {
+                if !job.geom.is_xyz() {
                     panic!(
                         "pbqff expects Cartesian geometry for single-points"
                     );
@@ -90,17 +63,20 @@ impl Program for Cfour {
             }
             Procedure::Freq => todo!(),
         };
-        let dir = Path::new(&self.filename);
+        let dir = Path::new(&job.filename);
         std::fs::create_dir_all(dir).unwrap_or_else(|e| {
-            panic!("failed to create {} with {e}", self.filename)
+            panic!("failed to create {} with {e}", job.filename)
         });
         let mut file = File::create(dir.join("ZMAT")).unwrap_or_else(|e| {
-            panic!("failed to create dftb input in {} with {e}", self.filename)
+            panic!("failed to create dftb input in {} with {e}", job.filename)
         });
         write!(file, "{body}").expect("failed to write input file");
     }
 
-    fn read_output(filename: &str) -> Result<ProgramResult, ProgramError> {
+    fn read_output(
+        &self,
+        filename: &str,
+    ) -> Result<ProgramResult, ProgramError> {
         let path = Path::new(filename);
 
         let outfile = path.join("output.dat");
@@ -191,7 +167,7 @@ impl Program for Cfour {
         })
     }
 
-    fn associated_files(&self) -> Vec<String> {
+    fn associated_files(&self, _job: &Job) -> Vec<String> {
         [
             "ECPDATA",
             "GENBAS",
@@ -204,20 +180,6 @@ impl Program for Cfour {
         .into_iter()
         .map(str::to_owned)
         .collect()
-    }
-
-    fn new(
-        filename: String,
-        template: Template,
-        charge: isize,
-        geom: Geom,
-    ) -> Self {
-        Self {
-            filename,
-            template,
-            charge,
-            geom,
-        }
     }
 }
 
@@ -289,6 +251,7 @@ impl Queue<Cfour> for Local {
 mod tests {
     use std::str::FromStr;
 
+    use crate::program::Template;
     use insta::{assert_debug_snapshot, assert_snapshot};
     use tempfile::tempdir;
 
@@ -296,7 +259,7 @@ mod tests {
 
     #[test]
     fn read_output() {
-        let got = Cfour::read_output("testfiles/cfour").unwrap();
+        let got = Cfour.read_output("testfiles/cfour").unwrap();
         assert_debug_snapshot!(got, @r"
         ProgramResult {
             energy: -76.33801063048065,
@@ -345,11 +308,11 @@ mod tests {
 ",
         );
 
-        let mut d = Cfour {
-            filename: dirname.clone(),
+        let job = Job::new(
+            dirname.clone(),
             template,
-            charge: 0,
-            geom: Geom::from_str(
+            0,
+            crate::geom::Geom::from_str(
                 "
 O        -0.000000000         0.000000000         0.065806577
 H         0.000000000        -0.753160027        -0.522199064
@@ -357,9 +320,10 @@ H         0.000000000         0.753160027        -0.522199064
 ",
             )
             .unwrap(),
-        };
+            0,
+        );
 
-        d.write_input(Procedure::SinglePt);
+        Cfour.write_input(&job, Procedure::SinglePt);
 
         assert_snapshot!(read_to_string(zmat).unwrap(), @r"
         comment line
@@ -385,11 +349,11 @@ H         0.000000000         0.753160027        -0.522199064
 ",
         );
 
-        let mut d = Cfour {
-            filename: "/tmp".into(),
+        let job = Job::new(
+            "/tmp".into(),
             template,
-            charge: 0,
-            geom: Geom::from_str(
+            0,
+            crate::geom::Geom::from_str(
                 "
 O        -0.000000000         0.000000000         0.065806577
 H         0.000000000        -0.753160027        -0.522199064
@@ -397,9 +361,10 @@ H         0.000000000         0.753160027        -0.522199064
 ",
             )
             .unwrap(),
-        };
+            0,
+        );
 
-        d.write_input(Procedure::SinglePt);
+        Cfour.write_input(&job, Procedure::SinglePt);
 
         assert_snapshot!(read_to_string("/tmp/ZMAT").unwrap(), @r"
         comment line

@@ -1,12 +1,12 @@
 use psqs::{
     geom::Geom,
     program::{
-        Procedure, Program, Template,
+        Job, Procedure, Program, Template,
         mopac::{Mopac, Params},
     },
 };
 
-fn test_mopac() -> Mopac {
+fn test_job() -> Job {
     let names = vec![
         "USS", "ZS", "BETAS", "GSS", "USS", "UPP", "ZS", "ZP", "BETAS",
         "BETAP", "GSS", "GPP", "GSP", "GP2", "HSP",
@@ -23,25 +23,32 @@ fn test_mopac() -> Mopac {
             -7.471929000000, 13.335519000000, 10.778326000000,
             11.528134000000, 9.486212000000, 0.717322000000,
         ];
-    Mopac::new_full(
+    let params = Params::from(
+        names.iter().map(|s| s.to_string()).collect(),
+        atoms.iter().map(|s| s.to_string()).collect(),
+        values,
+    );
+    let param_file = "/tmp/test.params";
+    Mopac::write_params(&params, param_file);
+    Job::new(
         String::from("/tmp/test"),
-        Some(Params::from(
-            names.iter().map(|s| s.to_string()).collect(),
-            atoms.iter().map(|s| s.to_string()).collect(),
-            values,
-        )),
+        Template {
+            header: format!(
+                "scfcrt=1.D-21 aux(precision=14) PM6 A0 external={param_file}"
+            ),
+        },
+        0,
         Geom::Xyz(Vec::new()),
         0,
-        Template::from("scfcrt=1.D-21 aux(precision=14) PM6 A0"),
     )
 }
 
 fn main() {
-    let mut tm = test_mopac();
-    tm.param_dir = Some("/tmp".to_string());
+    let program = Mopac;
+    let job = test_job();
     let mut res = Vec::new();
     for _ in 0..1000 {
-        tm.write_input(Procedure::SinglePt);
+        program.write_input(&job, Procedure::SinglePt);
         res.push(());
     }
 }
