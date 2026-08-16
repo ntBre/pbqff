@@ -2,8 +2,6 @@ use std::path::Path;
 use std::time::Duration;
 use std::{collections::HashSet, process::Command};
 
-use serde::{Deserialize, Serialize};
-
 use crate::program::Program;
 use crate::program::dftbplus::DFTBPlus;
 use crate::program::molpro::Molpro;
@@ -44,10 +42,7 @@ impl Pbs {
     }
 }
 
-impl Submit<Mopac> for Pbs
-where
-    Mopac: Serialize + for<'a> Deserialize<'a>,
-{
+impl Submit<Mopac> for Pbs {
     /// submit `filename` to the queue and return the jobid
     fn submit(&self, filename: &str) -> String {
         let mut cmd =
@@ -59,10 +54,7 @@ where
 
 // Molpro 2022 submit script requires submission from the current directory, so
 // we have to override the default impl
-impl Submit<Molpro> for Pbs
-where
-    Molpro: Serialize + for<'a> Deserialize<'a>,
-{
+impl Submit<Molpro> for Pbs {
     fn submit(&self, filename: &str) -> String {
         let path = Path::new(filename);
         let dir = path.parent().unwrap();
@@ -111,10 +103,7 @@ fn submit_inner(
     }
 }
 
-impl Queue<Molpro> for Pbs
-where
-    Molpro: Serialize + for<'a> Deserialize<'a>,
-{
+impl Queue<Molpro> for Pbs {
     fn template(&self) -> &Option<String> {
         &self.template
     }
@@ -230,7 +219,7 @@ impl Submit<DFTBPlus> for Pbs {
 
 impl<P> SubQueue<P> for Pbs
 where
-    P: Program + Clone + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn submit_command(&self) -> &str {
         "qsub"

@@ -83,75 +83,56 @@ impl FromStr for Template {
     }
 }
 
-/// A trait for describing programs runnable on a [crate::queue::Queue]
-pub trait Program {
-    /// returns the file associated with the program's input. it should not
-    /// include an extension
-    fn filename(&self) -> String;
-
-    /// return the output of `self.filename()` with ".out" appended
-    fn outfile(&self) -> String {
-        self.filename() + ".out"
+/// A program backend runnable on a [crate::queue::Queue].
+///
+/// Calculation-specific data lives in [`Job`]; implementations provide the
+/// shared behavior for writing inputs and reading outputs.
+pub trait Program: Sync {
+    /// Return the output associated with `job`.
+    fn outfile(&self, job: &Job) -> String {
+        job.filename.clone() + ".out"
     }
 
-    /// return the input file associated with `self`
-    fn infile(&self) -> String;
-
-    /// set `filename`
-    fn set_filename(&mut self, filename: &str);
-
-    /// the template for writing input files
-    fn template(&self) -> &Template;
+    /// Return the input file associated with `job`.
+    fn infile(&self, job: &Job) -> String;
 
     /// the file extension for the input file
-    fn extension(&self) -> String;
+    fn extension(&self) -> &'static str;
 
-    /// molecular charge
-    fn charge(&self) -> isize;
-
-    /// write the input file to the name returned by `filename`
-    fn write_input(&mut self, proc: Procedure);
+    /// Write the input file for `job`.
+    fn write_input(&self, job: &Job, proc: Procedure);
 
     /// read the output file `filename`
-    fn read_output(filename: &str) -> Result<ProgramResult, ProgramError>;
+    fn read_output(
+        &self,
+        filename: &str,
+    ) -> Result<ProgramResult, ProgramError>;
 
-    /// Return all the filenames associated with the Program for deletion when
-    /// it finishes
-    fn associated_files(&self) -> Vec<String>;
-
-    fn new(
-        filename: String,
-        template: Template,
-        charge: isize,
-        geom: Geom,
-    ) -> Self;
+    /// Return all filenames associated with `job` for deletion when it
+    /// finishes.
+    fn associated_files(&self, job: &Job) -> Vec<String>;
 
     /// Build the jobs described by `moles` in memory, but don't write any of
     /// their files yet
+    #[allow(clippy::too_many_arguments)]
     fn build_jobs(
+        &self,
         moles: Vec<Geom>,
-        dir: impl AsRef<Path>,
+        dir: &Path,
         start_index: usize,
         coeff: f64,
         job_num: usize,
         charge: isize,
         tmpl: Template,
-    ) -> Vec<Job<Self>>
-    where
-        Self: std::marker::Sized,
-    {
+    ) -> Vec<Job> {
         let mut count: usize = start_index;
         let mut job_num = job_num;
         let mut jobs = Vec::new();
         for mol in moles {
             let filename = format!("job.{job_num:08}");
-            let filename =
-                dir.as_ref().join(filename).to_str().unwrap().to_string();
+            let filename = dir.join(filename).to_str().unwrap().to_string();
             job_num += 1;
-            let mut job = Job::new(
-                Self::new(filename, tmpl.clone(), charge, mol.clone()),
-                count,
-            );
+            let mut job = Job::new(filename, tmpl.clone(), charge, mol, count);
             job.coeff = coeff;
             jobs.push(job);
             count += 1;
@@ -161,8 +142,19 @@ pub trait Program {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Job<P: Program> {
-    pub program: P,
+pub struct Job {
+    /// Filename without the program's input extension.
+    pub filename: String,
+
+    /// Template used to write the program input.
+    pub template: Template,
+
+    /// Molecular charge.
+    pub charge: isize,
+
+    /// Input geometry.
+    pub geom: Geom,
+
     pub pbs_file: String,
     pub job_id: String,
 
@@ -172,14 +164,23 @@ pub struct Job<P: Program> {
     /// the coefficient to multiply by when storing the result
     pub coeff: f64,
 
-    /// the last modified time of `program`'s output file
+    /// the last modified time of the program's output file
     pub(crate) modtime: SystemTime,
 }
 
-impl<P: Program> Job<P> {
-    pub fn new(program: P, index: usize) -> Self {
+impl Job {
+    pub fn new(
+        filename: String,
+        template: Template,
+        charge: isize,
+        geom: Geom,
+        index: usize,
+    ) -> Self {
         Self {
-            program,
+            filename,
+            template,
+            charge,
+            geom,
             pbs_file: String::new(),
             job_id: String::new(),
             index,
@@ -188,11 +189,10 @@ impl<P: Program> Job<P> {
         }
     }
 
-    /// return the current modtime of `self.program`'s output file, or
-    /// `self.modtime` if there is an error accessing the metadata
-    pub fn modtime(&self) -> SystemTime {
-        let p = self.program.outfile();
-        if let Ok(meta) = std::fs::metadata(p) {
+    /// Return the current modification time of `outfile`, or `self.modtime` if
+    /// its metadata cannot be read.
+    pub fn modtime(&self, outfile: impl AsRef<Path>) -> SystemTime {
+        if let Ok(meta) = std::fs::metadata(outfile) {
             meta.modified().unwrap()
         } else {
             self.modtime
@@ -214,4 +214,15 @@ fn parse_energy(
         .map(str::parse::<f64>)
         .transpose()
         .map_err(|_| ProgramError::EnergyParseError(outname.to_owned()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Program;
+    use super::mopac::Mopac;
+
+    #[test]
+    fn program_is_object_safe() {
+        let _: &dyn Program = &Mopac;
+    }
 }

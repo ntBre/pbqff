@@ -6,12 +6,11 @@ use std::{
 
 use log::{trace, warn};
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 use symm::Atom;
 
 use crate::{geom::Geom, program::Procedure};
 
-use super::{Program, ProgramError, ProgramResult, Template, parse_energy};
+use super::{Job, Program, ProgramError, ProgramResult, parse_energy};
 
 #[cfg(test)]
 mod tests;
@@ -19,41 +18,18 @@ mod tests;
 static INPUT_CELL: OnceLock<[Regex; 3]> = OnceLock::new();
 static CELL: OnceLock<[Regex; 5]> = OnceLock::new();
 
-#[derive(Clone, Deserialize, Serialize)]
-pub struct DFTBPlus {
-    /// in this case, `filename` is actually a directory name because every
-    /// DFTB+ input file has to have the same name
-    filename: String,
-    template: Template,
-    charge: isize,
-    geom: Geom,
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct DFTBPlus;
 
 impl Program for DFTBPlus {
-    fn filename(&self) -> String {
-        self.filename.clone()
-    }
-
-    fn infile(&self) -> String {
+    fn infile(&self, _job: &Job) -> String {
         todo!()
-    }
-
-    fn set_filename(&mut self, filename: &str) {
-        self.filename = filename.into();
-    }
-
-    fn template(&self) -> &Template {
-        &self.template
     }
 
     /// every file has to have the same name, so I don't actually need to match
     /// up extensions
-    fn extension(&self) -> String {
-        String::new()
-    }
-
-    fn charge(&self) -> isize {
-        self.charge
+    fn extension(&self) -> &'static str {
+        ""
     }
 
     /// Example [Template]:
@@ -86,9 +62,9 @@ impl Program for DFTBPlus {
     ///   ParserVersion = 12
     /// }
     /// ```
-    fn write_input(&mut self, proc: Procedure) {
+    fn write_input(&self, job: &Job, proc: Procedure) {
         use std::io::Write;
-        let mut body = self.template().clone().header;
+        let mut body = job.template.clone().header;
         // skip optgrad but accept optg at the end of a line
         let [opt, charge, geom_re] = INPUT_CELL.get_or_init(|| {
             [
@@ -157,7 +133,7 @@ impl Program for DFTBPlus {
                 }
             }
         }
-        let geom = match &self.geom {
+        let geom = match &job.geom {
             Geom::Zmat(_) => {
                 panic!("don't know how to handle a Z-matrix in dftb+");
             }
@@ -165,24 +141,27 @@ impl Program for DFTBPlus {
         };
         body = geom_re.replace(&body, geom).to_string();
         body = charge
-            .replace(&body, &format!("{}", self.charge))
+            .replace(&body, &format!("{}", job.charge))
             .to_string();
 
-        let dir = Path::new(&self.filename);
+        let dir = Path::new(&job.filename);
         std::fs::create_dir_all(dir).unwrap_or_else(|e| {
-            panic!("failed to create {} with {e}", self.filename)
+            panic!("failed to create {} with {e}", job.filename)
         });
         let mut file =
             File::create(dir.join("dftb_in.hsd")).unwrap_or_else(|e| {
                 panic!(
                     "failed to create dftb input in {} with {e}",
-                    self.filename
+                    job.filename
                 )
             });
         write!(file, "{body}").expect("failed to write input file");
     }
 
-    fn read_output(filename: &str) -> Result<ProgramResult, ProgramError> {
+    fn read_output(
+        &self,
+        filename: &str,
+    ) -> Result<ProgramResult, ProgramError> {
         let path = Path::new(filename);
 
         let outfile = path.join("out");
@@ -273,7 +252,7 @@ impl Program for DFTBPlus {
         })
     }
 
-    fn associated_files(&self) -> Vec<String> {
+    fn associated_files(&self, _job: &Job) -> Vec<String> {
         vec![
             "charges.bin".to_owned(),
             "detailed.out".to_owned(),
@@ -283,19 +262,5 @@ impl Program for DFTBPlus {
             "dftb_pin.hsd".to_owned(),
             "dftb_in.hsd".to_owned(),
         ]
-    }
-
-    fn new(
-        filename: String,
-        template: Template,
-        charge: isize,
-        geom: Geom,
-    ) -> Self {
-        Self {
-            filename,
-            template,
-            charge,
-            geom,
-        }
     }
 }

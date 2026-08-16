@@ -4,61 +4,25 @@ use std::{
 };
 
 use regex::Regex;
-use serde::{Deserialize, Serialize};
 
 use crate::geom::{Geom, geom_string};
 
 use super::{
-    Procedure, Program, ProgramError, ProgramResult, Template, parse_energy,
+    Job, Procedure, Program, ProgramError, ProgramResult, parse_energy,
 };
 
 #[cfg(test)]
 pub(crate) mod tests;
 
-#[derive(Clone, Serialize, Deserialize)]
-pub struct Molpro {
-    filename: String,
-    template: Template,
-    charge: isize,
-    geom: Geom,
-}
+#[derive(Debug, Clone, Copy, Default)]
+pub struct Molpro;
 
 static CELL: OnceLock<[Regex; 6]> = OnceLock::new();
 static INPUT_CELL: OnceLock<[Regex; 4]> = OnceLock::new();
 
 impl Program for Molpro {
-    fn new(
-        filename: String,
-        template: Template,
-        charge: isize,
-        geom: Geom,
-    ) -> Self {
-        Self {
-            filename,
-            template,
-            charge,
-            geom,
-        }
-    }
-
-    fn filename(&self) -> String {
-        self.filename.clone()
-    }
-
-    fn set_filename(&mut self, filename: &str) {
-        self.filename = String::from(filename);
-    }
-
-    fn template(&self) -> &Template {
-        &self.template
-    }
-
-    fn extension(&self) -> String {
-        String::from("inp")
-    }
-
-    fn charge(&self) -> isize {
-        self.charge
+    fn extension(&self) -> &'static str {
+        "inp"
     }
 
     /// Example [Template]:
@@ -92,9 +56,9 @@ impl Program for Molpro {
     /// The missing closing brace around the geometry allows for easier handling
     /// of ZMAT inputs since `write_input` can insert its own closing brace
     /// between the ZMAT and parameter values.
-    fn write_input(&mut self, proc: Procedure) {
+    fn write_input(&self, job: &Job, proc: Procedure) {
         use std::io::Write;
-        let mut body = self.template().clone().header;
+        let mut body = job.template.clone().header;
         // skip optgrad but accept optg at the end of a line
         let [opt, optg_line, charge, geom_re] = INPUT_CELL.get_or_init(|| {
             [
@@ -128,7 +92,7 @@ impl Program for Molpro {
                 }
             }
         }
-        let geom = match &self.geom {
+        let geom = match &job.geom {
             Geom::Zmat(geom) => {
                 // inserting } and newline before ZMAT parameters
                 let mut new_lines = String::with_capacity(geom.len() + 2);
@@ -148,10 +112,10 @@ impl Program for Molpro {
         };
         body = geom_re.replace(&body, geom).to_string();
         body = charge
-            .replace(&body, &format!("{}", self.charge))
+            .replace(&body, &format!("{}", job.charge))
             .to_string();
 
-        let filename = format!("{}.{}", self.filename, self.extension());
+        let filename = format!("{}.{}", job.filename, self.extension());
         let mut file = match File::create(&filename) {
             Ok(f) => f,
             Err(e) => panic!("failed to create {filename} with {e}"),
@@ -159,7 +123,10 @@ impl Program for Molpro {
         write!(file, "{body}").expect("failed to write input file");
     }
 
-    fn read_output(filename: &str) -> Result<ProgramResult, ProgramError> {
+    fn read_output(
+        &self,
+        filename: &str,
+    ) -> Result<ProgramResult, ProgramError> {
         let outfile = format!("{}.out", &filename);
         if !std::path::Path::new(&outfile).exists() {
             return Err(ProgramError::FileNotFound(outfile));
@@ -237,11 +204,11 @@ impl Program for Molpro {
         Err(ProgramError::EnergyNotFound(outfile))
     }
 
-    fn associated_files(&self) -> Vec<String> {
-        vec![self.infile(), self.outfile()]
+    fn associated_files(&self, job: &Job) -> Vec<String> {
+        vec![self.infile(job), self.outfile(job)]
     }
 
-    fn infile(&self) -> String {
-        self.filename() + ".inp"
+    fn infile(&self, job: &Job) -> String {
+        job.filename.clone() + ".inp"
     }
 }

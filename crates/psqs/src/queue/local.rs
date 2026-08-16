@@ -1,4 +1,3 @@
-use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
 use crate::program::dftbplus::DFTBPlus;
@@ -93,9 +92,7 @@ impl Queue<DFTBPlus> for Local {
     }
 }
 
-impl<P: Program + Clone + Serialize + for<'a> Deserialize<'a>> SubQueue<P>
-    for Local
-{
+impl<P: Program> SubQueue<P> for Local {
     fn submit_command(&self) -> &str {
         "bash"
     }

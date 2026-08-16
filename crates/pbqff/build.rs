@@ -65,6 +65,7 @@ config::Queue::{queue},
 {},
 \".\",
 &mut std::io::stdout(),
+&{program},
 &{queue}::new(
     config.chunk_size,
     config.job_limit,

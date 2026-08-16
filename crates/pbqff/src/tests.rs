@@ -46,6 +46,7 @@ fn h2o_normal() {
         Normal::default(),
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -98,6 +99,7 @@ fn c3h2_normal() {
         Normal::findiff(false),
         &dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -121,6 +123,7 @@ fn c3h2_normal() {
         Normal::findiff(false),
         &dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
         normal::Resume::load(dir.as_ref().join("res.chk")),
@@ -160,6 +163,7 @@ fn c3h2_normal_findiff() {
         Normal::findiff(true),
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -195,6 +199,7 @@ fn h2o_cart() {
         Cart,
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -234,6 +239,7 @@ fn h2o_sic() {
         coord,
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -274,6 +280,7 @@ fn sic() {
         coord,
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );
@@ -323,6 +330,7 @@ fn cart() {
         Cart,
         dir,
         &mut std::io::stdout(),
+        &Mopac,
         &queue,
         &config,
     );

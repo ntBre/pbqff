@@ -46,10 +46,10 @@ pub(crate) trait Drain {
 
     fn procedure(&self) -> Procedure;
 
-    fn set_result<P: Program>(
+    fn set_result(
         &self,
         dst: &mut [Self::Item],
-        job: &mut Job<P>,
+        job: &mut Job,
         res: ProgramResult,
     );
 
@@ -57,15 +57,16 @@ pub(crate) trait Drain {
     /// on failure, return a vector of failed job indices
     fn drain<P, Q>(
         &self,
+        program: &P,
         dir: &str,
         queue: &Q,
-        mut jobs: Vec<Job<P>>,
+        mut jobs: Vec<Job>,
         dst: &mut [Self::Item],
         check: Check,
     ) -> Result<f64, Vec<usize>>
     where
         Self: Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
         Q: Queue<P> + ?Sized + Sync,
         <Self as Drain>::Item: Clone + Serialize,
     {
@@ -113,7 +114,7 @@ pub(crate) trait Drain {
         // to checkpoints. None initially and then Some(chunk_num)
         let mut last_chunk = None;
         let mut to_remove = Vec::new();
-        let mut resub = Resub::new(queue, dir, self.procedure());
+        let mut resub = Resub::new(program, queue, dir, self.procedure());
         let mut failed_jobs = HashSet::new();
         let mut iter = 0;
         const MAX_RETRIES: usize = 5;
@@ -125,6 +126,7 @@ pub(crate) trait Drain {
             }
             if !out_of_jobs {
                 let n = self.receive_jobs(
+                    program,
                     &mut chunks,
                     job_limit,
                     &mut cur_jobs,
@@ -143,23 +145,25 @@ pub(crate) trait Drain {
             to_remove.clear();
             let now = std::time::Instant::now();
             let outfiles: Vec<_> =
-                cur_jobs.iter().map(|job| job.program.filename()).collect();
+                cur_jobs.iter().map(|job| job.filename.clone()).collect();
             use rayon::prelude::*;
-            let results: Vec<_> =
-                outfiles.par_iter().map(|out| P::read_output(out)).collect();
+            let results: Vec<_> = outfiles
+                .par_iter()
+                .map(|out| program.read_output(out))
+                .collect();
             time.reading += now.elapsed();
             for (i, (job, res)) in cur_jobs.iter_mut().zip(results).enumerate()
             {
                 match res {
                     Ok(res) => {
-                        let name = job.program.filename();
+                        let name = job.filename.clone();
                         if failed_jobs.remove(&name) {
                             log::info!("removed {name} from failed_jobs");
                         }
                         to_remove.push(i);
                         job_time += res.time;
                         self.set_result(dst, job, res);
-                        for f in job.program.associated_files() {
+                        for f in program.associated_files(job) {
                             dump.send(f);
                         }
                         finished += 1;
@@ -183,7 +187,7 @@ pub(crate) trait Drain {
                     }
                     Err(e) => {
                         if e.is_error_in_output() {
-                            let filename = job.program.filename();
+                            let filename = job.filename.clone();
                             if !failed_jobs.contains(&filename) {
                                 log::warn!("job failed with `{e}`");
                                 failed_jobs.insert(filename);
@@ -197,12 +201,12 @@ pub(crate) trait Drain {
                             // aren't appearing until after I've already
                             // resubmitted
                             let retry = retries
-                                .entry(job.program.filename())
+                                .entry(job.filename.clone())
                                 .or_insert(MAX_RETRIES);
                             if *retry == 0 {
                                 // just overwrite the existing job with
                                 // the resubmitted version
-                                let time = job.modtime();
+                                let time = job.modtime(program.outfile(job));
                                 if time > job.modtime {
                                     // file has been updated since we last
                                     // looked at it, so need to look again
@@ -211,9 +215,7 @@ pub(crate) trait Drain {
                                     // actual resubmission path
                                     eprintln!(
                                         "resubmitting {} (id={}) for {:?}",
-                                        job.program.filename(),
-                                        job.job_id,
-                                        e
+                                        job.filename, job.job_id, e
                                     );
                                     if *NO_RESUB {
                                         eprintln!(
@@ -223,7 +225,7 @@ pub(crate) trait Drain {
                                         );
                                         std::process::exit(1);
                                     }
-                                    failed_jobs.remove(&job.program.filename());
+                                    failed_jobs.remove(&job.filename);
                                     // copy the job into resub and plan to
                                     // remove it from cur_jobs
                                     resub.push(job.clone());
@@ -320,12 +322,8 @@ pub(crate) trait Drain {
 
     /// load a checkpoint from the `checkpoint` file, storing the energies in
     /// `dst` and returning the list of remaining jobs
-    fn load_checkpoint<P>(
-        checkpoint: &str,
-        dst: &mut [Self::Item],
-    ) -> Vec<Job<P>>
+    fn load_checkpoint(checkpoint: &str, dst: &mut [Self::Item]) -> Vec<Job>
     where
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Self::Item: Clone + for<'a> Deserialize<'a>,
     {
         let Ok(f) = std::fs::File::open(checkpoint) else {
@@ -342,13 +340,12 @@ pub(crate) trait Drain {
     /// To avoid problems with interrupted writes, this functions creates an
     /// intermediate temporary file first in `check_dir` and renames it to the
     /// destination.
-    fn write_checkpoint<P>(
+    fn write_checkpoint(
         check_dir: &str,
         checkpoint: &str,
         dst: Vec<Self::Item>,
-        jobs: Vec<Job<P>>,
+        jobs: Vec<Job>,
     ) where
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
         Self::Item: Serialize,
     {
         let checkpoint = Path::new(check_dir).join(checkpoint);
@@ -370,16 +367,14 @@ pub(crate) trait Drain {
         };
     }
 
-    fn do_checkpoint<P>(
-        cur_jobs: &[Job<P>],
+    fn do_checkpoint(
+        cur_jobs: &[Job],
         last_chunk: Option<usize>,
-        jobs_init: &[Job<P>],
+        jobs_init: &[Job],
         chunk_size: usize,
         check_dir: &str,
         dst: &mut [<Self as Drain>::Item],
     ) where
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
-        Job<P>: Clone,
         Self::Item: Serialize + Clone,
     {
         let mut cur_jobs = cur_jobs.to_vec();
@@ -399,9 +394,10 @@ pub(crate) trait Drain {
     #[allow(clippy::too_many_arguments)]
     fn receive_jobs<P, Q>(
         &self,
-        chunks: &mut Peekable<Fuse<Enumerate<ChunksMut<Job<P>>>>>,
+        program: &P,
+        chunks: &mut Peekable<Fuse<Enumerate<ChunksMut<Job>>>>,
         job_limit: usize,
-        cur_jobs: &mut Vec<Job<P>>,
+        cur_jobs: &mut Vec<Job>,
         queue: &Q,
         dir: &str,
         slurm_jobs: &mut HashMap<String, usize>,
@@ -411,7 +407,7 @@ pub(crate) trait Drain {
     ) -> usize
     where
         Self: Sync,
-        P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+        P: Program,
         Q: Queue<P> + ?Sized + Sync,
         <Self as Drain>::Item: Clone + Serialize,
     {
@@ -423,8 +419,13 @@ pub(crate) trait Drain {
             .par_bridge()
             .map(|(chunk_num, jobs)| {
                 let now = std::time::Instant::now();
-                let (slurm_jobs, wi, ws, ss) =
-                    queue.build_chunk(dir, jobs, chunk_num, self.procedure());
+                let (slurm_jobs, wi, ws, ss) = queue.build_chunk(
+                    program,
+                    dir,
+                    jobs,
+                    chunk_num,
+                    self.procedure(),
+                );
                 let job_id = jobs[0].job_id.clone();
                 let elapsed = now.elapsed();
                 log::debug!(
@@ -473,7 +474,7 @@ fn get_cpu_time() -> f64 {
 
 fn wait<P, Q>(queue: &Q, time: &mut timer::Timer, iter: usize, remaining: usize)
 where
-    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
     Q: Queue<P> + ?Sized + Sync,
 {
     let date = jiff::Zoned::now().strftime("%Y-%m-%d %H:%M:%S");
@@ -495,10 +496,10 @@ impl Drain for Opt {
         Procedure::Opt
     }
 
-    fn set_result<P: Program>(
+    fn set_result(
         &self,
         dst: &mut [Self::Item],
-        job: &mut Job<P>,
+        job: &mut Job,
         res: ProgramResult,
     ) {
         dst[job.index] = Geom::Xyz(res.cart_geom.unwrap());
@@ -506,12 +507,9 @@ impl Drain for Opt {
 }
 
 #[derive(Deserialize, Serialize)]
-struct Checkpoint<P, T>
-where
-    P: Program + Clone,
-{
+struct Checkpoint<T> {
     dst: Vec<T>,
-    jobs: Vec<Job<P>>,
+    jobs: Vec<Job>,
 }
 
 pub(crate) struct Single;
@@ -523,10 +521,10 @@ impl Drain for Single {
         Procedure::SinglePt
     }
 
-    fn set_result<P: Program>(
+    fn set_result(
         &self,
         dst: &mut [Self::Item],
-        job: &mut Job<P>,
+        job: &mut Job,
         res: ProgramResult,
     ) {
         dst[job.index] += job.coeff * res.energy;
@@ -542,10 +540,10 @@ impl Drain for Both {
         Procedure::Opt
     }
 
-    fn set_result<P: Program>(
+    fn set_result(
         &self,
         dst: &mut [Self::Item],
-        job: &mut Job<P>,
+        job: &mut Job,
         res: ProgramResult,
     ) {
         dst[job.index] = res;

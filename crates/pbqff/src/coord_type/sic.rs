@@ -44,12 +44,13 @@ impl<W, Q, P> CoordType<W, Q, P> for Sic
 where
     W: Write,
     Q: Queue<P> + Sync,
-    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn run(
         mut self,
         dir: impl AsRef<Path>,
         w: &mut W,
+        program: &P,
         queue: &Q,
         config: &Config,
     ) -> (Spectro, Output) {
@@ -59,6 +60,7 @@ where
         let geom = if config.optimize {
             let res = optimize(
                 &dir,
+                program,
                 queue,
                 config.geometry.clone(),
                 template.clone(),
@@ -103,8 +105,15 @@ where
 
         let pts_dir = dir.as_ref().join("pts").join("inp");
         let pts_dir = pts_dir.to_string_lossy().to_string();
-        let jobs =
-            P::build_jobs(geoms, &pts_dir, 0, 1.0, 0, config.charge, template);
+        let jobs = program.build_jobs(
+            geoms,
+            Path::new(&pts_dir),
+            0,
+            1.0,
+            0,
+            config.charge,
+            template,
+        );
 
         writeln!(w, "\n{} atoms require {} jobs", mol.atoms.len(), jobs.len())
             .unwrap();
@@ -121,6 +130,7 @@ where
         let mut energies = vec![0.0; jobs.len()];
         let time = queue
             .drain(
+                program,
                 &pts_dir,
                 jobs,
                 &mut energies,
@@ -147,6 +157,7 @@ where
         mut self,
         dir: impl AsRef<Path>,
         w: &mut W,
+        program: &P,
         queue: &Q,
         config: &Config,
         Resume {
@@ -165,6 +176,7 @@ where
         let chk = root_dir.join("chk.json");
         let time = queue
             .resume(
+                program,
                 pts_dir.to_str().unwrap(),
                 chk.to_str().unwrap(),
                 &mut energies,

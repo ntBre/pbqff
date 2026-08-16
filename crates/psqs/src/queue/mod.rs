@@ -21,7 +21,6 @@ pub mod local;
 pub mod pbs;
 pub mod slurm;
 use drain::*;
-use serde::{Deserialize, Serialize};
 mod drain;
 
 pub use drain::Check;
@@ -33,10 +32,7 @@ pub struct Resubmit {
     pub job_id: String,
 }
 
-pub trait Submit<P>: SubQueue<P>
-where
-    P: Program + Clone + Serialize + for<'a> Deserialize<'a>,
-{
+pub trait Submit<P: Program>: SubQueue<P> {
     /// submit `filename` to the queue and return the jobid
     fn submit(&self, filename: &str) -> String {
         loop {
@@ -69,10 +65,7 @@ where
 }
 
 /// a trait for all of the program-independent parts of a [Queue]
-pub trait SubQueue<P>
-where
-    P: Program + Clone + Serialize + for<'a> Deserialize<'a>,
-{
+pub trait SubQueue<P: Program> {
     /// the extension to append to submit scripts for this type of Queue
     const SCRIPT_EXT: &'static str;
 
@@ -99,7 +92,7 @@ where
 
 pub trait Queue<P>: SubQueue<P> + Submit<P>
 where
-    P: Program + Clone + Send + Sync + Serialize + for<'a> Deserialize<'a>,
+    P: Program,
 {
     fn default_submit_script(&self) -> String;
 
@@ -161,20 +154,22 @@ where
     /// script, and submitting the script
     fn build_chunk(
         &self,
+        program: &P,
         dir: &str,
-        jobs: &mut [Job<P>],
+        jobs: &mut [Job],
         chunk_num: usize,
         proc: Procedure,
     ) -> (HashMap<String, usize>, Duration, Duration, Duration) {
-        self.build_chunk_inner(dir, "main", chunk_num, jobs, proc)
+        self.build_chunk_inner(program, dir, "main", chunk_num, jobs, proc)
     }
 
     fn build_chunk_inner(
         &self,
+        program: &P,
         dir: &str,
         base: &str,
         chunk_num: usize,
-        jobs: &mut [Job<P>],
+        jobs: &mut [Job],
         proc: Procedure,
     ) -> (HashMap<String, usize>, Duration, Duration, Duration) {
         let mut input = Duration::default();
@@ -186,11 +181,11 @@ where
         let mut slurm_jobs = HashMap::new();
         let filenames = jobs.iter_mut().map(|job| {
             time!(e, {
-                job.program.write_input(proc);
+                program.write_input(job, proc);
             });
             input += e;
             job.pbs_file = queue_file.to_string();
-            job.program.filename()
+            job.filename.clone()
         });
         slurm_jobs.insert(queue_file.clone(), jl);
         time!(e, {
@@ -211,16 +206,17 @@ where
 
     fn drain_err_case(
         &self,
+        program: &P,
         e: ProgramError,
         qstat: &mut HashSet<String>,
         slurm_jobs: &mut HashMap<String, usize>,
-        job: &mut Job<P>,
+        job: &mut Job,
     ) {
         let no_resub = LazyCell::new(|| std::env::var("SEMP_RESUB").is_ok());
         // just overwrite the existing job with the resubmitted
         // version
         if !qstat.contains(&job.job_id) {
-            let time = job.modtime();
+            let time = job.modtime(program.outfile(job));
             if time > job.modtime {
                 // file has been updated since we last looked at it, so need to
                 // look again
@@ -229,9 +225,7 @@ where
             }
             eprintln!(
                 "resubmitting {} (id={}) for {:?}",
-                job.program.filename(),
-                job.job_id,
-                e
+                job.filename, job.job_id, e
             );
             if *no_resub {
                 eprintln!(
@@ -239,17 +233,13 @@ where
                 );
                 std::process::exit(1);
             }
-            let resub = format!(
-                "{}.{}",
-                job.program.filename(),
-                job.program.extension()
-            );
+            let resub = format!("{}.{}", job.filename, program.extension());
             let Resubmit {
                 inp_file,
                 pbs_file,
                 job_id,
             } = self.resubmit(&resub);
-            job.program.set_filename(&inp_file);
+            job.filename = inp_file;
             job.pbs_file = pbs_file.clone();
             slurm_jobs.insert(pbs_file, 1);
             qstat.insert(job_id.clone());
@@ -260,19 +250,21 @@ where
     /// optimize is a copy of drain for optimizing jobs
     fn optimize(
         &self,
+        program: &P,
         dir: &str,
-        jobs: Vec<Job<P>>,
+        jobs: Vec<Job>,
         dst: &mut [Geom],
     ) -> Result<f64, Vec<usize>>
     where
         Self: Sync,
     {
-        Opt.drain(dir, self, jobs, dst, Check::None)
+        Opt.drain(program, dir, self, jobs, dst, Check::None)
     }
 
     /// resume draining from the checkpoint file in `checkpoint`
     fn resume(
         &self,
+        program: &P,
         dir: &str,
         checkpoint: &str,
         dst: &mut [f64],
@@ -286,33 +278,35 @@ where
             "resuming from checkpoint in '{checkpoint}' with {} jobs remaining",
             jobs.len()
         );
-        self.drain(dir, jobs, dst, check)
+        self.drain(program, dir, jobs, dst, check)
     }
 
     /// run the single-point energy calculations in `jobs`, storing the results
     /// in `dst`. if `check_int` > 0, write checkpoint files at that interval
     fn drain(
         &self,
+        program: &P,
         dir: &str,
-        jobs: Vec<Job<P>>,
+        jobs: Vec<Job>,
         dst: &mut [f64],
         check: Check,
     ) -> Result<f64, Vec<usize>>
     where
         Self: Sync,
     {
-        Single.drain(dir, self, jobs, dst, check)
+        Single.drain(program, dir, self, jobs, dst, check)
     }
 
     fn energize(
         &self,
+        program: &P,
         dir: &str,
-        jobs: Vec<Job<P>>,
+        jobs: Vec<Job>,
         dst: &mut [ProgramResult],
     ) -> Result<f64, Vec<usize>>
     where
         Self: Sync,
     {
-        Both.drain(dir, self, jobs, dst, Check::None)
+        Both.drain(program, dir, self, jobs, dst, Check::None)
     }
 }
