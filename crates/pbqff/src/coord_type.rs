@@ -33,7 +33,7 @@ const PTS_DIR: &str = "pts";
 ///
 /// Given a [Queue], an output destination, and a [Config], return the final
 /// [Spectro] and [Output]
-pub trait CoordType<W: Write, Q: Queue<P>, P: Program> {
+pub trait CoordType<W: Write> {
     /// All of the data necessary to resume from a checkpoint.
     type Resume: Load;
 
@@ -43,8 +43,8 @@ pub trait CoordType<W: Write, Q: Queue<P>, P: Program> {
         self,
         dir: impl AsRef<Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
     ) -> (Spectro, Output);
 
@@ -53,8 +53,8 @@ pub trait CoordType<W: Write, Q: Queue<P>, P: Program> {
         self,
         dir: impl AsRef<Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
         resume: Self::Resume,
     ) -> (Spectro, Output);

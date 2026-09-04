@@ -23,6 +23,10 @@ mod tests;
 pub struct Mopac;
 
 impl Program for Mopac {
+    fn command(&self, filename: &str) -> String {
+        format!("$MOPAC_CMD {filename}.mop")
+    }
+
     fn extension(&self) -> &'static str {
         "mop"
     }

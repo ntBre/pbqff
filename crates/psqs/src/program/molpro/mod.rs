@@ -21,6 +21,14 @@ static CELL: OnceLock<[Regex; 6]> = OnceLock::new();
 static INPUT_CELL: OnceLock<[Regex; 4]> = OnceLock::new();
 
 impl Program for Molpro {
+    fn command(&self, filename: &str) -> String {
+        format!("$MOLPRO_CMD {filename}.inp")
+    }
+
+    fn submit_from_script_dir(&self) -> bool {
+        true
+    }
+
     fn extension(&self) -> &'static str {
         "inp"
     }

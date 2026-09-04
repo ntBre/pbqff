@@ -113,7 +113,7 @@ impl Normal {
 
     /// run the QFF using a least-squares fitting
     #[allow(clippy::too_many_arguments)]
-    fn run_fitted<P, W, Q>(
+    fn run_fitted<W>(
         &mut self,
         o: &Output,
         s: &Spectro,
@@ -122,13 +122,11 @@ impl Normal {
         pg: PointGroup,
         config: &Config,
         template: Template,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
-        Q: Queue<P> + Sync,
-        P: Program,
     {
         let (geoms, taylor, _atomic_numbers) = self
             .generate_pts(&dir, w, &o.geom, &pg, config.step_size)
@@ -230,7 +228,7 @@ impl Normal {
 
     /// run the QFF using finite differences
     #[allow(clippy::too_many_arguments)]
-    fn run_findiff<P, W, Q>(
+    fn run_findiff<W>(
         &self,
         o: &Output,
         s: &Spectro,
@@ -239,14 +237,12 @@ impl Normal {
         ref_energy: f64,
         template: &Template,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         dir: impl AsRef<Path>,
     ) -> (Vec<f64>, Vec<f64>)
     where
         W: Write,
-        Q: Queue<P> + Sync,
-        P: Program,
     {
         let n = self.ncoords;
         let deriv = Derivative::quartic(n);
@@ -358,18 +354,16 @@ fn cleanup(dir: impl AsRef<Path>) {
     }
 }
 
-impl<W, Q, P> CoordType<W, Q, P> for Normal
+impl<W> CoordType<W> for Normal
 where
     W: Write,
-    Q: Queue<P> + Sync,
-    P: Program,
 {
     fn run(
         mut self,
         dir: impl AsRef<std::path::Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
     ) -> (Spectro, Output) {
         let pts_dir = dir.as_ref().join("pts");
@@ -465,8 +459,8 @@ where
         #[allow(unused_assignments)] mut self,
         dir: impl AsRef<std::path::Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
         Resume {
             normal,
@@ -837,17 +831,15 @@ pub struct CartPart {
 impl Normal {
     /// run the Cartesian harmonic force field and return the spectro output,
     /// from which we can extract the geometry and normal coordinates (lxm)
-    pub fn cart_part<P, Q, W>(
+    pub fn cart_part<W>(
         &self,
         config: &FirstPart,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         w: &mut W,
         root_dir: impl AsRef<Path>,
     ) -> Result<CartPart, Box<dyn Error>>
     where
-        P: Program,
-        Q: Queue<P> + Sync,
         W: Write,
     {
         let pts_dir = root_dir.as_ref().join(PTS_DIR);
@@ -862,7 +854,7 @@ impl Normal {
             ..
         } = if config.norm_resume_hff {
             let resume =
-                <Cart as crate::coord_type::CoordType<W, Q, P>>::Resume::load(
+                <Cart as crate::coord_type::CoordType<W>>::Resume::load(
                     root_dir.as_ref().join(CHK_NAME),
                 );
             Cart.resume_first_part(

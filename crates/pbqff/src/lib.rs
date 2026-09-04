@@ -45,10 +45,10 @@ pub fn make_check(check_int: usize, dir: impl AsRef<Path>) -> Check {
 
 /// Optimize the geometry in `geom` using `template` and the provided `queue`.
 /// Creates the `opt` directory if it doesn't already exist.
-pub fn optimize<Q: Queue<P> + Sync, P: Program>(
+pub fn optimize(
     dir: impl AsRef<Path>,
-    program: &P,
-    queue: &Q,
+    program: &dyn Program,
+    queue: &dyn Queue,
     geom: Geom,
     template: Template,
     charge: isize,
@@ -69,9 +69,9 @@ pub fn optimize<Q: Queue<P> + Sync, P: Program>(
 
 /// Like [optimize] but runs a single-point energy instead of an optimization.
 /// Also creates the `opt` directory, if it doesn't already exist.
-pub fn ref_energy<Q: Queue<P> + Sync, P: Program>(
-    program: &P,
-    queue: &Q,
+pub fn ref_energy(
+    program: &dyn Program,
+    queue: &dyn Queue,
     geom: Geom,
     template: Template,
     charge: isize,

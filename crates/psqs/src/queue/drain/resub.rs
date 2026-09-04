@@ -5,9 +5,9 @@ use crate::{
     queue::Queue,
 };
 
-pub(crate) struct Resub<'a, P: Program, Q: Queue<P> + ?Sized> {
+pub(crate) struct Resub<'a, Q: Queue + ?Sized> {
     jobs: Vec<Job>,
-    program: &'a P,
+    program: &'a dyn Program,
     queue: &'a Q,
     dir: &'a str,
     counter: usize,
@@ -43,9 +43,9 @@ impl ResubOutput {
     }
 }
 
-impl<'a, P: Program, Q: Queue<P> + ?Sized> Resub<'a, P, Q> {
+impl<'a, Q: Queue + ?Sized> Resub<'a, Q> {
     pub(crate) fn new(
-        program: &'a P,
+        program: &'a dyn Program,
         queue: &'a Q,
         dir: &'a str,
         proc: Procedure,

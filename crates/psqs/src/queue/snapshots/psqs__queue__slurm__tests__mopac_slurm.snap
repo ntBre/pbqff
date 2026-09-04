@@ -12,7 +12,7 @@ export MOPAC_CMD=/home/qc/mopac2016/MOPAC2016.exe
 echo $SLURM_JOB_ID
 date
 hostname
-$MOPAC_CMD opt0.inp.mop
-$MOPAC_CMD opt1.inp.mop
-$MOPAC_CMD opt2.inp.mop
-$MOPAC_CMD opt3.inp.mop
+$MOPAC_CMD opt0.mop
+$MOPAC_CMD opt1.mop
+$MOPAC_CMD opt2.mop
+$MOPAC_CMD opt3.mop

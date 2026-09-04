@@ -9,7 +9,7 @@ expression: got
 #SBATCH --mem=8gb
 
 MOLPRO_CMD="/home/qc/bin/molpro2020.sh 1 1"
-$MOLPRO_CMD opt0.inp.inp
-$MOLPRO_CMD opt1.inp.inp
-$MOLPRO_CMD opt2.inp.inp
-$MOLPRO_CMD opt3.inp.inp
+$MOLPRO_CMD opt0.inp
+$MOLPRO_CMD opt1.inp
+$MOLPRO_CMD opt2.inp
+$MOLPRO_CMD opt3.inp

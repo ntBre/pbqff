@@ -40,18 +40,16 @@ impl Sic {
     }
 }
 
-impl<W, Q, P> CoordType<W, Q, P> for Sic
+impl<W> CoordType<W> for Sic
 where
     W: Write,
-    Q: Queue<P> + Sync,
-    P: Program,
 {
     fn run(
         mut self,
         dir: impl AsRef<Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
     ) -> (Spectro, Output) {
         let template = Template::from(&config.template);
@@ -157,8 +155,8 @@ where
         mut self,
         dir: impl AsRef<Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
         Resume {
             intder,

@@ -1,13 +1,8 @@
 use std::collections::HashSet;
 
-use crate::program::dftbplus::DFTBPlus;
-use crate::program::molpro::Molpro;
-use crate::program::{Program, mopac::Mopac};
 use crate::queue::Queue;
 
-use super::{SubQueue, Submit};
-
-/// Minimal implementation for testing MOPAC locally
+/// Minimal implementation for running programs locally, primarily for tests.
 #[derive(Debug)]
 pub struct Local {
     pub dir: String,
@@ -42,43 +37,15 @@ impl Local {
     }
 }
 
-impl Submit<Molpro> for Local {}
+impl Queue for Local {
+    fn script_ext(&self) -> &'static str {
+        "slurm"
+    }
 
-impl Queue<Molpro> for Local {
     fn template(&self) -> &str {
         &self.template
     }
 
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("$MOLPRO_CMD {filename}.inp")
-    }
-}
-
-impl Submit<Mopac> for Local {}
-
-impl Queue<Mopac> for Local {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("$MOPAC_CMD {filename}.mop")
-    }
-}
-
-impl Submit<DFTBPlus> for Local {}
-
-impl Queue<DFTBPlus> for Local {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $DFTB_CMD > out)")
-    }
-}
-
-impl<P: Program> SubQueue<P> for Local {
     fn submit_command(&self) -> &str {
         "bash"
     }
@@ -94,8 +61,6 @@ impl<P: Program> SubQueue<P> for Local {
     fn sleep_int(&self) -> usize {
         1
     }
-
-    const SCRIPT_EXT: &'static str = "slurm";
 
     fn dir(&self) -> &str {
         &self.dir
@@ -132,7 +97,12 @@ impl<P: Program> SubQueue<P> for Local {
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::{program::cfour::Cfour, queue::templates};
+    use crate::{
+        program::{
+            cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+        },
+        queue::templates,
+    };
 
     use super::*;
 
@@ -145,14 +115,15 @@ mod tests {
     }
 
     macro_rules! make_tests {
-        ($($name:ident, $queue:expr => $p:ty$(,)*)*) => {
+        ($($name:ident, $queue:expr => $program:expr$(,)*)*) => {
             $(
             #[test]
             fn $name() {
                 let tmp = tempfile::NamedTempFile::new().unwrap();
-                <Local as Queue<$p>>::write_submit_script(
+                Queue::write_submit_script(
                     $queue,
-                    ["opt0.inp", "opt1.inp", "opt2.inp", "opt3.inp"].map(|s| s.into()),
+                    &$program,
+                    &["opt0", "opt1", "opt2", "opt3"].map(str::to_owned),
                     tmp.path().to_str().unwrap(),
                 );
                 let got = std::fs::read_to_string(tmp).unwrap();
@@ -166,8 +137,8 @@ mod tests {
     }
 
     make_tests! {
-        mopac_local, &local(templates::LOCAL_MOPAC) =>  Mopac,
-        molpro_local, &local(templates::LOCAL_MOLPRO) =>  Molpro,
+        mopac_local, &local(templates::LOCAL_MOPAC) => Mopac,
+        molpro_local, &local(templates::LOCAL_MOLPRO) => Molpro,
         cfour_local, &local(templates::LOCAL_CFOUR) => Cfour,
         dftb_local, &local(templates::LOCAL_DFTBPLUS) => DFTBPlus,
     }

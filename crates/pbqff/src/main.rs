@@ -7,12 +7,14 @@ use pbqff::{
     die,
 };
 use psqs::{
-    program::{cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac},
-    queue::{local::Local, pbs::Pbs, slurm::Slurm},
+    program::{
+        Program as ProgramBackend, cfour::Cfour, dftbplus::DFTBPlus,
+        molpro::Molpro, mopac::Mopac,
+    },
+    queue::{Queue as QueueBackend, local::Local, pbs::Pbs, slurm::Slurm},
 };
 
 include!(concat!(env!("OUT_DIR"), "/version.rs"));
-include!(concat!(env!("OUT_DIR"), "/dispatch.rs"));
 
 use clap::Parser;
 
@@ -53,6 +55,81 @@ struct Args {
 }
 
 use spectro::{Output, Spectro};
+
+fn dispatch(config: &Config, args: Args) -> (Spectro, Output) {
+    let program: &dyn ProgramBackend = match config.program {
+        config::Program::Mopac => &Mopac,
+        config::Program::Molpro => &Molpro,
+        config::Program::DFTBPlus => &DFTBPlus,
+        config::Program::Cfour => &Cfour,
+    };
+    let queue: Box<dyn QueueBackend> = match config.queue {
+        config::Queue::Pbs => Box::new(Pbs::new(
+            config.chunk_size,
+            config.job_limit,
+            config.sleep_int,
+            "pts",
+            args.no_del,
+            config.resolved_queue_template(),
+        )),
+        config::Queue::Slurm => Box::new(Slurm::new(
+            config.chunk_size,
+            config.job_limit,
+            config.sleep_int,
+            "pts",
+            args.no_del,
+            config.resolved_queue_template(),
+        )),
+        config::Queue::Local => Box::new(Local::new(
+            config.chunk_size,
+            config.job_limit,
+            config.sleep_int,
+            "pts",
+            args.no_del,
+            config.resolved_queue_template(),
+        )),
+    };
+    let queue = queue.as_ref();
+    let mut stdout = std::io::stdout();
+    match (config.coord_type, args.checkpoint) {
+        (config::CoordType::Normal, false) => Normal::findiff(config.findiff)
+            .run(".", &mut stdout, program, queue, config),
+        (config::CoordType::Normal, true) => Normal::findiff(config.findiff)
+            .resume(
+                ".",
+                &mut stdout,
+                program,
+                queue,
+                config,
+                <Normal as CoordType<std::io::Stdout>>::Resume::load("res.chk"),
+            ),
+        (config::CoordType::Cart, false) => {
+            Cart.run(".", &mut stdout, program, queue, config)
+        }
+        (config::CoordType::Cart, true) => Cart.resume(
+            ".",
+            &mut stdout,
+            program,
+            queue,
+            config,
+            <Cart as CoordType<std::io::Stdout>>::Resume::load("res.chk"),
+        ),
+        (config::CoordType::Sic, false) => Sic::new(Intder::load_file(
+            "intder.in",
+        ))
+        .run(".", &mut stdout, program, queue, config),
+        (config::CoordType::Sic, true) => {
+            Sic::new(Intder::load_file("intder.in")).resume(
+                ".",
+                &mut stdout,
+                program,
+                queue,
+                config,
+                <Sic as CoordType<std::io::Stdout>>::Resume::load("res.chk"),
+            )
+        }
+    }
+}
 
 fn main() -> Result<(), std::io::Error> {
     env_logger::init();

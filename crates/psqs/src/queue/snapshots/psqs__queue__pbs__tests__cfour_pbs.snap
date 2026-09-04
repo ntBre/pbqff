@@ -17,7 +17,7 @@ export WORKDIR=$PBS_O_WORKDIR
 cd $WORKDIR
 
 CFOUR_CMD="/ddnlus/r2518/bin/c4ext_new.sh $NCPUS"
-(cd pts/opt0.inp && $CFOUR_CMD)
-(cd pts/opt1.inp && $CFOUR_CMD)
-(cd pts/opt2.inp && $CFOUR_CMD)
-(cd pts/opt3.inp && $CFOUR_CMD)
+(cd pts/opt0 && $CFOUR_CMD)
+(cd pts/opt1 && $CFOUR_CMD)
+(cd pts/opt2 && $CFOUR_CMD)
+(cd pts/opt3 && $CFOUR_CMD)
