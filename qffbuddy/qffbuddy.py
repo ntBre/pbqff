@@ -136,6 +136,12 @@ CFOUR_TEMPLATE = """comment line
 {{.keywords}})
 """
 
+ORCA_TEMPLATE = """! B3LYP def2-SVP VeryTightSCF {{.procedure}}
+
+* xyz {{.charge}} 1
+{{.geom}}*
+"""
+
 ###################
 # Queue templates #
 ###################
@@ -452,6 +458,7 @@ computations""",
                 ("Mopac", "mopac"),
                 ("DFTB+", "dftb+"),
                 ("CFOUR", "cfour"),
+                ("ORCA", "orca"),
             ],
             self.program,
             self.main_panel,
@@ -550,6 +557,8 @@ menu for some examples.""",
             self.template.insert("1.0", DFTB_TEMPLATE)
         elif self.program.get() == "cfour":
             self.template.insert("1.0", CFOUR_TEMPLATE)
+        elif self.program.get() == "orca":
+            self.template.insert("1.0", ORCA_TEMPLATE)
         else:
             self.template.insert("1.0", "default template")
 

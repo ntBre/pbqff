@@ -174,6 +174,7 @@ mod tests {
     use crate::{
         program::{
             cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+            orca::Orca,
         },
         queue::templates,
     };
@@ -224,5 +225,6 @@ mod tests {
         molpro_pbs, &pbs(templates::PBS_MOLPRO) => Molpro,
         cfour_pbs, &pbs(templates::PBS_CFOUR) => Cfour,
         dftb_pbs, &pbs(templates::PBS_DFTBPLUS) => DFTBPlus,
+        orca_pbs, &pbs(templates::PBS_ORCA) => Orca,
     }
 }

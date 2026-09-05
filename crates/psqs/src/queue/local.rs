@@ -100,6 +100,7 @@ mod tests {
     use crate::{
         program::{
             cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+            orca::Orca,
         },
         queue::templates,
     };
@@ -141,5 +142,6 @@ mod tests {
         molpro_local, &local(templates::LOCAL_MOLPRO) => Molpro,
         cfour_local, &local(templates::LOCAL_CFOUR) => Cfour,
         dftb_local, &local(templates::LOCAL_DFTBPLUS) => DFTBPlus,
+        orca_local, &local(templates::LOCAL_ORCA) => Orca,
     }
 }

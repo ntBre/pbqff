@@ -22,14 +22,17 @@ fn resolves_bundled_queue_templates() {
         (Queue::Pbs, Program::Molpro, templates::PBS_MOLPRO),
         (Queue::Pbs, Program::DFTBPlus, templates::PBS_DFTBPLUS),
         (Queue::Pbs, Program::Cfour, templates::PBS_CFOUR),
+        (Queue::Pbs, Program::Orca, templates::PBS_ORCA),
         (Queue::Slurm, Program::Mopac, templates::SLURM_MOPAC),
         (Queue::Slurm, Program::Molpro, templates::SLURM_MOLPRO),
         (Queue::Slurm, Program::DFTBPlus, templates::SLURM_DFTBPLUS),
         (Queue::Slurm, Program::Cfour, templates::SLURM_CFOUR),
+        (Queue::Slurm, Program::Orca, templates::SLURM_ORCA),
         (Queue::Local, Program::Mopac, templates::LOCAL_MOPAC),
         (Queue::Local, Program::Molpro, templates::LOCAL_MOLPRO),
         (Queue::Local, Program::DFTBPlus, templates::LOCAL_DFTBPLUS),
         (Queue::Local, Program::Cfour, templates::LOCAL_CFOUR),
+        (Queue::Local, Program::Orca, templates::LOCAL_ORCA),
     ];
 
     for (queue, program, expected) in cases {

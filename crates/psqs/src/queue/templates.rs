@@ -80,13 +80,55 @@ cd $WORKDIR
 export DFTB_CMD=/ddnlus/r2518/.conda/envs/dftb/bin/dftb+
 "#;
 
+pub const PBS_ORCA: &str = r#"#!/bin/bash
+#PBS -N {{.basename}}
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -o {{.filename}}.out
+#PBS -l mem=16gb
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=2150:00:00
+#PBS -q workq
+
+module load openpbs
+
+export OMP_NUM_THREADS=8
+export ORCA_DIR=/ddnlus/r3750/orca/orca_6_1_1_linux_x86-64_shared_openmpi418_nodmrg
+export XTBEXE=$ORCA_DIR/xtb/xtb-dist/bin/xtb
+export PATH=$ORCA_DIR:$ORCA_DIR/xtb/xtb-dist/bin:$PATH
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER.$PBS_JOBID
+
+mkdir -p "$TMPDIR"
+trap 'rm -rf "$TMPDIR"' EXIT
+cd "$WORKDIR"
+
+run_orca() {
+    input=$1
+    name=$(basename "${input%.inp}")
+    scratch="$TMPDIR/$name"
+    mkdir -p "$scratch"
+    cp "$input" "$scratch/$name.inp" || return
+    (
+        cd "$scratch" || exit 1
+        "$ORCA_DIR/orca" "$name.inp" '--bind-to core:overload-allowed --use-hwthread-cpus'
+    )
+    status=$?
+    rm -rf "$scratch"
+    return $status
+}
+ORCA_CMD=run_orca
+"#;
+
 pub const SLURM_MOPAC: &str = include_str!("../../templates/slurm/mopac");
 pub const SLURM_MOLPRO: &str = include_str!("../../templates/slurm/molpro");
 pub const SLURM_CFOUR: &str = "";
 pub const SLURM_DFTBPLUS: &str = "";
+pub const SLURM_ORCA: &str = "ORCA_CMD=orca\n";
 
 pub const LOCAL_MOPAC: &str = "export MOPAC_CMD=/opt/mopac/mopac
 export LD_LIBRARY_PATH=/opt/mopac/\n";
 pub const LOCAL_MOLPRO: &str = "";
 pub const LOCAL_CFOUR: &str = "CFOUR_CMD=/opt/cfour/cfour\n";
 pub const LOCAL_DFTBPLUS: &str = "DFTB_CMD=/opt/dftb+/dftb+\n";
+pub const LOCAL_ORCA: &str = "ORCA_CMD=orca\n";

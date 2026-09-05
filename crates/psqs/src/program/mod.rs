@@ -15,6 +15,7 @@ pub mod cfour;
 pub mod dftbplus;
 pub mod molpro;
 pub mod mopac;
+pub mod orca;
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct ProgramResult {
