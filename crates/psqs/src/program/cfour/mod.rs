@@ -186,64 +186,34 @@ impl Program for Cfour {
 impl Submit<Cfour> for Pbs {}
 
 impl Queue<Cfour> for Pbs {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("(cd {filename} && $CFOUR_CMD)")
-    }
-
-    fn default_submit_script(&self) -> String {
-        "#!/bin/sh
-#PBS -N {{.basename}}
-#PBS -S /bin/bash
-#PBS -j oe
-#PBS -o {{.filename}}.out
-#PBS -W umask=022
-#PBS -l walltime=1000:00:00
-#PBS -l ncpus=1
-#PBS -l mem=8gb
-#PBS -q workq
-
-module load openpbs
-
-export WORKDIR=$PBS_O_WORKDIR
-cd $WORKDIR
-
-CFOUR_CMD=\"/ddnlus/r2518/bin/c4ext_new.sh $NCPUS\"
-"
-        .to_owned()
     }
 }
 
 impl Queue<Cfour> for Slurm {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("(cd {filename} && $CFOUR_CMD)")
-    }
-
-    fn default_submit_script(&self) -> String {
-        String::new()
     }
 }
 
 impl Submit<Cfour> for Local {}
 
 impl Queue<Cfour> for Local {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("(cd {filename} && $CFOUR_CMD)")
-    }
-
-    fn default_submit_script(&self) -> String {
-        "CFOUR_CMD=/opt/cfour/cfour\n".into()
     }
 }
 

@@ -16,7 +16,7 @@ pub struct Slurm {
     sleep_int: usize,
     dir: &'static str,
     no_del: bool,
-    pub(crate) template: Option<String>,
+    pub(crate) template: String,
 }
 
 impl Slurm {
@@ -26,7 +26,7 @@ impl Slurm {
         sleep_int: usize,
         dir: &'static str,
         no_del: bool,
-        template: Option<String>,
+        template: String,
     ) -> Self {
         Self {
             chunk_size,
@@ -42,44 +42,32 @@ impl Slurm {
 impl<P: Program> Submit<P> for Slurm {}
 
 impl Queue<Molpro> for Slurm {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("$MOLPRO_CMD {filename}.inp")
     }
-
-    fn default_submit_script(&self) -> String {
-        include_str!("../../templates/slurm/molpro").to_owned()
-    }
 }
 
 impl Queue<Mopac> for Slurm {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("$MOPAC_CMD {filename}.mop")
     }
-
-    fn default_submit_script(&self) -> String {
-        include_str!("../../templates/slurm/mopac").to_owned()
-    }
 }
 
 impl Queue<DFTBPlus> for Slurm {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("(cd {filename} && $DFTB_CMD > out)")
-    }
-
-    fn default_submit_script(&self) -> String {
-        String::new()
     }
 }
 
@@ -163,18 +151,18 @@ where
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::program::cfour::Cfour;
+    use crate::{program::cfour::Cfour, queue::templates};
 
     use super::*;
 
-    fn slurm() -> Slurm {
+    fn slurm(template: &str) -> Slurm {
         Slurm {
             chunk_size: 1,
             job_limit: 1,
             sleep_int: 1,
             dir: "/tmp",
             no_del: false,
-            template: None,
+            template: template.to_owned(),
         }
     }
 
@@ -201,9 +189,9 @@ mod tests {
     }
 
     make_tests! {
-        mopac_slurm, &slurm() =>  Mopac,
-        molpro_slurm, &slurm() => Molpro,
-        cfour_slurm, &slurm() => Cfour,
-        dftb_slurm, &slurm() => DFTBPlus,
+        mopac_slurm, &slurm(templates::SLURM_MOPAC) =>  Mopac,
+        molpro_slurm, &slurm(templates::SLURM_MOLPRO) => Molpro,
+        cfour_slurm, &slurm(templates::SLURM_CFOUR) => Cfour,
+        dftb_slurm, &slurm(templates::SLURM_DFTBPLUS) => DFTBPlus,
     }
 }

@@ -20,6 +20,7 @@ use crate::{
 pub mod local;
 pub mod pbs;
 pub mod slurm;
+pub mod templates;
 use drain::*;
 mod drain;
 
@@ -94,9 +95,7 @@ pub trait Queue<P>: SubQueue<P> + Submit<P>
 where
     P: Program,
 {
-    fn default_submit_script(&self) -> String;
-
-    fn template(&self) -> &Option<String>;
+    fn template(&self) -> &str;
 
     fn program_cmd(&self, filename: &str) -> String;
 
@@ -110,8 +109,7 @@ where
         let basename = path.file_name().unwrap();
         let mut body = self
             .template()
-            .clone()
-            .unwrap_or_else(|| <Self as Queue<P>>::default_submit_script(self))
+            .to_owned()
             .replace("{{.basename}}", basename.to_str().unwrap())
             .replace("{{.filename}}", filename);
         for f in infiles {

@@ -224,17 +224,12 @@ struct TestQueue;
 impl Submit<Mopac> for TestQueue {}
 
 impl Queue<Mopac> for TestQueue {
-    fn template(&self) -> &Option<String> {
-        static S: Option<String> = Some(String::new());
-        &S
+    fn template(&self) -> &str {
+        ""
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("echo {filename}")
-    }
-
-    fn default_submit_script(&self) -> String {
-        todo!()
     }
 }
 

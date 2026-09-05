@@ -19,7 +19,7 @@ pub struct Pbs {
     pub sleep_int: usize,
     pub dir: &'static str,
     pub no_del: bool,
-    pub template: Option<String>,
+    pub template: String,
 }
 
 impl Pbs {
@@ -29,7 +29,7 @@ impl Pbs {
         sleep_int: usize,
         dir: &'static str,
         no_del: bool,
-        template: Option<String>,
+        template: String,
     ) -> Self {
         Self {
             chunk_size,
@@ -104,7 +104,7 @@ fn submit_inner(
 }
 
 impl Queue<Molpro> for Pbs {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
@@ -116,95 +116,25 @@ impl Queue<Molpro> for Pbs {
         let basename = Path::new(&filename).file_name().unwrap();
         format!("$MOLPRO_CMD {basename:?}.inp")
     }
-
-    fn default_submit_script(&self) -> String {
-        "#!/bin/sh
-#PBS -N {{.basename}}
-#PBS -S /bin/bash
-#PBS -j oe
-#PBS -o {{.basename}}.out
-#PBS -W umask=022
-#PBS -l walltime=1000:00:00
-#PBS -l ncpus=1
-#PBS -l mem=8gb
-#PBS -q workq
-
-module load openpbs molpro
-
-export WORKDIR=$PBS_O_WORKDIR
-export TMPDIR=/tmp/$USER/$PBS_JOBID
-cd $WORKDIR
-mkdir -p $TMPDIR
-trap 'rm -rf $TMPDIR' EXIT
-
-export MOLPRO_CMD=\"molpro -t $NCPUS --no-xml-output\"
-"
-        .to_owned()
-    }
 }
 
 impl Queue<Mopac> for Pbs {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("$MOPAC_CMD {filename}.mop")
     }
-
-    fn default_submit_script(&self) -> String {
-        "#!/bin/sh
-#PBS -N {{.basename}}
-#PBS -S /bin/bash
-#PBS -j oe
-#PBS -o {{.filename}}.out
-#PBS -W umask=022
-#PBS -l walltime=1000:00:00
-#PBS -l ncpus=1
-#PBS -l mem=1gb
-#PBS -q workq
-
-module load openpbs
-
-export WORKDIR=$PBS_O_WORKDIR
-cd $WORKDIR
-
-export LD_LIBRARY_PATH=/ddnlus/r2518/Packages/mopac/build
-export MOPAC_CMD=/ddnlus/r2518/Packages/mopac/build/mopac
-"
-        .to_owned()
-    }
 }
 
 impl Queue<DFTBPlus> for Pbs {
-    fn template(&self) -> &Option<String> {
+    fn template(&self) -> &str {
         &self.template
     }
 
     fn program_cmd(&self, filename: &str) -> String {
         format!("(cd {filename} && $DFTB_CMD > out)")
-    }
-
-    fn default_submit_script(&self) -> String {
-        "#!/bin/sh
-#PBS -N {{.basename}}
-#PBS -S /bin/bash
-#PBS -j oe
-#PBS -o {{.filename}}.out
-#PBS -W umask=022
-#PBS -l walltime=1000:00:00
-#PBS -l ncpus=1
-#PBS -l mem=8gb
-#PBS -q workq
-
-module load openpbs
-
-export WORKDIR=$PBS_O_WORKDIR
-cd $WORKDIR
-
-export DFTB_CMD=/ddnlus/r2518/.conda/envs/dftb/bin/dftb+
-"
-        .to_owned()
     }
 }
 
@@ -281,18 +211,18 @@ where
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::program::cfour::Cfour;
+    use crate::{program::cfour::Cfour, queue::templates};
 
     use super::*;
 
-    fn pbs() -> Pbs {
+    fn pbs(template: &str) -> Pbs {
         Pbs {
             chunk_size: 1,
             job_limit: 1,
             sleep_int: 1,
             dir: "/tmp",
             no_del: false,
-            template: None,
+            template: template.to_owned(),
         }
     }
 
@@ -320,9 +250,9 @@ mod tests {
     }
 
     make_tests! {
-        mopac_pbs, &pbs() =>  Mopac,
-        molpro_pbs, &pbs() =>  Molpro,
-        cfour_pbs, &pbs() => Cfour,
-        dftb_pbs, &pbs() => DFTBPlus,
+        mopac_pbs, &pbs(templates::PBS_MOPAC) =>  Mopac,
+        molpro_pbs, &pbs(templates::PBS_MOLPRO) =>  Molpro,
+        cfour_pbs, &pbs(templates::PBS_CFOUR) => Cfour,
+        dftb_pbs, &pbs(templates::PBS_DFTBPLUS) => DFTBPlus,
     }
 }
