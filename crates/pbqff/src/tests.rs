@@ -10,6 +10,7 @@ use nalgebra::dvector;
 use psqs::geom::Geom;
 use psqs::program::mopac::Mopac;
 use psqs::queue::local::Local;
+use psqs::queue::templates;
 use spectro::Output;
 use spectro::Spectro;
 use symm::Molecule;
@@ -31,17 +32,21 @@ fn tempdir() -> tempfile::TempDir {
     tempfile::tempdir().unwrap()
 }
 
+fn local() -> Local {
+    Local {
+        dir: "pts".to_string(),
+        chunk_size: 512,
+        template: templates::LOCAL_MOPAC.to_owned(),
+    }
+}
+
 #[test]
 #[ignore]
 fn h2o_normal() {
     let dir = tempdir();
     init(&dir);
     let config = Config::load("testfiles/water.toml");
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::default(),
         dir,
@@ -90,11 +95,7 @@ fn c3h2_normal() {
         check_int: 1,
         ..Config::load("testfiles/cart.toml")
     };
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::findiff(false),
         &dir,
@@ -154,11 +155,7 @@ fn c3h2_normal_findiff() {
         check_int: 1,
         ..Config::load("testfiles/cart.toml")
     };
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
         Normal::findiff(true),
         dir,
@@ -190,11 +187,7 @@ fn h2o_cart() {
     let dir = &tempdir();
     init(dir);
     let config = Config::load("testfiles/water.toml");
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
         dir,
@@ -230,11 +223,7 @@ fn h2o_sic() {
     let dir = tempdir();
     let config = Config::load("testfiles/water.toml");
     let coord = Sic::new(Intder::load_file("testfiles/h2o.intder"));
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
         dir,
@@ -271,11 +260,7 @@ fn sic() {
     init(dir);
     let config = Config::load("testfiles/test.toml");
     let coord = Sic::new(Intder::load_file("testfiles/intder.in"));
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
         coord,
         dir,
@@ -321,11 +306,7 @@ fn cart() {
     let dir = tempdir();
     init(&dir);
     let config = Config::load("testfiles/cart.toml");
-    let queue = Local {
-        dir: "pts".to_string(),
-        chunk_size: 512,
-        ..Default::default()
-    };
+    let queue = local();
     let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
         Cart,
         dir,

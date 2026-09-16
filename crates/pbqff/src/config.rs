@@ -217,9 +217,9 @@ pub struct Config {
     /// `template`
     pub hybrid_template: String,
 
-    /// the optional template to use for the queuing system. If this is not
-    /// provided, the queue's implementation of
-    /// [psqs::queue::Queue::default_submit_script] will be used
+    /// The optional template to use for the queuing system. If this is not
+    /// provided, [`Config::resolved_queue_template`] returns the bundled
+    /// default for the selected program and queue.
     pub queue_template: Option<String>,
 
     /// the quantum chemistry program to use. options supported currently are
@@ -343,6 +343,31 @@ impl Config {
     pub fn queue_template(mut self, t: Option<String>) -> Self {
         self.queue_template = t;
         self
+    }
+
+    /// Return the explicitly configured queue template or the bundled default
+    /// for the selected program and queue.
+    #[must_use]
+    pub fn resolved_queue_template(&self) -> String {
+        self.queue_template.clone().unwrap_or_else(|| {
+            use psqs::queue::templates;
+
+            match (self.queue, self.program) {
+                (Queue::Pbs, Program::Mopac) => templates::PBS_MOPAC,
+                (Queue::Pbs, Program::Molpro) => templates::PBS_MOLPRO,
+                (Queue::Pbs, Program::DFTBPlus) => templates::PBS_DFTBPLUS,
+                (Queue::Pbs, Program::Cfour) => templates::PBS_CFOUR,
+                (Queue::Slurm, Program::Mopac) => templates::SLURM_MOPAC,
+                (Queue::Slurm, Program::Molpro) => templates::SLURM_MOLPRO,
+                (Queue::Slurm, Program::DFTBPlus) => templates::SLURM_DFTBPLUS,
+                (Queue::Slurm, Program::Cfour) => templates::SLURM_CFOUR,
+                (Queue::Local, Program::Mopac) => templates::LOCAL_MOPAC,
+                (Queue::Local, Program::Molpro) => templates::LOCAL_MOLPRO,
+                (Queue::Local, Program::DFTBPlus) => templates::LOCAL_DFTBPLUS,
+                (Queue::Local, Program::Cfour) => templates::LOCAL_CFOUR,
+            }
+            .to_owned()
+        })
     }
 
     int_builders!(sleep_int, job_limit, chunk_size, check_int);

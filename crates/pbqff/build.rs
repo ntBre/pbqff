@@ -72,7 +72,7 @@ config::Queue::{queue},
     config.sleep_int,
     \"pts\",
     args.no_del,
-    config.queue_template.clone(),
+    config.resolved_queue_template(),
 ),
 {resume}
 ),",
