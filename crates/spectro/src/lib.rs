@@ -698,9 +698,14 @@ impl Spectro {
                                     * f64::sin(-alpha * s);
                                 let test3 = (test.abs() - test2.abs())
                                     / lxm[(ncomp3, imode2)];
-                                if test3.abs() < 0.001 && test * test2 < 0.0 {
-                                    for ii in 0..self.n3n {
-                                        lxm[(ii, imode2)] *= -1.0;
+                                if test3.abs() < 0.001 {
+                                    // Keep the first matching representation;
+                                    // later ones can reverse the relative sign.
+                                    iflag = true;
+                                    if test * test2 < 0.0 {
+                                        for ii in 0..self.n3n {
+                                            lxm[(ii, imode2)] *= -1.0;
+                                        }
                                     }
                                 }
                             }

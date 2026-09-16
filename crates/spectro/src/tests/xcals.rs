@@ -261,27 +261,12 @@ fn gcnst1() {
     }
 }
 
-macro_rules! warn {
-    ($msg: expr) => {
-        eprintln!(
-            "\nwarning: {} --> {}:{}:{}",
-            $msg,
-            file!(),
-            line!(),
-            column!()
-        );
-    };
-}
-
 #[test]
 fn sym() {
     let tests = [
         Test::new("nh3", 6, 24.716378286389887, 5e-10, 3e-9),
         Test::new("ph3", 6, 20.748849036017717, 1e-11, 9.32e-12),
-        {
-            warn!("high bipy gcnst eps");
-            Test::new("bipy", 15, 32.906_770_783_666_87, 1.52e-11, 1.01)
-        },
+        Test::new("bipy", 15, 32.906_770_783_666_87, 1.52e-11, 6e-12),
         Test::new("c2h-", 4, -1.0534319575869713, 1e-11, 6e-12),
         Test::new("hmgnc", 7, -0.12246977241439683, 1e-11, 6e-12),
     ];
