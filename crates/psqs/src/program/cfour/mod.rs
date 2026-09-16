@@ -7,8 +7,6 @@ use std::{
 use regex::Regex;
 use symm::{ANGBOHR, Atom};
 
-use crate::queue::{Queue, Submit, local::Local, pbs::Pbs, slurm::Slurm};
-
 use super::{
     Job, Procedure, Program, ProgramError, ProgramResult, parse_energy,
 };
@@ -19,6 +17,10 @@ pub struct Cfour;
 static CELL: OnceLock<[Regex; 4]> = OnceLock::new();
 
 impl Program for Cfour {
+    fn command(&self, filename: &str) -> String {
+        format!("(cd {filename} && $CFOUR_CMD)")
+    }
+
     fn infile(&self, _job: &Job) -> String {
         todo!()
     }
@@ -180,40 +182,6 @@ impl Program for Cfour {
         .into_iter()
         .map(str::to_owned)
         .collect()
-    }
-}
-
-impl Submit<Cfour> for Pbs {}
-
-impl Queue<Cfour> for Pbs {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $CFOUR_CMD)")
-    }
-}
-
-impl Queue<Cfour> for Slurm {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $CFOUR_CMD)")
-    }
-}
-
-impl Submit<Cfour> for Local {}
-
-impl Queue<Cfour> for Local {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $CFOUR_CMD)")
     }
 }
 

@@ -1,5 +1,9 @@
 use std::{
-    error::Error, fmt::Display, path::Path, str::FromStr, time::SystemTime,
+    error::Error,
+    fmt::{Debug, Display},
+    path::Path,
+    str::FromStr,
+    time::SystemTime,
 };
 
 use serde::{Deserialize, Serialize};
@@ -87,7 +91,18 @@ impl FromStr for Template {
 ///
 /// Calculation-specific data lives in [`Job`]; implementations provide the
 /// shared behavior for writing inputs and reading outputs.
-pub trait Program: Sync {
+pub trait Program: Sync + Debug {
+    /// Render the shell command that runs the input rooted at `filename`.
+    fn command(&self, filename: &str) -> String;
+
+    /// Whether PBS must submit the script from its parent directory.
+    ///
+    /// Molpro 2022 requires this on the cluster where PBQFF was developed. The
+    /// queue uses the same relative path when rendering [`Self::command`].
+    fn submit_from_script_dir(&self) -> bool {
+        false
+    }
+
     /// Return the output associated with `job`.
     fn outfile(&self, job: &Job) -> String {
         job.filename.clone() + ".out"

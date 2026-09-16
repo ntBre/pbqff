@@ -22,6 +22,10 @@ static CELL: OnceLock<[Regex; 5]> = OnceLock::new();
 pub struct DFTBPlus;
 
 impl Program for DFTBPlus {
+    fn command(&self, filename: &str) -> String {
+        format!("(cd {filename} && $DFTB_CMD > out)")
+    }
+
     fn infile(&self, _job: &Job) -> String {
         todo!()
     }

@@ -100,18 +100,16 @@ pub fn freqs(
     (spectro, output)
 }
 
-impl<W, Q, P> CoordType<W, Q, P> for Cart
+impl<W> CoordType<W> for Cart
 where
     W: io::Write,
-    Q: Queue<P> + Sync,
-    P: Program,
 {
     fn run(
         self,
         dir: impl AsRef<Path>,
         w: &mut W,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         config: &Config,
     ) -> (Spectro, Output) {
         let FirstOutput {
@@ -159,8 +157,8 @@ where
         self,
         _dir: impl AsRef<Path>,
         _w: &mut W,
-        _program: &P,
-        _queue: &Q,
+        _program: &dyn Program,
+        _queue: &dyn Queue,
         _config: &Config,
         _resume: Resume,
     ) -> (Spectro, Output) {
@@ -233,20 +231,18 @@ impl Cart {
     /// run the "first part" of the Cartesian QFF, including the optimization if
     /// requested and the generation and running of the single-point energies
     #[allow(clippy::too_many_arguments)]
-    pub fn first_part<W, Q, P>(
+    pub fn first_part<W>(
         &self,
         w: &mut W,
         config: &FirstPart,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         nderiv: Nderiv,
         root_dir: impl AsRef<Path>,
         pts_dir: impl AsRef<Path>,
     ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
-        Q: Queue<P> + Sync,
-        P: Program,
     {
         let template = Template::from(&config.template);
         let (geom, ref_energy) = if config.optimize {
@@ -366,20 +362,18 @@ impl Cart {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub fn resume_first_part<W, Q, P>(
+    pub fn resume_first_part<W>(
         &self,
         resume: Resume,
         _w: &mut W,
         config: &FirstPart,
-        program: &P,
-        queue: &Q,
+        program: &dyn Program,
+        queue: &dyn Queue,
         _nderiv: Nderiv,
         root_dir: impl AsRef<Path>,
     ) -> Result<FirstOutput, Box<dyn Error>>
     where
         W: io::Write,
-        Q: Queue<P> + Sync,
-        P: Program,
     {
         let pts_dir = root_dir.as_ref().join("pts");
         let chk = root_dir.as_ref().join("chk.json");

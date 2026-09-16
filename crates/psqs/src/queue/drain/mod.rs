@@ -55,9 +55,9 @@ pub(crate) trait Drain {
 
     /// on success, return the total job time, as returned by `P::read_output`.
     /// on failure, return a vector of failed job indices
-    fn drain<P, Q>(
+    fn drain<Q>(
         &self,
-        program: &P,
+        program: &dyn Program,
         dir: &str,
         queue: &Q,
         mut jobs: Vec<Job>,
@@ -66,8 +66,7 @@ pub(crate) trait Drain {
     ) -> Result<f64, Vec<usize>>
     where
         Self: Sync,
-        P: Program,
-        Q: Queue<P> + ?Sized + Sync,
+        Q: Queue + ?Sized,
         <Self as Drain>::Item: Clone + Serialize,
     {
         // total time for the jobs to run as returned from Program::read_output
@@ -392,9 +391,9 @@ pub(crate) trait Drain {
 
     /// Returns the number of chunks received
     #[allow(clippy::too_many_arguments)]
-    fn receive_jobs<P, Q>(
+    fn receive_jobs<Q>(
         &self,
-        program: &P,
+        program: &dyn Program,
         chunks: &mut Peekable<Fuse<Enumerate<ChunksMut<Job>>>>,
         job_limit: usize,
         cur_jobs: &mut Vec<Job>,
@@ -407,8 +406,7 @@ pub(crate) trait Drain {
     ) -> usize
     where
         Self: Sync,
-        P: Program,
-        Q: Queue<P> + ?Sized + Sync,
+        Q: Queue + ?Sized,
         <Self as Drain>::Item: Clone + Serialize,
     {
         use rayon::prelude::*;
@@ -472,10 +470,9 @@ fn get_cpu_time() -> f64 {
     }
 }
 
-fn wait<P, Q>(queue: &Q, time: &mut timer::Timer, iter: usize, remaining: usize)
+fn wait<Q>(queue: &Q, time: &mut timer::Timer, iter: usize, remaining: usize)
 where
-    P: Program,
-    Q: Queue<P> + ?Sized + Sync,
+    Q: Queue + ?Sized,
 {
     let date = jiff::Zoned::now().strftime("%Y-%m-%d %H:%M:%S");
     eprintln!(

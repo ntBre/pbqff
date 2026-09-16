@@ -47,7 +47,7 @@ fn h2o_normal() {
     init(&dir);
     let config = Config::load("testfiles/water.toml");
     let queue = local();
-    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Normal as CoordType<Stdout>>::run(
         Normal::default(),
         dir,
         &mut std::io::stdout(),
@@ -96,7 +96,7 @@ fn c3h2_normal() {
         ..Config::load("testfiles/cart.toml")
     };
     let queue = local();
-    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Normal as CoordType<Stdout>>::run(
         Normal::findiff(false),
         &dir,
         &mut std::io::stdout(),
@@ -120,7 +120,7 @@ fn c3h2_normal() {
     // corr
     check!(got, want, 2.6e-1);
 
-    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::resume(
+    let (_, summ) = <Normal as CoordType<Stdout>>::resume(
         Normal::findiff(false),
         &dir,
         &mut std::io::stdout(),
@@ -156,7 +156,7 @@ fn c3h2_normal_findiff() {
         ..Config::load("testfiles/cart.toml")
     };
     let queue = local();
-    let (_, summ) = <Normal as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Normal as CoordType<Stdout>>::run(
         Normal::findiff(true),
         dir,
         &mut std::io::stdout(),
@@ -188,7 +188,7 @@ fn h2o_cart() {
     init(dir);
     let config = Config::load("testfiles/water.toml");
     let queue = local();
-    let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Cart as CoordType<Stdout>>::run(
         Cart,
         dir,
         &mut std::io::stdout(),
@@ -224,7 +224,7 @@ fn h2o_sic() {
     let config = Config::load("testfiles/water.toml");
     let coord = Sic::new(Intder::load_file("testfiles/h2o.intder"));
     let queue = local();
-    let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Sic as CoordType<Stdout>>::run(
         coord,
         dir,
         &mut std::io::stdout(),
@@ -261,7 +261,7 @@ fn sic() {
     let config = Config::load("testfiles/test.toml");
     let coord = Sic::new(Intder::load_file("testfiles/intder.in"));
     let queue = local();
-    let (_, summ) = <Sic as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Sic as CoordType<Stdout>>::run(
         coord,
         dir,
         &mut std::io::stdout(),
@@ -307,7 +307,7 @@ fn cart() {
     init(&dir);
     let config = Config::load("testfiles/cart.toml");
     let queue = local();
-    let (_, summ) = <Cart as CoordType<Stdout, Local, Mopac>>::run(
+    let (_, summ) = <Cart as CoordType<Stdout>>::run(
         Cart,
         dir,
         &mut std::io::stdout(),

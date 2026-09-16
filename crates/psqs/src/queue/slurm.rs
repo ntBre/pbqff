@@ -1,11 +1,6 @@
 use std::collections::HashSet;
 
-use crate::program::Program;
-use crate::program::mopac::Mopac;
-use crate::program::{dftbplus::DFTBPlus, molpro::Molpro};
 use crate::queue::Queue;
-
-use super::{SubQueue, Submit};
 
 /// Slurm is a type for holding the information for submitting a slurm job.
 /// `filename` is the name of the Slurm submission script
@@ -39,42 +34,15 @@ impl Slurm {
     }
 }
 
-impl<P: Program> Submit<P> for Slurm {}
+impl Queue for Slurm {
+    fn script_ext(&self) -> &'static str {
+        "slurm"
+    }
 
-impl Queue<Molpro> for Slurm {
     fn template(&self) -> &str {
         &self.template
     }
 
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("$MOLPRO_CMD {filename}.inp")
-    }
-}
-
-impl Queue<Mopac> for Slurm {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("$MOPAC_CMD {filename}.mop")
-    }
-}
-
-impl Queue<DFTBPlus> for Slurm {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $DFTB_CMD > out)")
-    }
-}
-
-impl<P> SubQueue<P> for Slurm
-where
-    P: Program,
-{
     fn submit_command(&self) -> &str {
         "sbatch"
     }
@@ -90,8 +58,6 @@ where
     fn sleep_int(&self) -> usize {
         self.sleep_int
     }
-
-    const SCRIPT_EXT: &'static str = "slurm";
 
     fn dir(&self) -> &str {
         self.dir
@@ -127,8 +93,7 @@ where
 
     fn status(&self) -> HashSet<String> {
         let mut ret = HashSet::new();
-        // wut?
-        let lines = <Slurm as SubQueue<P>>::stat_cmd(self);
+        let lines = self.stat_cmd();
         for line in lines.lines() {
             let fields: Vec<_> = line.split_whitespace().collect();
             let [job_id, state] = fields.as_slice() else {
@@ -151,7 +116,12 @@ where
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::{program::cfour::Cfour, queue::templates};
+    use crate::{
+        program::{
+            cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+        },
+        queue::templates,
+    };
 
     use super::*;
 
@@ -167,20 +137,25 @@ mod tests {
     }
 
     macro_rules! make_tests {
-        ($($name:ident, $queue:expr => $p:ty$(,)*)*) => {
+        ($($name:ident, $queue:expr => $program:expr$(,)*)*) => {
             $(
             #[test]
             fn $name() {
                 let tmp = tempfile::NamedTempFile::new().unwrap();
-                <Slurm as Queue<$p>>::write_submit_script(
+                Queue::write_submit_script(
                     $queue,
-                    ["opt0.inp", "opt1.inp", "opt2.inp", "opt3.inp"].map(|s| s.into()),
+                    &$program,
+                    &["opt0", "opt1", "opt2", "opt3"].map(str::to_owned),
                     tmp.path().to_str().unwrap(),
                 );
                 let got = std::fs::read_to_string(tmp).unwrap();
-                let got: Vec<&str> = got.lines().filter(|l|
-                    !(l.starts_with("#SBATCH --job-name")
-                        || l.starts_with("#SBATCH -o"))).collect();
+                let got: Vec<&str> = got
+                    .lines()
+                    .filter(|l| {
+                        !(l.starts_with("#SBATCH --job-name")
+                            || l.starts_with("#SBATCH -o"))
+                    })
+                    .collect();
                 let got = got.join("\n");
                 assert_snapshot!(got);
             }
@@ -189,7 +164,7 @@ mod tests {
     }
 
     make_tests! {
-        mopac_slurm, &slurm(templates::SLURM_MOPAC) =>  Mopac,
+        mopac_slurm, &slurm(templates::SLURM_MOPAC) => Mopac,
         molpro_slurm, &slurm(templates::SLURM_MOLPRO) => Molpro,
         cfour_slurm, &slurm(templates::SLURM_CFOUR) => Cfour,
         dftb_slurm, &slurm(templates::SLURM_DFTBPLUS) => DFTBPlus,

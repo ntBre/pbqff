@@ -3,12 +3,7 @@ use std::time::Duration;
 use std::{collections::HashSet, process::Command};
 
 use crate::program::Program;
-use crate::program::dftbplus::DFTBPlus;
-use crate::program::molpro::Molpro;
-use crate::program::mopac::Mopac;
 use crate::queue::Queue;
-
-use super::{SubQueue, Submit};
 
 /// Pbs is a type for holding the information for submitting a pbs job.
 /// `filename` is the name of the Pbs submission script
@@ -42,32 +37,7 @@ impl Pbs {
     }
 }
 
-impl Submit<Mopac> for Pbs {
-    /// submit `filename` to the queue and return the jobid
-    fn submit(&self, filename: &str) -> String {
-        let mut cmd =
-            Command::new(<Self as SubQueue<Mopac>>::submit_command(self));
-        let cmd = cmd.arg("-f").arg(filename);
-        submit_inner(cmd, self.sleep_int).unwrap()
-    }
-}
-
-// Molpro 2022 submit script requires submission from the current directory, so
-// we have to override the default impl
-impl Submit<Molpro> for Pbs {
-    fn submit(&self, filename: &str) -> String {
-        let path = Path::new(filename);
-        let dir = path.parent().unwrap();
-        let base = path.file_name().unwrap();
-        let mut cmd =
-            Command::new(<Self as SubQueue<Molpro>>::submit_command(self));
-        let cmd = cmd.arg(base).current_dir(dir);
-        submit_inner(cmd, self.sleep_int).unwrap()
-    }
-}
-
-/// helper function to consolidate error handling between the two submit
-/// implementations
+/// Submit a PBS command with bounded retries.
 fn submit_inner(
     cmd: &mut Command,
     sleep_int: usize,
@@ -103,54 +73,46 @@ fn submit_inner(
     }
 }
 
-impl Queue<Molpro> for Pbs {
+impl Queue for Pbs {
+    fn script_ext(&self) -> &'static str {
+        "pbs"
+    }
+
     fn template(&self) -> &str {
         &self.template
     }
 
-    /// This must be consistent with the `Submit<Molpro>` implementation, which
-    /// currently changes to the parent directory of the PBS script before
-    /// submitting. This also assumes, then, that the PBS script is in the same
-    /// directory as the input files, but I think that's a safe assumption.
-    fn program_cmd(&self, filename: &str) -> String {
-        let basename = Path::new(&filename).file_name().unwrap();
-        format!("$MOLPRO_CMD {basename:?}.inp")
-    }
-}
-
-impl Queue<Mopac> for Pbs {
-    fn template(&self) -> &str {
-        &self.template
-    }
-
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("$MOPAC_CMD {filename}.mop")
-    }
-}
-
-impl Queue<DFTBPlus> for Pbs {
-    fn template(&self) -> &str {
-        &self.template
+    /// Molpro 2022 requires submission from the script's directory. Other
+    /// programs use the normal `qsub path/to/script` form.
+    fn submit(&self, program: &dyn Program, filename: &str) -> String {
+        let mut cmd = Command::new(self.submit_command());
+        if program.submit_from_script_dir() {
+            let path = Path::new(filename);
+            let dir = path.parent().unwrap();
+            let base = path.file_name().unwrap();
+            cmd.arg(base).current_dir(dir);
+        } else {
+            cmd.arg(filename);
+        }
+        submit_inner(&mut cmd, self.sleep_int).unwrap()
     }
 
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("(cd {filename} && $DFTB_CMD > out)")
+    fn program_filename(
+        &self,
+        program: &dyn Program,
+        filename: &str,
+    ) -> String {
+        if program.submit_from_script_dir() {
+            Path::new(filename)
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned()
+        } else {
+            filename.to_owned()
+        }
     }
-}
 
-impl Submit<DFTBPlus> for Pbs {
-    fn submit(&self, filename: &str) -> String {
-        let mut cmd =
-            Command::new(<Self as SubQueue<DFTBPlus>>::submit_command(self));
-        let cmd = cmd.arg("-f").arg(filename);
-        submit_inner(cmd, self.sleep_int).unwrap()
-    }
-}
-
-impl<P> SubQueue<P> for Pbs
-where
-    P: Program,
-{
     fn submit_command(&self) -> &str {
         "qsub"
     }
@@ -166,8 +128,6 @@ where
     fn sleep_int(&self) -> usize {
         self.sleep_int
     }
-
-    const SCRIPT_EXT: &'static str = "pbs";
 
     fn dir(&self) -> &str {
         self.dir
@@ -191,7 +151,7 @@ where
 
     fn status(&self) -> HashSet<String> {
         let mut ret = HashSet::new();
-        let lines = <Pbs as SubQueue<P>>::stat_cmd(self);
+        let lines = self.stat_cmd();
         // skip to end of header
         let lines = lines.lines().skip_while(|l| !l.contains("-----------"));
         for line in lines {
@@ -211,7 +171,12 @@ where
 mod tests {
     use insta::assert_snapshot;
 
-    use crate::{program::cfour::Cfour, queue::templates};
+    use crate::{
+        program::{
+            cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+        },
+        queue::templates,
+    };
 
     use super::*;
 
@@ -227,21 +192,26 @@ mod tests {
     }
 
     macro_rules! make_tests {
-        ($($name:ident, $queue:expr => $p:ty$(,)*)*) => {
+        ($($name:ident, $queue:expr => $program:expr$(,)*)*) => {
             $(
             #[test]
             fn $name() {
                 let tmp = tempfile::NamedTempFile::new().unwrap();
-                <Pbs as Queue<$p>>::write_submit_script(
+                Queue::write_submit_script(
                     $queue,
-                    ["pts/opt0.inp", "pts/opt1.inp", "pts/opt2.inp", "pts/opt3.inp"]
-                    .map(|s| s.into()),
+                    &$program,
+                    &["pts/opt0", "pts/opt1", "pts/opt2", "pts/opt3"]
+                    .map(str::to_owned),
                     tmp.path().to_str().unwrap(),
                 );
                 let got = std::fs::read_to_string(tmp).unwrap();
-                let got: Vec<&str> = got.lines().filter(|l|
-                    !(l.starts_with("#PBS -N")
-                        || l.starts_with("#PBS -o"))).collect();
+                let got: Vec<&str> = got
+                    .lines()
+                    .filter(|l| {
+                        !(l.starts_with("#PBS -N")
+                            || l.starts_with("#PBS -o"))
+                    })
+                    .collect();
                 let got = got.join("\n");
                 assert_snapshot!(got);
             }
@@ -250,8 +220,8 @@ mod tests {
     }
 
     make_tests! {
-        mopac_pbs, &pbs(templates::PBS_MOPAC) =>  Mopac,
-        molpro_pbs, &pbs(templates::PBS_MOLPRO) =>  Molpro,
+        mopac_pbs, &pbs(templates::PBS_MOPAC) => Mopac,
+        molpro_pbs, &pbs(templates::PBS_MOLPRO) => Molpro,
         cfour_pbs, &pbs(templates::PBS_CFOUR) => Cfour,
         dftb_pbs, &pbs(templates::PBS_DFTBPLUS) => DFTBPlus,
     }

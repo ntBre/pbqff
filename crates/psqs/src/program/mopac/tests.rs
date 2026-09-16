@@ -6,7 +6,7 @@ use tempfile::TempDir;
 
 use crate::{geom::Geom, program::Template, string};
 
-use crate::queue::{Queue, SubQueue, Submit};
+use crate::queue::Queue;
 
 use super::*;
 
@@ -219,21 +219,18 @@ fn read_multi_el() {
 }
 
 /// minimal queue for testing general submission
+#[derive(Debug)]
 struct TestQueue;
 
-impl Submit<Mopac> for TestQueue {}
+impl Queue for TestQueue {
+    fn script_ext(&self) -> &'static str {
+        "pbs"
+    }
 
-impl Queue<Mopac> for TestQueue {
     fn template(&self) -> &str {
-        ""
+        "MOPAC_CMD=echo\n"
     }
 
-    fn program_cmd(&self, filename: &str) -> String {
-        format!("echo {filename}")
-    }
-}
-
-impl SubQueue<Mopac> for TestQueue {
     fn submit_command(&self) -> &str {
         "bash"
     }
@@ -249,8 +246,6 @@ impl SubQueue<Mopac> for TestQueue {
     fn sleep_int(&self) -> usize {
         1
     }
-
-    const SCRIPT_EXT: &'static str = "pbs";
 
     fn dir(&self) -> &str {
         "inp"
@@ -275,11 +270,9 @@ fn test_submit() {
     let pbs = tmp.path().join("main.pbs");
     let path = pbs.to_string_lossy();
     let tq = TestQueue;
-    tq.write_submit_script(
-        string!["input1.mop", "input2.mop", "input3.mop"],
-        &path,
-    );
-    let got = tq.submit(&path);
+    let inputs = string!["input1", "input2", "input3"];
+    tq.write_submit_script(&Mopac, &inputs, &path);
+    let got = tq.submit(&Mopac, &path);
     let want = "input3.mop";
     assert_eq!(got, want);
 }
@@ -293,7 +286,7 @@ fn test_resubmit() -> anyhow::Result<()> {
 
     std::fs::copy("testfiles/job.mop", &mop)?;
 
-    let got = TestQueue.resubmit(&mop);
+    let got = TestQueue.resubmit(&Mopac, &mop);
 
     assert!(redo_mop.exists());
     assert!(redo_pbs.exists());
@@ -306,7 +299,7 @@ fn test_resubmit() -> anyhow::Result<()> {
         Resubmit {
             inp_file: "[TMP]/job_redo",
             pbs_file: "[TMP]/job_redo.pbs",
-            job_id: "[TMP]/job_redo",
+            job_id: "[TMP]/job_redo.mop",
         }
         "#);
     });
