@@ -9,7 +9,7 @@ use pbqff::{
 use psqs::{
     program::{
         Program as ProgramBackend, cfour::Cfour, dftbplus::DFTBPlus,
-        molpro::Molpro, mopac::Mopac,
+        molpro::Molpro, mopac::Mopac, orca::Orca,
     },
     queue::{Queue as QueueBackend, local::Local, pbs::Pbs, slurm::Slurm},
 };
@@ -62,6 +62,7 @@ fn dispatch(config: &Config, args: Args) -> (Spectro, Output) {
         config::Program::Molpro => &Molpro,
         config::Program::DFTBPlus => &DFTBPlus,
         config::Program::Cfour => &Cfour,
+        config::Program::Orca => &Orca,
     };
     let queue: Box<dyn QueueBackend> = match config.queue {
         config::Queue::Pbs => Box::new(Pbs::new(

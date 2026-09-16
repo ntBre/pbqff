@@ -119,6 +119,7 @@ mod tests {
     use crate::{
         program::{
             cfour::Cfour, dftbplus::DFTBPlus, molpro::Molpro, mopac::Mopac,
+            orca::Orca,
         },
         queue::templates,
     };
@@ -168,5 +169,6 @@ mod tests {
         molpro_slurm, &slurm(templates::SLURM_MOLPRO) => Molpro,
         cfour_slurm, &slurm(templates::SLURM_CFOUR) => Cfour,
         dftb_slurm, &slurm(templates::SLURM_DFTBPLUS) => DFTBPlus,
+        orca_slurm, &slurm(templates::SLURM_ORCA) => Orca,
     }
 }

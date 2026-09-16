@@ -1,0 +1,9 @@
+---
+source: src/queue/slurm.rs
+expression: got
+---
+ORCA_CMD=orca
+$ORCA_CMD opt0.inp > opt0.out 2>&1
+$ORCA_CMD opt1.inp > opt1.out 2>&1
+$ORCA_CMD opt2.inp > opt2.out 2>&1
+$ORCA_CMD opt3.inp > opt3.out 2>&1

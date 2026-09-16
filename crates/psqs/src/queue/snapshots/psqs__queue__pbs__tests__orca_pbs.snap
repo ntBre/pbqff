@@ -1,0 +1,44 @@
+---
+source: src/queue/pbs.rs
+expression: got
+---
+#!/bin/bash
+#PBS -S /bin/bash
+#PBS -j oe
+#PBS -l mem=16gb
+#PBS -l nodes=1:ppn=8
+#PBS -l walltime=2150:00:00
+#PBS -q workq
+
+module load openpbs
+
+export OMP_NUM_THREADS=8
+export ORCA_DIR=/ddnlus/r3750/orca/orca_6_1_1_linux_x86-64_shared_openmpi418_nodmrg
+export XTBEXE=$ORCA_DIR/xtb/xtb-dist/bin/xtb
+export PATH=$ORCA_DIR:$ORCA_DIR/xtb/xtb-dist/bin:$PATH
+export WORKDIR=$PBS_O_WORKDIR
+export TMPDIR=/tmp/$USER.$PBS_JOBID
+
+mkdir -p "$TMPDIR"
+trap 'rm -rf "$TMPDIR"' EXIT
+cd "$WORKDIR"
+
+run_orca() {
+    input=$1
+    name=$(basename "${input%.inp}")
+    scratch="$TMPDIR/$name"
+    mkdir -p "$scratch"
+    cp "$input" "$scratch/$name.inp" || return
+    (
+        cd "$scratch" || exit 1
+        "$ORCA_DIR/orca" "$name.inp" '--bind-to core:overload-allowed --use-hwthread-cpus'
+    )
+    status=$?
+    rm -rf "$scratch"
+    return $status
+}
+ORCA_CMD=run_orca
+$ORCA_CMD pts/opt0.inp > pts/opt0.out 2>&1
+$ORCA_CMD pts/opt1.inp > pts/opt1.out 2>&1
+$ORCA_CMD pts/opt2.inp > pts/opt2.out 2>&1
+$ORCA_CMD pts/opt3.inp > pts/opt3.out 2>&1

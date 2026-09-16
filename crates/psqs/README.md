@@ -18,6 +18,7 @@ The following quantum chemistry programs are supported:
 - [x] [Molpro][molpro]
 - [x] [CFOUR][cfour]
 - [x] [DFTB+][dftb+]
+- [x] [ORCA][orca]
 - [ ] Gaussian
 
 ## Queuing systems
@@ -31,3 +32,4 @@ The following queuing systems are supported:
 [molpro]: https://www.molpro.net/
 [cfour]: https://cfour.uni-mainz.de/cfour/
 [dftb+]: https://dftbplus.org/
+[orca]: https://www.faccts.de/orca/
